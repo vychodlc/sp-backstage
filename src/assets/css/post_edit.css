@@ -1,0 +1,22 @@
+.post_preview_html {
+  white-space: pre-wrap;
+  word-wrap:break-word;
+  padding: 0 10px;
+  font-size: 10px;
+  width: calc(75vh * 0.5);
+  height: 75vh;
+  overflow-y: scroll;
+  border: 8px solid #000;
+  color: #000;
+  border-radius: 20px;
+}
+.post_preview_html::-webkit-scrollbar {
+  display: none;
+}
+.post_preview_html img {
+  width: 100%;
+}
+.quill-editor img {
+  width: 30%;
+  display: block;
+}
