@@ -6,6 +6,11 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     isLogin:'0',
+    user: {
+      id: null,
+      nickname: null,
+      right: null
+    },
     token: localStorage.getItem('token') ? localStorage.getItem('token'):'',
     refresh_token: localStorage.getItem('refresh_token') ? localStorage.getItem('refresh_token'):'',
   },
@@ -18,11 +23,18 @@ export default new Vuex.Store({
       state.refresh_token = refresh_token
       localStorage.refresh_token = refresh_token
     },
+    setUser(state, id, nickname, right) {
+      state.user.nickname = nickname
+      state.user.id = id
+      state.user.right = right
+    },
     rmToken(state) {
       state.token = ''
       state.refresh_token = ''
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
+      state.user.nickname = null
+      state.user.id = null
+      state.user.right = null
+      localStorage.clear()
     },
   },
   getters: {
@@ -32,7 +44,6 @@ export default new Vuex.Store({
       }
       return state.token
     }
-  
   },
   actions: {
   },

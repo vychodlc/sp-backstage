@@ -123,6 +123,7 @@
 
 <script>
   import { getUser,editUserinfo,delUser,register,setUserRight } from '@/network/user.js'
+  import { validateEmail } from '@/utils/validate.js'
   export default {
     name: "User",
     data () {
@@ -231,14 +232,28 @@
         })
       },
       goAdd() {
-        register(this.dialogAdd).then(res=>{
-          if(res.data.status=='200') {
-            this.$message({type: 'success',message: '新增成功!'});
-            this.dialogAdd = {nickname:'',email:'',password:''},
-            this.dialogAddVisible = false;
-            this._getUser();
-          }
-        })
+        if(this.dialogAdd.name=='') {
+          this.$message({type: 'warning',message: '姓名不能为空'});
+        }else if(this.dialogAdd.name.length<2) {
+          this.$message({type: 'warning',message: '昵称最短2位'});
+        }else if(this.dialogAdd.name.length>20) {
+          this.$message({type: 'warning',message: '昵称最长20位'});
+        }else if(validateEmail(this.dialogRight.email)==false) {
+          this.$message({type: 'warning',message: '邮箱不符合规范'});
+        }else if(this.dialogAdd.password.length<6) {
+          this.$message({type: 'warning',message: '密码最短6位'});
+        }else if(this.dialogAdd.password.length>40) {
+          this.$message({type: 'warning',message: '密码最长40位'});
+        }else{
+          register(this.dialogAdd).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '新增成功!'});
+              this.dialogAdd = {nickname:'',email:'',password:''},
+              this.dialogAddVisible = false;
+              this._getUser();
+            }
+          })
+        }
       },
       handleDelete(index, row) {
         this.$confirm('此操作将永久删除用户：'+ row.user_nickname +', 是否继续?', '提示', {

@@ -9,13 +9,13 @@ module.exports = {
         'views': '@/views',
       }
     }
-  },  
+  },
   devServer: {
     port: 8080,
     open: true,
     proxy: {
       '/api': {
-        target: 'http://api.bupt404.cn/sp/',
+        target: "http://api.bupt404.cn/sp/",
         // target: process.env.VUE_APP_URL,
         changeOrigin: true,
         ws: true,

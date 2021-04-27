@@ -96,7 +96,7 @@
       <div class="submit">
         <el-button size="mini" @click="$router.replace('/home/post')">取消</el-button>
         <el-button size="mini" type="primary" @click="submitForm('postForm')">提交</el-button>
-        <el-button size="mini" type="primary" @click="test()">测试</el-button>
+        <!-- <el-button size="mini" type="primary" @click="test()">测试</el-button> -->
       </div>
     </div>
   </div>
@@ -225,22 +225,24 @@ export default {
       } else if (this.postForm.content=='') {
         this.$message({type: 'error',message: '请输入文章内容!'});
       } else {
+        this.loading = true;
         if (this.isEdit==true&&this.$refs.uploadCover.uploadFiles==0) {
           if(this.postForm.activity==0) {
             this.postForm.act_start_time=''
             this.postForm.act_end_time=''
             this.postForm.act_link=''
           }
-          // console.log(this.postForm.act_start_time,this.postForm.act_start_time.toString().indexOf('GMT'));
           if(this.postForm.act_start_time!=''&&this.postForm.act_start_time.toString().indexOf('GMT')!=-1){this.postForm.act_start_time = msToDate(this.postForm.act_start_time.getTime()).hasTime};
           if(this.postForm.act_end_time!=''&&this.postForm.act_end_time.toString().indexOf('GMT')!=-1){this.postForm.act_end_time = msToDate(this.postForm.act_end_time.getTime()).hasTime};  
           editPost(this.postForm).then(res=>{
             console.log('EDIT NO IMG');
             if(res.data.status='200') {
               this.$message({type: 'success',message: '修改文章成功!'});
-              this.$router.replace('/home/post')
+              this.$router.replace('/home/post');
+              this.loading = false;
             } else {
               this.$message({type: 'error',message: res.data.msg});
+              this.loading = false;
             }
           })
         } else {
@@ -264,8 +266,10 @@ export default {
                   if(res.data.status='200') {
                     this.$message({type: 'success',message: '修改文章成功!'});
                     this.$router.replace('/home/post')
+                    this.loading = false;
                   } else {
                     this.$message({type: 'error',message: res.data.msg});
+                    this.loading = false;
                   }
                 })
               } else {
@@ -276,13 +280,16 @@ export default {
                   if(res.data.status='200') {
                     this.$message({type: 'success',message: '新建文章成功!'});
                     this.$router.replace('/home/post')
+                    this.loading = false;
                   } else {
                     this.$message({type: 'error',message: res.data.msg});
+                    this.loading = false;
                   }
                 })
               }
             } else {
               this.$message({type: 'error',message: res.data.msg});
+              this.loading = false;
             }
           })
         }

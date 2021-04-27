@@ -1,5 +1,5 @@
 <template>
-  <div class="login-container">
+  <div class="login-container" v-loading="loading">
     <el-form v-if="isLogin" ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import { login, register } from '@/network/user.js'
+import { login,register,auth,getUserInfo } from '@/network/user.js'
 import { validateEmail } from '@/utils/validate.js'
 
 const validatorEmail = (rule, value, callback) => {
@@ -153,6 +153,7 @@ export default {
   data () {
     return {
       isLogin: true,
+      loading: false,
       loginForm: {
         email: '',
         password: '',
@@ -176,22 +177,34 @@ export default {
       redirect: undefined
    }
   },
+  created() {
+    if(!localStorage.token) {
+      this.$router.replace('/')
+    } else {
+      this.$router.replace('/home')
+    }
+  },
   methods: {
     handleLogin() {
+      this.loading = true;
       login(this.loginForm).then(res=>{
         if(res.data.status=='200') {
           this.$store.commit('setToken', res.data.token);
           this.$store.commit('setRefreshToken', res.data.refresh_token);
-          this.$message({
-            message: '登陆成功',
-            type: 'success'
+          auth(localStorage.token).then(res=>{
+            localStorage.uuid = res.data.data.sub;
+            getUserInfo(localStorage.uuid).then(res=>{
+              localStorage.right = res.data.data.user_right;
+              localStorage.nickname = res.data.data.user_nickname;
+              this.$store.commit('setUser', localStorage.uuid = localStorage.uuid,res.data.data.user_nickname,res.data.data.user_right);
+              this.$message({message: '登陆成功',type: 'success'});
+              this.loading = false;
+              this.$router.push({ path:'/home' });
+            });
           });
-          this.$router.push({ path:'/home' });
         } else {
-          this.$message({
-            type: 'error',
-            message: res.data.msg
-          });
+          this.$message({type: 'error',message: res.data.msg});
+          this.loading = false;
         }
       });
     },
@@ -200,11 +213,8 @@ export default {
         if(res.data.status=='200') {
           this.$store.commit('setToken', res.data.token);
           this.$store.commit('setRefreshToken', res.data.refresh_token);
-          this.$message({
-            message: '注册成功',
-            type: 'success'
-          });
-          this.isLogin = true
+          this.$message({message: '注册成功',type: 'success'});
+          this.isLogin = true;
           this.loginForm.email = this.registerForm.email;
           this.loginForm.password = '';
           this.registerForm.email = '';
@@ -212,10 +222,7 @@ export default {
           this.registerForm.nickname = '';
           // this.$router.push({ path:'/home' });
         } else {
-          this.$message({
-            type: 'error',
-            message: res.data.msg
-          });
+          this.$message({type: 'error',message: res.data.msg});
         }
         
       });
@@ -238,18 +245,18 @@ export default {
     width: 85%;
   }
   .login-container .el-input input {
-      background: transparent;
-      border: 0px;
-      -webkit-appearance: none;
-      border-radius: 0px;
-      padding: 12px 5px 12px 15px;
-      color: #fff;
-      height: 47px;
-      caret-color: #fff;
+    background: transparent;
+    border: 0px;
+    -webkit-appearance: none;
+    border-radius: 0px;
+    padding: 12px 5px 12px 15px;
+    color: #fff;
+    height: 47px;
+    caret-color: #fff;
   }
   .login-container .el-input input:-webkit-autofill {
-        box-shadow: 0 0 0px 1000px #fff inset !important;
-        -webkit-text-fill-color: #fff !important;
+    box-shadow: 0 0 0px 1000px #fff inset !important;
+    -webkit-text-fill-color: #fff !important;
   }
 
   .login-container .el-form-item {

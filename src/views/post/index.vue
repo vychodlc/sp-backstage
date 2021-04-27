@@ -12,7 +12,7 @@
     <el-input  placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
-    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filter}} : {{search}}</el-tag>
+    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filter}} : {{searchWord}}</el-tag>
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -95,13 +95,14 @@
 </template>
 
 <script>
-  import { getPostList,delPost,changePostStatus,getPostFilter,getPostFilterByTag } from '@/network/post.js'
+  import { getPostList,delPost,changePostStatus,getPostFilter,getPostFilterByTag,searchPost } from '@/network/post.js'
   import { getTag } from '@/network/tag.js'
   export default {
     name: "Post",
     data () {
       return {
         search: null,
+        searchWord: null,
         filter: 'title',
         isSearch: false,
         loading: true,
@@ -140,13 +141,24 @@
                       this.tableData[item].tags = this.tableData[item].tags.split(',');
                     }
                   } else {
-                    this.$message({
-                      type: 'error',
-                      message: res.data.msg
-                    })
+                    this.$message({type: 'error',message: res.data.msg})
                   }      
                   this.loading = false;
                 });
+              } else if(this.filter=='title') {
+                searchPost(this.search,pageIndex).then(res=> {
+                  if(res.data.status=='200') {
+                    this.pageNum = parseInt(res.data.search_num);
+                    this.tableData = res.data.data;
+                    this.loading = false;
+                    for(let item in this.tableData) {
+                      this.tableData[item].tags = this.tableData[item].tags.split(',');
+                    }
+                  } else {
+                    this.$message({type: 'error',message: res.data.msg})
+                  }      
+                  this.loading = false;
+                })
               } else {
                 getPostFilter(this.filter,this.search,pageIndex).then(res => {
                   if(res.data.status=='200') {
@@ -157,16 +169,14 @@
                       this.tableData[item].tags = this.tableData[item].tags.split(',');
                     }
                   } else {
-                    this.$message({
-                      type: 'error',
-                      message: res.data.msg
-                    })
+                    this.$message({type: 'error',message: res.data.msg})
                   }      
                   this.loading = false;
                 });
               }
             } else {
               getPostList(pageIndex).then(res => {
+                console.log(123,res);
                 if(res.data.status=='200') {
                   this.pageNum = parseInt(res.data.posts_num);
                   this.tableData = res.data.data;
@@ -175,10 +185,7 @@
                     this.tableData[item].tags = this.tableData[item].tags.split(',');
                   }
                 } else {
-                  this.$message({
-                    type: 'error',
-                    message: res.data.msg
-                  })
+                  this.$message({type: 'error',message: res.data.msg})
                 }      
                 this.loading = false;
               });
@@ -195,7 +202,8 @@
           delPost(row.ID).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
-              this._getPostList();
+              this.currentPage = 1;
+              this._getPostList(this.currentPage);
             }else {
               this.$message({type: 'warning',message: '删除失败'});
             }
@@ -213,7 +221,8 @@
         if(this.oldPost.post_status!=this.dialogStatus) {
           changePostStatus(this.oldPost.ID,this.dialogStatus,localStorage.nickname).then(res => {
             this.$message({type: 'success',message: '状态修改成功'});
-            this._getPostList();
+            this.currentPage = 1;
+            this._getPostList(this.currentPage);
             this.dialogStatusVisible = false;
           })
         } else {
@@ -226,6 +235,7 @@
       goSearch() {
         this.currentPage = 1;
         this.isSearch = true;
+        this.searchWord = this.search;
         this.loading = true;
         this._getPostList(this.currentPage)
       },

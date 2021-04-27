@@ -11,13 +11,15 @@
     name: 'App',
     components: { Home },
     mounted() {
-      auth(localStorage.token).then(res=>{
-        localStorage.uuid = res.data.data.sub;
-        getUserInfo(localStorage.uuid).then(res=>{
-          localStorage.right = res.data.data.user_right;
-          localStorage.nickname = res.data.data.user_nickname;
-        })
-      });
+      if(localStorage.token){
+        auth(localStorage.token).then(res=>{
+          localStorage.uuid = res.data.data.sub;
+          getUserInfo(localStorage.uuid).then(res=>{
+            localStorage.right = res.data.data.user_right;
+            localStorage.nickname = res.data.data.user_nickname;
+          })
+        });
+      }
     },
   }
 </script>

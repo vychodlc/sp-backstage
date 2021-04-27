@@ -14,6 +14,13 @@ export function getPostDetail(id) {
   })
 }
 
+export function searchPost(s,p) {
+  return request({
+    url: '/search_post.php',
+    params: {s,p}
+  })
+}
+
 export function getPostFilter(filter,value,p) {
   return request({
     url: '/filter_post.php',
