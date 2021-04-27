@@ -11,7 +11,8 @@
     </el-select>
     <el-input  placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
-    <el-button size="small" type="primary" @click="isSearch=false">返回</el-button>
+    <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
+    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filter}} : {{search}}</el-tag>
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -94,7 +95,7 @@
 </template>
 
 <script>
-  import { getPostList,delPost,changePostStatus,getPostFilter } from '@/network/post.js'
+  import { getPostList,delPost,changePostStatus,getPostFilter,getPostFilterByTag } from '@/network/post.js'
   import { getTag } from '@/network/tag.js'
   export default {
     name: "Post",
@@ -122,22 +123,66 @@
         getTag().then(res=> {
           if(res.data.status=='200') {
             this.tags = res.data.data;
-            getPostList(pageIndex).then(res => {
-              if(res.data.status=='200') {
-                this.pageNum = parseInt(res.data.posts_num);
-                this.tableData = res.data.data;
-                this.loading = false;
-                for(let item in this.tableData) {
-                  this.tableData[item].tags = this.tableData[item].tags.split(',');
+            if(this.isSearch==true) {
+              if(this.filter=='tag') {
+                let index = 0;
+                for(let key in this.tags) {
+                  if(this.tags[key]==this.search) {
+                    index = key;
+                  }
                 }
+                getPostFilterByTag(index,this.currentPage).then(res => {
+                  if(res.data.status=='200') {
+                    this.pageNum = parseInt(res.data.filter_num);
+                    this.tableData = res.data.data;
+                    this.loading = false;
+                    for(let item in this.tableData) {
+                      this.tableData[item].tags = this.tableData[item].tags.split(',');
+                    }
+                  } else {
+                    this.$message({
+                      type: 'error',
+                      message: res.data.msg
+                    })
+                  }      
+                  this.loading = false;
+                });
               } else {
-                this.$message({
-                  type: 'error',
-                  message: res.data.msg
-                })
-              }      
-              this.loading = false;
-            });
+                getPostFilter(this.filter,this.search,pageIndex).then(res => {
+                  if(res.data.status=='200') {
+                    this.pageNum = parseInt(res.data.filter_num);
+                    this.tableData = res.data.data;
+                    this.loading = false;
+                    for(let item in this.tableData) {
+                      this.tableData[item].tags = this.tableData[item].tags.split(',');
+                    }
+                  } else {
+                    this.$message({
+                      type: 'error',
+                      message: res.data.msg
+                    })
+                  }      
+                  this.loading = false;
+                });
+              }
+            } else {
+              getPostList(pageIndex).then(res => {
+                if(res.data.status=='200') {
+                  this.pageNum = parseInt(res.data.posts_num);
+                  this.tableData = res.data.data;
+                  this.loading = false;
+                  for(let item in this.tableData) {
+                    this.tableData[item].tags = this.tableData[item].tags.split(',');
+                  }
+                } else {
+                  this.$message({
+                    type: 'error',
+                    message: res.data.msg
+                  })
+                }      
+                this.loading = false;
+              });
+            }
           }
         });
       },
@@ -181,9 +226,14 @@
       goSearch() {
         this.currentPage = 1;
         this.isSearch = true;
-        getPostFilter(this.filter,this.search,this.currentPage).then(res=>{
-          console.log(res);
-        })
+        this.loading = true;
+        this._getPostList(this.currentPage)
+      },
+      goBack() {
+        this.isSearch=false;
+        this.search=null;
+        this.currentPage = 1;
+        this._getPostList(this.currentPage)
       }
     }
   }

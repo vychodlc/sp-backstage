@@ -21,6 +21,13 @@ export function getPostFilter(filter,value,p) {
   })
 }
 
+export function getPostFilterByTag(id,p) {
+  return request({
+    url: '/filter_post_by_tag.php',
+    params: {id,p}
+  })
+}
+
 export function addCoverImg(file) {
   let formData = new FormData();
   formData.append('cover_img',file);
