@@ -1,6 +1,6 @@
 <template>
   <div class="post-container">
-    <el-select v-model="filter" size="small" style="width:8vw;margin-right:10px" placeholder="请选择">
+    <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="标题" value="title"></el-option>
       <el-option label="作者" value="author"></el-option>
       <el-option label="菜单" value="menu"></el-option>
@@ -9,10 +9,33 @@
       <el-option label="活动" value="activity"></el-option>
       <el-option label="状态" value="post_status"></el-option>
     </el-select>
-    <el-input  placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <template v-if="this.filter=='activity'||this.filter=='post_status'||this.filter=='rank'||this.filter=='menu'">
+      <template v-if="this.filter=='activity'">
+        <el-radio v-model="search" label="0">无</el-radio>
+        <el-radio v-model="search" label="1">有</el-radio>
+      </template>
+      <template v-else-if="this.filter=='rank'">
+        <el-radio v-model="search" label="1">1</el-radio>
+        <el-radio v-model="search" label="2">2</el-radio>
+        <el-radio v-model="search" label="3">3</el-radio>
+        <el-radio v-model="search" label="4">4</el-radio>
+        <el-radio v-model="search" label="5">5</el-radio>
+      </template>
+      <template v-else-if="this.filter=='menu'">
+        <el-radio v-model="search" label="种类">种类</el-radio>
+        <el-radio v-model="search" label="品牌">品牌</el-radio>
+        <el-radio v-model="search" label="年代">年代</el-radio>
+      </template>
+      <template v-else>
+        <el-radio v-model="search" label="0">未发布</el-radio>
+        <el-radio v-model="search" label="1">已发布</el-radio>
+        <el-radio v-model="search" label="2">已下架</el-radio>
+      </template>
+    </template>
+    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
-    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filter}} : {{searchWord}}</el-tag>
+    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -104,6 +127,7 @@
         search: null,
         searchWord: null,
         filter: 'title',
+        filterWord: null,
         isSearch: false,
         loading: true,
         tableData: [],
@@ -113,6 +137,15 @@
         oldPost: null,
         pageNum: null,
         currentPage: 1,
+        interpret: {
+          'title': {name:'标题'},
+          'author': {name:'作者'},
+          'menu': {name:'菜单'},
+          'tag': {name:'标签'},
+          'rank': {name:'评级'},
+          'activity': {name:'活动'},
+          'post_status': {name:'状态'}
+        }
       }
     },
     mounted() {
@@ -176,7 +209,6 @@
               }
             } else {
               getPostList(pageIndex).then(res => {
-                console.log(123,res);
                 if(res.data.status=='200') {
                   this.pageNum = parseInt(res.data.posts_num);
                   this.tableData = res.data.data;
@@ -233,10 +265,14 @@
         this._getPostList(this.currentPage)
       },
       goSearch() {
-        this.currentPage = 1;
         this.isSearch = true;
         this.searchWord = this.search;
+        this.filterWord = this.interpret[this.filter].name;
+        // if(thi.search=='title') {
+        //   this.searchWord = '标题'
+        // }
         this.loading = true;
+        this.currentPage = 1;
         this._getPostList(this.currentPage)
       },
       goBack() {
@@ -244,6 +280,9 @@
         this.search=null;
         this.currentPage = 1;
         this._getPostList(this.currentPage)
+      },
+      filterChange() {
+        this.search = '';
       }
     }
   }

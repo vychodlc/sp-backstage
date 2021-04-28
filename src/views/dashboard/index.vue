@@ -1,8 +1,9 @@
 <template>
   <div>
-    <el-button type="primary" @click="see()">看一眼</el-button>
+    <h1>这是仪表盘，还没有做0.0</h1>
+    <!-- <el-button type="primary" @click="see()">看一眼</el-button>
     <el-button type="primary" @click="test()">提交</el-button>
-    <el-button type="primary" @click="del()">删除</el-button>
+    <el-button type="primary" @click="del()">删除</el-button> -->
   </div>
 </template>
 

@@ -221,37 +221,53 @@
         // this.dialogForm.permissions = this.tableData[index].user_permissions;
       },
       goEdit() {
-        editUserinfo(this.dialogForm).then(res=>{
-          if(res.data.status=='200') {
-            this.$message({type: 'success',message: '修改成功!'});
-            this.dialogFormVisible = false;
-            this._getUser();
-          }else{
-            this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
-          }
-        })
+        if(this.dialogForm.nickname=='') {
+          this.$message({type: 'warning',message: '昵称不能为空'});
+        }else if(this.dialogForm.nickname.length<2) {
+          this.$message({type: 'warning',message: '昵称最短2位'});
+        }else if(this.dialogForm.nickname.length>20) {
+          this.$message({type: 'warning',message: '昵称最长20位'});
+        }else if(validateEmail(this.dialogForm.email)==false) {
+          this.$message({type: 'warning',message: '邮箱不符合规范'});
+        }else{
+          this.loading = true;
+          editUserinfo(this.dialogForm).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '修改成功!'});
+              this.dialogFormVisible = false;
+              this._getUser();
+            }else{
+              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
+            }          
+            this.loading = false;
+          })
+        }
       },
       goAdd() {
-        if(this.dialogAdd.name=='') {
-          this.$message({type: 'warning',message: '姓名不能为空'});
-        }else if(this.dialogAdd.name.length<2) {
+        if(this.dialogAdd.nickname=='') {
+          this.$message({type: 'warning',message: '昵称不能为空'});
+        }else if(this.dialogAdd.nickname.length<2) {
           this.$message({type: 'warning',message: '昵称最短2位'});
-        }else if(this.dialogAdd.name.length>20) {
+        }else if(this.dialogAdd.nickname.length>20) {
           this.$message({type: 'warning',message: '昵称最长20位'});
-        }else if(validateEmail(this.dialogRight.email)==false) {
+        }else if(validateEmail(this.dialogAdd.email)==false) {
           this.$message({type: 'warning',message: '邮箱不符合规范'});
         }else if(this.dialogAdd.password.length<6) {
           this.$message({type: 'warning',message: '密码最短6位'});
         }else if(this.dialogAdd.password.length>40) {
           this.$message({type: 'warning',message: '密码最长40位'});
         }else{
+          this.loading = true;
           register(this.dialogAdd).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '新增成功!'});
               this.dialogAdd = {nickname:'',email:'',password:''},
               this.dialogAddVisible = false;
               this._getUser();
-            }
+            }else{
+              this.$message({type: 'warning',message: '新增失败——'+res.data.msg});
+            }          
+            this.loading = false;
           })
         }
       },
@@ -261,6 +277,7 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
+          this.loading = true;
           delUser(row.uuid).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
@@ -268,6 +285,7 @@
             }else {
               this.$message({type: 'warning',message: '删除失败'});
             }
+            this.loading = false;
           })
         }).catch(() => {
           this.$message({type: 'info',message: '已取消删除'});          
