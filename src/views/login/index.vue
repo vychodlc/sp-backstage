@@ -1,6 +1,6 @@
 <template>
   <div class="login-container" v-loading="loading">
-    <el-form v-if="isLogin" ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+    <el-form v-if="isLogin" ref="loginForm" :model="loginForm" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
         <h3 class="title">Login Form</h3>
@@ -39,8 +39,11 @@
         />
       </el-form-item>
 
-      <el-button 
+      <!-- <el-button 
       :disabled='loginForm.email==""||loginForm.password==""'
+       :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button> -->
+
+      <el-button 
        :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
       <div class="tips">
@@ -50,7 +53,7 @@
     </el-form>
 
     
-    <el-form v-else ref="registerForm" :model="registerForm" :rules="registerRules" class="login-form" auto-complete="on" label-position="left">
+    <el-form v-else ref="registerForm" :model="registerForm" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
         <h3 class="title">Register Form</h3>
@@ -108,8 +111,11 @@
         </span> -->
       </el-form-item>
 
-      <el-button :loading="loading" 
+      <!-- <el-button :loading="loading" 
       :disabled='registerForm.email==""||registerForm.nickname==""||registerForm.password==""'
+      type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">Register</el-button> -->
+
+      <el-button :loading="loading"
       type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">Register</el-button>
 
       <div class="tips">
@@ -163,15 +169,7 @@ export default {
         nickname: '',
         password: '',
       },
-      loginRules: {
-        email: [{ required: true, trigger: 'blur', validator: validatorEmail }],
-        password: [{ required: true, trigger: 'blur', validator: validatorString }]
-      },
-      registerRules: {
-        email: [{ required: true, trigger: 'blur', validator: validatorEmail }],
-        nickname: [{ required: true, trigger: 'blur', validator: validatorString }],
-        password: [{ required: true, trigger: 'blur', validator: validatorString }]
-      },
+      flag: new RegExp("[`~!@#$^&*()=|{}':;',\\[\\].<>《》/?~！@#￥……&*（）——|{}【】‘；：”“'。，、？ ]"),
       loading: false,
       passwordType: 'password',
       redirect: undefined
@@ -186,46 +184,71 @@ export default {
   },
   methods: {
     handleLogin() {
-      this.loading = true;
-      login(this.loginForm).then(res=>{
-        if(res.data.status=='200') {
-          this.$store.commit('setToken', res.data.token);
-          this.$store.commit('setRefreshToken', res.data.refresh_token);
-          auth(localStorage.token).then(res=>{
-            localStorage.uuid = res.data.data.sub;
-            getUserInfo(localStorage.uuid).then(res=>{
-              localStorage.right = res.data.data.user_right;
-              localStorage.nickname = res.data.data.user_nickname;
-              this.$store.commit('setUser', localStorage.uuid = localStorage.uuid,res.data.data.user_nickname,res.data.data.user_right);
-              this.$message({message: '登陆成功',type: 'success'});
-              this.loading = false;
-              this.$router.push({ path:'/home' });
+      if(this.loginForm.email=='') {
+        this.$message({type: 'error',message: '请输入邮箱'})
+      } else if (validateEmail(this.loginForm.email)==false) {
+        this.$message({type: 'error',message: '邮箱格式不正确'})
+      } else if (this.loginForm.password=='') {
+        this.$message({type: 'error',message: '请输入密码'})
+      } else {
+        this.loading = true;
+        login(this.loginForm).then(res=>{
+          if(res.data.status=='200') {
+            this.$store.commit('setToken', res.data.token);
+            this.$store.commit('setRefreshToken', res.data.refresh_token);
+            auth(localStorage.token).then(res=>{
+              localStorage.uuid = res.data.data.sub;
+              getUserInfo(localStorage.uuid).then(res=>{
+                localStorage.right = res.data.data.user_right;
+                localStorage.nickname = res.data.data.user_nickname;
+                this.$store.commit('setUser', localStorage.uuid = localStorage.uuid,res.data.data.user_nickname,res.data.data.user_right);
+                this.$message({message: '登陆成功',type: 'success'});
+                this.loading = false;
+                this.$router.push({ path:'/home' });
+              });
             });
-          });
-        } else {
-          this.$message({type: 'error',message: res.data.msg});
-          this.loading = false;
-        }
-      });
+          } else {
+            this.$message({type: 'error',message: res.data.msg});
+            this.loginForm.password = '';
+            this.loading = false;
+          }
+        });
+      }
     },
     handleRegister() {
-      register(this.registerForm).then(res=>{
-        if(res.data.status=='200') {
-          this.$store.commit('setToken', res.data.token);
-          this.$store.commit('setRefreshToken', res.data.refresh_token);
-          this.$message({message: '注册成功',type: 'success'});
-          this.isLogin = true;
-          this.loginForm.email = this.registerForm.email;
-          this.loginForm.password = '';
-          this.registerForm.email = '';
-          this.registerForm.password = '';
-          this.registerForm.nickname = '';
-          // this.$router.push({ path:'/home' });
-        } else {
-          this.$message({type: 'error',message: res.data.msg});
-        }
-        
-      });
+      if(this.registerForm.email=='') {
+        this.$message({type: 'error',message: '请输入邮箱'})
+      } else if (validateEmail(this.registerForm.email)==false) {
+        this.$message({type: 'error',message: '邮箱格式不正确'})
+      } else if (this.registerForm.nickname=='') {
+        this.$message({type: 'error',message: '请输入昵称'})
+      } else if (this.registerForm.nickname.length<2||this.registerForm.nickname.length>20) {
+        this.$message({type: 'error',message: '昵称限长 2~20 位'})
+      } else if (this.flag.test(this.registerForm.nickname)==true) {
+        this.$message({type: 'error',message: '用户名为英文数字与中文，不能含有特殊字符'})
+      } else if (this.registerForm.password=='') {
+        this.$message({type: 'error',message: '请输入密码'})
+      } else if (this.registerForm.password.length<6||this.registerForm.password.length>20) {
+        this.$message({type: 'error',message: '密码限长 6~20 位'})
+      } else {
+        register(this.registerForm).then(res=>{
+          if(res.data.status=='200') {
+            this.$store.commit('setToken', res.data.token);
+            this.$store.commit('setRefreshToken', res.data.refresh_token);
+            this.$message({message: '注册成功',type: 'success'});
+            this.isLogin = true;
+            this.loginForm.email = this.registerForm.email;
+            this.loginForm.password = '';
+            this.registerForm.email = '';
+            this.registerForm.password = '';
+            this.registerForm.nickname = '';
+            // this.$router.push({ path:'/home' });
+          } else {
+            this.$message({type: 'error',message: res.data.msg});
+            this.registerForm.password = '';
+          }
+        });
+      }
     },
     changeForm(status) {
       if(status==0) {

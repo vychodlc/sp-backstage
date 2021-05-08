@@ -27,11 +27,13 @@
         width="150">
       </el-table-column>      
       <el-table-column
-        width="100"
+        width="150"
         prop="user_right"
         label="right">
         <template slot-scope="scope">
-          {{scope.row.user_right}}
+          <el-tag size="mini" v-if="scope.row.user_right==-1" type="info">冻结</el-tag>
+          <el-tag size="mini" v-if="scope.row.user_right==0" type="success">前台</el-tag>
+          <el-tag size="mini" v-if="scope.row.user_right==1" type="warning">后台</el-tag>
           <el-button
             style="margin-left:10px"
             @click="handleEditRight(scope.$index, scope.row)"

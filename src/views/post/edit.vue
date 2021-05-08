@@ -185,23 +185,34 @@ export default {
       return isIMAGE && isLt1M;
     },
     handleChange2(f,filelist) {
-      let file = this.$refs.uploadContentImg.uploadFiles.pop().raw;
-      let fileName = new Date().getTime() + '-' +file.name;
-      let uploadFile = new File([file], fileName, {type: file.type});
-      addCoverImg(uploadFile).then(res=>{
-        if(res.data.status=='201') {
-          console.log(res.data);
-          const quill=this.$refs.myQuillEditor.quill;
-          const pos=quill.getSelection().index;
-          quill.insertEmbed(pos,'image',res.data.cover_img_url);
-        }
-      })
+      const isIMAGE = (f.raw.type === 'image/jpeg')||(f.raw.type === 'image/gif')||(f.raw.type === 'image/png');
+      const isLt1M = f.raw.size / 1024 / 1024 < 1;
+      if (!isIMAGE) {
+        console.log(123);
+        this.$refs.uploadContentImg.uploadFiles.pop().raw;
+        this.$message.error('上传文件只能是图片格式!');
+      } else if (!isLt1M) {
+        this.$refs.uploadContentImg.uploadFiles.pop().raw;
+        this.$message.error('上传文件大小不能超过 1MB!');
+      } else {
+        let file = this.$refs.uploadContentImg.uploadFiles.pop().raw;
+        let fileName = new Date().getTime() + '-' +file.name;
+        let uploadFile = new File([file], fileName, {type: file.type});
+        addCoverImg(uploadFile).then(res=>{
+          if(res.data.status=='201') {
+            // console.log(res.data);
+            const quill=this.$refs.myQuillEditor.quill;
+            const pos=quill.getSelection().index;
+            quill.insertEmbed(pos,'image',res.data.cover_img_url);
+          }
+        })
+      }
     },
     handleExceed() {
       this.$message({type: 'error',message: '请删除当前封面再上传其他封面!'});
     },
     submitForm() {
-      console.log(this.postForm,this.isEdit);
+      // console.log(this.postForm,this.isEdit);
       if(this.postForm.title=='') {
         this.$message({type: 'error',message: '请填写文章标题!'});
       } else if (this.postForm.title.length>30||this.postForm.title.length<5) {
@@ -218,8 +229,10 @@ export default {
         this.$message({type: 'error',message: '请选择活动开始时间!'});
       } else if (this.postForm.activity==1&&(this.postForm.act_end_time==''||this.postForm.act_end_time==null||this.postForm.act_end_time=="0000-00-00 00:00:00")) {
         this.$message({type: 'error',message: '请选择活动结束时间!'});
+      } else if (this.postForm.activity==1&&(this.postForm.act_start_time>this.postForm.act_end_time)) {
+        this.$message({type: 'error',message: '请保证活动结束时间晚于开始时间'});
       } else if (this.postForm.activity==1&&(this.postForm.act_link=='')) {
-        this.$message({type: 'error',message: '请选择活动链接!'});
+        this.$message({type: 'error',message: '请填写活动链接!'});
       } else if (this.postForm.rank==0) {
         this.$message({type: 'error',message: '请选择文章优先级!'});
       } else if (this.postForm.content=='') {
@@ -335,7 +348,7 @@ export default {
       let editId = this.$route.params.id;
       getPostDetail(editId).then(res=>{
         if(res.data.status=='200') {
-          console.log(res.data.data);
+          // console.log(res.data.data);
           this.postForm.id = res.data.data.ID;
           this.postForm.author = res.data.data.author;
           this.postForm.author_id = res.data.data.author_id;

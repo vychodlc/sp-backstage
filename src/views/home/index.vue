@@ -18,6 +18,14 @@
               <el-menu-item index="/home/tag"><i class="el-icon-menu"></i>标签管理</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
+          <el-submenu index="3">
+            <template slot="title"><i class="el-icon-menu"></i>转运</template>
+            <el-menu-item-group>
+              <el-menu-item index="/home/transmit"><i class="el-icon-menu"></i>申报管理</el-menu-item>
+              <el-menu-item index="/home/storage"><i class="el-icon-menu"></i>库存管理</el-menu-item>
+              <el-menu-item index="/home/output"><i class="el-icon-menu"></i>出库管理</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
           <el-menu-item index="/home/user"><i class="el-icon-menu"></i>用户管理</el-menu-item>
         </el-menu>
       </el-aside>
@@ -72,6 +80,12 @@
     }
   }
 </script>
+
+<style>
+  .el-menu-item-group__title {
+    display: none;
+  }
+</style>
 
 <style scoped>
   .el-header {
