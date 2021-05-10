@@ -295,6 +295,5 @@
   .pagination {
     position: absolute;
     right: 20px;
-    bottom: -40px;
   }
 </style>

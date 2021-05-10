@@ -200,8 +200,9 @@ export default {
               localStorage.uuid = res.data.data.sub;
               getUserInfo(localStorage.uuid).then(res=>{
                 localStorage.right = res.data.data.user_right;
+                localStorage.ID = res.data.data.ID;
                 localStorage.nickname = res.data.data.user_nickname;
-                this.$store.commit('setUser', localStorage.uuid = localStorage.uuid,res.data.data.user_nickname,res.data.data.user_right);
+                this.$store.commit('setUser',res.data.data.ID,res.data.data.user_nickname,res.data.data.user_right);
                 this.$message({message: '登陆成功',type: 'success'});
                 this.loading = false;
                 this.$router.push({ path:'/home' });

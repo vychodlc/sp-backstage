@@ -7,9 +7,9 @@ export default new Vuex.Store({
   state: {
     isLogin:'0',
     user: {
-      id: null,
-      nickname: null,
-      right: null
+      id: localStorage.getItem('ID') ? localStorage.getItem('ID'):null,
+      nickname: localStorage.getItem('nickname') ? localStorage.getItem('nickname'):null,
+      right: localStorage.getItem('right') ? localStorage.getItem('right'):null
     },
     token: localStorage.getItem('token') ? localStorage.getItem('token'):'',
     refresh_token: localStorage.getItem('refresh_token') ? localStorage.getItem('refresh_token'):'',

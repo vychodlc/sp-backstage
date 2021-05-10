@@ -21,30 +21,40 @@
       :data="tableData"
       style="width: 100%"
       height="75vh">
-      <el-table-column label="申报单号" prop="item1"></el-table-column>
-      <el-table-column label="快递单号" prop="item2"></el-table-column>
-      <el-table-column label="邮箱地址" prop="item3"></el-table-column>
-      <el-table-column label="用户编号" prop="item4"></el-table-column>
-      <el-table-column label="申报时间" prop="item5"></el-table-column>
-      <el-table-column label="状态" prop="item6">
+      <el-table-column label="申报单号" prop="apply_ID"></el-table-column>
+      <el-table-column label="快递单号" prop="expressid"></el-table-column>
+      <el-table-column label="邮箱地址" prop="email"></el-table-column>
+      <el-table-column label="用户编号" prop="user_id"></el-table-column>
+      <el-table-column label="申报时间" prop="apply_time"></el-table-column>
+      <el-table-column label="状态" prop="apply_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.item6==0" type="warning">未发布</el-tag>
-          <el-tag size="mini" v-if="scope.row.item6==1" type="success">发布中</el-tag>
-          <el-tag size="mini" v-if="scope.row.item6==2" type="info">已下架</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
+          <el-tag size="mini" v-if="scope.row.apply_status==0" type="warning">未入库</el-tag>
+          <el-tag size="mini" v-if="scope.row.apply_status==1" type="success">已入库</el-tag>
+          <el-tag size="mini" v-if="scope.row.apply_status==2" type="info">已驳回</el-tag>
+          <!-- <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link> -->
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="300">
         <template slot="header">
           <el-button
             size="mini"
             type="primary"
-            @click="$router.push({name:'PostEdit'})">新增</el-button>
+            @click="dialogAddVisible=true">新增</el-button>
         </template>
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="$router.push({name:'PostEdit',params:{id:scope.row.ID}})">编辑</el-button>
+            type="warning"
+            v-if="scope.row.apply_status==0"
+            @click="handleRefuse(scope.row)">驳回</el-button>
+          <el-button
+            size="mini"
+            type="success"
+            v-if="scope.row.apply_status==0"
+            @click="handleStorage(scope.row)">入库</el-button>
+          <el-button
+            size="mini"
+            @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
             type="danger"
@@ -52,17 +62,100 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog title="文章状态修改" :visible.sync="dialogStatusVisible">
+    
+    <el-dialog title="新增申报信息" :visible.sync="dialogAddVisible">
       <el-form>
-        <el-form-item>
-          <el-radio v-model="dialogStatus" label="0">未发布</el-radio>
-          <el-radio v-model="dialogStatus" label="1">已发布</el-radio>
-          <el-radio v-model="dialogStatus" label="2">已下架</el-radio>
+        <el-form-item label="快递单号">
+          <el-input v-model="newApplyExpressid" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱地址">
+          <el-input v-model="newApplyEmail" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogStatusVisible = false">取 消</el-button>
-        <el-button type="primary" @click="goStatusChange()">确 定</el-button>
+        <el-button @click="dialogAddVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleAdd()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- <el-dialog :title="'修改申报信息——申报单号:'+editApplyID" :visible.sync="dialogEditVisible">
+      <el-form>
+        <el-form-item label="快递单号">
+          <el-input v-model="editApplyExpressid" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱地址">
+          <el-input v-model="editApplyEmail" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogEditVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goEdit()">确 定</el-button>
+      </div>
+    </el-dialog> -->
+    <el-dialog title='申报状态修改' :visible.sync="dialogChangeVisible">
+      <el-form>
+        <el-form-item>
+          <el-radio v-model="dialogChange" label="0">未入库</el-radio>
+          <el-radio v-model="dialogChange" label="1">已入库</el-radio>
+          <el-radio v-model="dialogChange" label="2">已驳回</el-radio>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogChangeVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goChange()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog title="新增申报信息" :visible.sync="dialogStorageVisible">
+        <el-form label-width="100px" size="mini">
+          <el-form-item label="申报单号">
+            <el-input v-model="newStorage.expressid" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="邮箱地址">
+            <el-input v-model="newStorage.email" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="库存编号">
+            <el-input v-model="newStorage.article_num" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="货品尺寸">
+            <el-row>
+              <el-col>
+                <el-form-item label="长(cm)">
+                  <el-input type="number" v-model="newStorage.size[0]"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col>
+                <el-form-item label="宽(cm)">
+                  <el-input type="number" v-model="newStorage.size[1]"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col>
+                <el-form-item label="高(cm)">
+                  <el-input type="number" v-model="newStorage.size[2]"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="货品重量">
+            <el-input v-model="newStorage.weight" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="货品图片">
+            <el-upload
+              ref="uploadImg"
+              class="upload-demo"
+              action="#"
+              accept="image/jpeg,image/gif,image/png"
+              :on-change='handleChangeImg'
+              :on-exceed='handleExceed'
+              :limit='1'
+              list-type="picture"
+              :auto-upload="false">
+              <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+              <div slot="tip" class="el-upload__tip">只能上传jpg/png/gif文件，且不超过1MB</div>
+            </el-upload>
+          </el-form-item>
+        </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogStorageVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goStorage()">确 定</el-button>
       </div>
     </el-dialog>
     <div class="pagination">
@@ -78,8 +171,9 @@
 </template>
 
 <script>
-  import { getPostList,delPost,changePostStatus,getPostFilter,getPostFilterByTag,searchPost } from '@/network/post.js'
-  import { getTag } from '@/network/tag.js'
+  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage } from '@/network/transship.js'
+  import { addCoverImg } from '@/network/post.js'
+  import { validateEmail } from '@/utils/validate.js'
   export default {
     name: "Transmit",
     data () {
@@ -90,13 +184,33 @@
         filterWord: null,
         isSearch: false,
         loading: true,
-        tableData: [
-          {item1: 12312312,item2: 12312312,item3: 12312312,item4: 12312312,item5: 12312312,item6: 1}
-        ],
+        tableData: [],
         tags: null,
-        dialogStatusVisible: false,
-        dialogStatus: null,
-        oldPost: null,
+
+        dialogAddVisible: false,
+        newApplyExpressid: '',
+        newApplyEmail: '',
+
+        dialogEditVisible: false,
+        editApplyID: '',
+        editApplyExpressid: '',
+        editApplyEmail: '',
+        
+        dialogChangeVisible: false,
+        dialogChange: '',
+        oldApply: null,
+
+        dialogStorageVisible: false,
+        newStorage: {
+          user_id: '',
+          email: '',
+          expressid: '',
+          article_num: '',
+          size: ['','',''],
+          weight: '',
+          pic: ''
+        },
+
         pageNum: null,
         currentPage: 1,
         interpret: {
@@ -111,94 +225,133 @@
       }
     },
     mounted() {
-      // this._getPostList(this.currentPage);
-      this.loading = false;
+      this._getApplyList(this.currentPage);
     },
     methods:{
-      _getPostList(pageIndex) {
+      _getApplyList(pageIndex) {
         this.loading = true;
-        getTag().then(res=> {
-          if(res.data.status=='200') {
-            this.tags = res.data.data;
-            if(this.isSearch==true) {
-              if(this.filter=='tag') {
-                let index = 0;
-                for(let key in this.tags) {
-                  if(this.tags[key]==this.search) {
-                    index = key;
-                  }
-                }
-                getPostFilterByTag(index,this.currentPage).then(res => {
-                  if(res.data.status=='200') {
-                    this.pageNum = parseInt(res.data.filter_num);
-                    this.tableData = res.data.data;
-                    this.loading = false;
-                    for(let item in this.tableData) {
-                      this.tableData[item].tags = this.tableData[item].tags.split(',');
-                    }
-                  } else {
-                    this.$message({type: 'error',message: res.data.msg})
-                  }      
-                  this.loading = false;
-                });
-              } else if(this.filter=='title') {
-                searchPost(this.search,pageIndex).then(res=> {
-                  if(res.data.status=='200') {
-                    this.pageNum = parseInt(res.data.search_num);
-                    this.tableData = res.data.data;
-                    this.loading = false;
-                    for(let item in this.tableData) {
-                      this.tableData[item].tags = this.tableData[item].tags.split(',');
-                    }
-                  } else {
-                    this.$message({type: 'error',message: res.data.msg})
-                  }      
-                  this.loading = false;
-                })
-              } else {
-                getPostFilter(this.filter,this.search,pageIndex).then(res => {
-                  if(res.data.status=='200') {
-                    this.pageNum = parseInt(res.data.filter_num);
-                    this.tableData = res.data.data;
-                    this.loading = false;
-                    for(let item in this.tableData) {
-                      this.tableData[item].tags = this.tableData[item].tags.split(',');
-                    }
-                  } else {
-                    this.$message({type: 'error',message: res.data.msg})
-                  }      
-                  this.loading = false;
-                });
-              }
+        if(this.isSearch==true) {
+          // if(this.filter=='tag') {
+          //   let index = 0;
+          //   for(let key in this.tags) {
+          //     if(this.tags[key]==this.search) {
+          //       index = key;
+          //     }
+          //   }
+          //   getPostFilterByTag(index,this.currentPage).then(res => {
+          //     if(res.data.status=='200') {
+          //       this.pageNum = parseInt(res.data.filter_num);
+          //       this.tableData = res.data.data;
+          //       this.loading = false;
+          //       for(let item in this.tableData) {
+          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
+          //       }
+          //     } else {
+          //       this.$message({type: 'error',message: res.data.msg})
+          //     }      
+          //     this.loading = false;
+          //   });
+          // } else if(this.filter=='title') {
+          //   searchPost(this.search,pageIndex).then(res=> {
+          //     if(res.data.status=='200') {
+          //       this.pageNum = parseInt(res.data.search_num);
+          //       this.tableData = res.data.data;
+          //       this.loading = false;
+          //       for(let item in this.tableData) {
+          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
+          //       }
+          //     } else {
+          //       this.$message({type: 'error',message: res.data.msg})
+          //     }      
+          //     this.loading = false;
+          //   })
+          // } else {
+          //   getPostFilter(this.filter,this.search,pageIndex).then(res => {
+          //     if(res.data.status=='200') {
+          //       this.pageNum = parseInt(res.data.filter_num);
+          //       this.tableData = res.data.data;
+          //       this.loading = false;
+          //       for(let item in this.tableData) {
+          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
+          //       }
+          //     } else {
+          //       this.$message({type: 'error',message: res.data.msg})
+          //     }      
+          //     this.loading = false;
+          //   });
+          // }
+        } else {
+          getApplyList(pageIndex).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.applications_num);
+              this.tableData = res.data.data;
+              this.loading = false;
             } else {
-              getPostList(pageIndex).then(res => {
-                if(res.data.status=='200') {
-                  this.pageNum = parseInt(res.data.posts_num);
-                  this.tableData = res.data.data;
-                  this.loading = false;
-                  for(let item in this.tableData) {
-                    this.tableData[item].tags = this.tableData[item].tags.split(',');
-                  }
-                } else {
-                  this.$message({type: 'error',message: res.data.msg})
-                }      
-                this.loading = false;
-              });
+              this.$message({type: 'error',message: res.data.msg})
+            }      
+            this.loading = false;
+          });
+        }
+      },
+      handleAdd() {
+        if(this.newApplyExpressid=='') {
+          this.$message({type: 'warning',message: '请填写快递单号'});
+        } else if(this.newApplyEmail=='') {
+          this.$message({type: 'warning',message: '请填写邮箱地址'});
+        } else if(validateEmail(this.newApplyEmail)==false) {
+          this.$message({type: 'warning',message: '邮箱格式不符合规范'});
+        } else {
+          addApply(this.$store.state.user.id,[{'id':this.newApplyExpressid,'email':this.newApplyEmail}]).then(res=>{
+            if(res.data.status=='200') {
+              this.dialogAddVisible = false;
+              this.currentPage = 1;
+              this._getApplyList(this.currentPage);
+              this.$message({type: 'success',message: '添加成功'});
+              this.newApplyExpressid = '';
+              this.newApplyEmail = '';
+            } else {
+              this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
             }
-          }
-        });
+          })
+        }
+      },
+      handleEdit(index,row) {
+        this.editApplyID = row.apply_ID;
+        this.editApplyExpressid = row.expressid;
+        this.editApplyEmail = row.email;
+        this.dialogEditVisible = true;
+      },
+      goEdit() {
+        if(this.editApplyExpressid=='') {
+          this.$message({type: 'warning',message: '请填写快递单号'});
+        } else if(this.editApplyEmail=='') {
+          this.$message({type: 'warning',message: '请填写邮箱地址'});
+        } else if(validateEmail(this.editApplyEmail)==false) {
+          this.$message({type: 'warning',message: '邮箱格式不符合规范'});
+        } else {
+          editApply(this.editApplyID,this.editApplyExpressid,this.editApplyEmail).then(res=>{
+            if(res.data.status=='200') {
+              this.dialogEditVisible = false;
+              this.currentPage = 1;
+              this._getApplyList(this.currentPage);
+              this.$message({type: 'success',message: '修改成功'});
+            } else {
+              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
+            }
+          })
+        }       
       },
       handleDelete(index,row) {
-        this.$confirm('此操作将永久删除文章：'+ row.post_title +', 是否继续?', '提示', {
+        this.$confirm('此操作将永久删除这条单号为：'+ row.apply_ID +'的申报信息, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          delPost(row.ID).then(res=>{
+          delApply(row.apply_ID).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
               this.currentPage = 1;
-              this._getPostList(this.currentPage);
+              this._getApplyList(this.currentPage);
             }else {
               this.$message({type: 'warning',message: '删除失败'});
             }
@@ -207,25 +360,115 @@
           this.$message({type: 'info',message: '已取消删除'});          
         });
       },
-      changeStatus(row) {
-        this.dialogStatusVisible = true;
-        this.dialogStatus = row.post_status;
-        this.oldPost = row;
+      handleRefuse(row) {
+        this.$confirm('此操作将驳回这条单号为：'+ row.apply_ID +'的申报信息, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          changeApply(row.apply_ID,2).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '驳回成功!'});
+              this.currentPage = 1;
+              this._getApplyList(this.currentPage);
+            }else {
+              this.$message({type: 'warning',message: '驳回失败'});
+            }
+          })
+        }).catch(() => {
+          // this.$message({type: 'info',message: '已取消删除'});          
+        });
       },
-      goStatusChange() {
-        if(this.oldPost.post_status!=this.dialogStatus) {
-          changePostStatus(this.oldPost.ID,this.dialogStatus,localStorage.nickname).then(res => {
-            this.$message({type: 'success',message: '状态修改成功'});
-            this.currentPage = 1;
-            this._getPostList(this.currentPage);
-            this.dialogStatusVisible = false;
+      handleStorage(row) {
+        this.newStorage = {
+          user_id: '',
+          email: '',
+          expressid: '',
+          apply_id: '',
+          article_num: '',
+          size: ['','',''],
+          weight: '',
+          pic: ''
+        };
+        this.newStorage.user_id = row.user_id;
+        this.newStorage.expressid = row.expressid;
+        this.newStorage.apply_id = row.apply_ID;
+        this.newStorage.email = row.email;
+        this.dialogStorageVisible = true;
+      },
+      goStorage() {
+        let file = this.$refs.uploadImg.uploadFiles.pop().raw;
+        let fileName = new Date().getTime() + '-' +file.name;
+        let uploadFile = new File([file], fileName, {type: file.type});
+        addCoverImg(uploadFile).then(res=>{
+          if(res.data.status=='201') {
+            addStorage({
+              article_num: this.newStorage.article_num, 
+              user_id: this.newStorage.user_id,
+              apply_id: this.newStorage.apply_id,
+              size: this.newStorage.size.join('*'), 
+              weight: this.newStorage.weight,
+              pic: res.data.cover_img_url,
+            }).then(resAdd=>{
+              if(resAdd.data.status=='200') {
+                changeApply(this.newStorage.apply_id,1).then(res=>{
+                  this.dialogStorageVisible = false;
+                  this.currentPage = 1;
+                  this._getApplyList(this.currentPage);
+                  this.$message({type: 'success',message: '入库成功'});
+                });
+              }else{
+                this.$message({type: 'warning',message: '入库失败——'+resAdd.data.msg});
+              }
+            })
+          } else {
+            this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
+          }
+        })
+      },
+
+      
+      handleChangeImg(file,filelist) {
+        const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');
+        const isLt1M = file.raw.size / 1024 / 1024 < 1;
+        if (!isIMAGE) {
+          this.$refs.uploadImg.uploadFiles.pop().raw;
+          this.$message.error('上传文件只能是图片格式!');
+        }
+        if (!isLt1M) {
+          this.$refs.uploadImg.uploadFiles.pop().raw;
+          this.$message.error('上传文件大小不能超过 1MB!');
+        }
+        return isIMAGE && isLt1M;
+      },
+      handleExceed() {
+        this.$message({type: 'error',message: '请删除当前图片再上传其他图片!'});
+      },
+
+      handleChange(row) {
+        this.dialogChange = row.apply_status;
+        this.oldApply = row;
+        this.dialogChangeVisible = true;
+      },
+      goChange() {
+        if(this.oldApply.apply_status!=this.dialogChange) {
+          changeApply(this.oldApply.apply_ID,this.dialogChange).then(res => {
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '状态修改成功'});
+              this.currentPage = 1;
+              this._getApplyList(this.currentPage);
+              this.dialogChangeVisible = false;
+            } else {
+              this.$message({type: 'warning',message: '状态修改失败'});
+            }
           })
         } else {
           this.$message({type: 'warning',message: '状态未修改'});
         }
       },
+
       handleCurrentChange() {
-        this._getPostList(this.currentPage)
+        this._getApplyList(this.currentPage)
       },
       goSearch() {
         this.isSearch = true;
@@ -236,13 +479,13 @@
         // }
         this.loading = true;
         this.currentPage = 1;
-        this._getPostList(this.currentPage)
+        this._getApplyList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;
         this.search=null;
         this.currentPage = 1;
-        this._getPostList(this.currentPage)
+        this._getApplyList(this.currentPage)
       },
       filterChange() {
         this.search = '';
@@ -250,7 +493,6 @@
     }
   }
 </script>
-
 <style scoped>
   .post-container {
     position: relative;
@@ -258,6 +500,5 @@
   .pagination {
     position: absolute;
     right: 20px;
-    bottom: -40px;
   }
 </style>
