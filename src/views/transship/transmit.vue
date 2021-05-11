@@ -1,16 +1,16 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="快递单号" value="v1"></el-option>
-      <el-option label="邮箱地址" value="v2"></el-option>
-      <el-option label="用户编号" value="v3"></el-option>
-      <el-option label="状态" value="v4"></el-option>
+      <el-option label="申报单号" value="apply_ID"></el-option>
+      <el-option label="快递单号" value="expressid"></el-option>
+      <el-option label="用户编号" value="user_id"></el-option>
+      <el-option label="邮箱地址" value="email"></el-option>
+      <el-option label="状态" value="apply_status"></el-option>
     </el-select>
-    <template v-if="this.filter=='activity'||this.filter=='post_status'||this.filter=='rank'||this.filter=='menu'">
-      <template v-if="this.filter=='activity'">
-        <el-radio v-model="search" label="0">无</el-radio>
-        <el-radio v-model="search" label="1">有</el-radio>
-      </template>
+    <template v-if="this.filter=='apply_status'">
+      <el-radio v-model="search" label="0">未入库</el-radio>
+      <el-radio v-model="search" label="1">已入库</el-radio>
+      <el-radio v-model="search" label="2">已驳回</el-radio>
     </template>
     <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
@@ -77,7 +77,7 @@
         <el-button type="primary" @click="handleAdd()">确 定</el-button>
       </div>
     </el-dialog>
-    <!-- <el-dialog :title="'修改申报信息——申报单号:'+editApplyID" :visible.sync="dialogEditVisible">
+    <el-dialog :title="'修改申报信息——申报单号:'+editApplyID" :visible.sync="dialogEditVisible">
       <el-form>
         <el-form-item label="快递单号">
           <el-input v-model="editApplyExpressid" autocomplete="off"></el-input>
@@ -90,7 +90,7 @@
         <el-button @click="dialogEditVisible = false">取 消</el-button>
         <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
-    </el-dialog> -->
+    </el-dialog>
     <el-dialog title='申报状态修改' :visible.sync="dialogChangeVisible">
       <el-form>
         <el-form-item>
@@ -104,55 +104,55 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="新增申报信息" :visible.sync="dialogStorageVisible">
-        <el-form label-width="100px" size="mini">
-          <el-form-item label="申报单号">
-            <el-input v-model="newStorage.expressid" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="邮箱地址">
-            <el-input v-model="newStorage.email" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="库存编号">
-            <el-input v-model="newStorage.article_num" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="货品尺寸">
-            <el-row>
-              <el-col>
-                <el-form-item label="长(cm)">
-                  <el-input type="number" v-model="newStorage.size[0]"></el-input>
-                </el-form-item>
-              </el-col>
-              <el-col>
-                <el-form-item label="宽(cm)">
-                  <el-input type="number" v-model="newStorage.size[1]"></el-input>
-                </el-form-item>
-              </el-col>
-              <el-col>
-                <el-form-item label="高(cm)">
-                  <el-input type="number" v-model="newStorage.size[2]"></el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form-item>
-          <el-form-item label="货品重量">
-            <el-input v-model="newStorage.weight" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="货品图片">
-            <el-upload
-              ref="uploadImg"
-              class="upload-demo"
-              action="#"
-              accept="image/jpeg,image/gif,image/png"
-              :on-change='handleChangeImg'
-              :on-exceed='handleExceed'
-              :limit='1'
-              list-type="picture"
-              :auto-upload="false">
-              <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png/gif文件，且不超过1MB</div>
-            </el-upload>
-          </el-form-item>
-        </el-form>
+    <el-dialog title="新增库存信息(入库)" :visible.sync="dialogStorageVisible">
+      <el-form label-width="100px" size="mini">
+        <el-form-item label="申报单号">
+          <el-input v-model="newStorage.expressid" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱地址">
+          <el-input v-model="newStorage.email" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="库存编号">
+          <el-input v-model="newStorage.article_num" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="货品尺寸">
+          <el-row>
+            <el-col>
+              <el-form-item label="长(cm)">
+                <el-input type="number" v-model="newStorage.size[0]"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col>
+              <el-form-item label="宽(cm)">
+                <el-input type="number" v-model="newStorage.size[1]"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col>
+              <el-form-item label="高(cm)">
+                <el-input type="number" v-model="newStorage.size[2]"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="货品重量">
+          <el-input v-model="newStorage.weight" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="货品图片">
+          <el-upload
+            ref="uploadImg"
+            class="upload-demo"
+            action="#"
+            accept="image/jpeg,image/gif,image/png"
+            :on-change='handleChangeImg'
+            :on-exceed='handleExceed'
+            :limit='1'
+            list-type="picture"
+            :auto-upload="false">
+            <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png/gif文件，且不超过1MB</div>
+          </el-upload>
+        </el-form-item>
+      </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogStorageVisible = false">取 消</el-button>
         <el-button type="primary" @click="goStorage()">确 定</el-button>
@@ -171,7 +171,7 @@
 </template>
 
 <script>
-  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage } from '@/network/transship.js'
+  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { validateEmail } from '@/utils/validate.js'
   export default {
@@ -180,7 +180,7 @@
       return {
         search: null,
         searchWord: null,
-        filter: 'title',
+        filter: 'apply_ID',
         filterWord: null,
         isSearch: false,
         loading: true,
@@ -214,13 +214,11 @@
         pageNum: null,
         currentPage: 1,
         interpret: {
-          'title': {name:'标题'},
-          'author': {name:'作者'},
-          'menu': {name:'菜单'},
-          'tag': {name:'标签'},
-          'rank': {name:'评级'},
-          'activity': {name:'活动'},
-          'post_status': {name:'状态'}
+          'apply_ID': {name:'申报单号'},
+          'expressid': {name:'快递单号'},
+          'user_id': {name:'用户ID'},
+          'email': {name:'邮箱地址'},
+          'apply_status': {name:'状态'},
         }
       }
     },
@@ -231,55 +229,16 @@
       _getApplyList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          // if(this.filter=='tag') {
-          //   let index = 0;
-          //   for(let key in this.tags) {
-          //     if(this.tags[key]==this.search) {
-          //       index = key;
-          //     }
-          //   }
-          //   getPostFilterByTag(index,this.currentPage).then(res => {
-          //     if(res.data.status=='200') {
-          //       this.pageNum = parseInt(res.data.filter_num);
-          //       this.tableData = res.data.data;
-          //       this.loading = false;
-          //       for(let item in this.tableData) {
-          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
-          //       }
-          //     } else {
-          //       this.$message({type: 'error',message: res.data.msg})
-          //     }      
-          //     this.loading = false;
-          //   });
-          // } else if(this.filter=='title') {
-          //   searchPost(this.search,pageIndex).then(res=> {
-          //     if(res.data.status=='200') {
-          //       this.pageNum = parseInt(res.data.search_num);
-          //       this.tableData = res.data.data;
-          //       this.loading = false;
-          //       for(let item in this.tableData) {
-          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
-          //       }
-          //     } else {
-          //       this.$message({type: 'error',message: res.data.msg})
-          //     }      
-          //     this.loading = false;
-          //   })
-          // } else {
-          //   getPostFilter(this.filter,this.search,pageIndex).then(res => {
-          //     if(res.data.status=='200') {
-          //       this.pageNum = parseInt(res.data.filter_num);
-          //       this.tableData = res.data.data;
-          //       this.loading = false;
-          //       for(let item in this.tableData) {
-          //         this.tableData[item].tags = this.tableData[item].tags.split(',');
-          //       }
-          //     } else {
-          //       this.$message({type: 'error',message: res.data.msg})
-          //     }      
-          //     this.loading = false;
-          //   });
-          // }
+          filterApply(this.filter,this.search,pageIndex).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.filter_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }      
+            this.loading = false;
+          });
         } else {
           getApplyList(pageIndex).then(res => {
             if(res.data.status=='200') {
@@ -372,7 +331,7 @@
               this.currentPage = 1;
               this._getApplyList(this.currentPage);
             }else {
-              this.$message({type: 'warning',message: '驳回失败'});
+              this.$message({type: 'warning',message: '驳回失败'+res.data.msg});
             }
           })
         }).catch(() => {
@@ -473,10 +432,18 @@
       goSearch() {
         this.isSearch = true;
         this.searchWord = this.search;
+        if(this.filter=='apply_status') {
+          if(this.search=='0') {
+            this.searchWord = '未入库'
+          } else if(this.search=='1') { 
+            this.searchWord = '已入库'
+          } else if(this.search=='2') { 
+            this.searchWord = '已驳回'
+          }
+        } else {
+          this.searchWord = this.search;
+        }
         this.filterWord = this.interpret[this.filter].name;
-        // if(thi.search=='title') {
-        //   this.searchWord = '标题'
-        // }
         this.loading = true;
         this.currentPage = 1;
         this._getApplyList(this.currentPage)
