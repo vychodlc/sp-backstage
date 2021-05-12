@@ -117,11 +117,17 @@ export function changeStorage(storage_ID,storage_status) {
     data: formData
   })
 }
+export function getUserStorage(user_id) {
+  return request({
+    url: '/get_transship_storage_available_list.php',
+    params: {user_id}
+  })
+}
 /* 出库api */
 export function addOutput(info) {
   console.log(info);
   let formData = new FormData();
-  formData.append('article_nums',info.article_nums);
+  formData.append('article_nums',info.article_nums.map(item=>('"'+item+'"')).join(','));
   formData.append('user_id',info.user_id);
   formData.append('outbound_type',info.outbound_type);
   formData.append('material',info.material);

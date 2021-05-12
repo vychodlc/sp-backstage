@@ -78,37 +78,50 @@
     </el-table>
     
     <el-dialog title="新增出库信息" :visible.sync="dialogAddVisible">
-      <el-form label-width="100px" size="mini">
-        <el-form-item label="货品编号">
+      <span>首先输入用户编号，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
+      <el-form label-width="100px" size="mini" style="margin-top:30px">
+        <el-form-item label="用户编号">
+          <el-row>
+            <el-col :span='15'>
+              <el-input v-model="newOutput.user_id" @input="userStorage=[]"></el-input>
+            </el-col>
+            <el-col :span='3'>
+              <el-button style="margin-left:20px" @click="_getUserStorage(newOutput.user_id)" size="mini">获取库存信息</el-button>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="货品编号" v-if="userStorage.length>0">
           <el-select 
             v-model="newOutput.article_nums" 
             multiple 
             filterable
-            allow-create 
             default-first-option
             placeholder="请选择"
+            width='100%'
           >
+            <el-option
+              v-for="(item,index) in userStorage"
+              :key="index"
+              :label="item.article_num"
+              :value="item.article_num">
+            </el-option>
           </el-select>
-        </el-form-item>
-        <el-form-item label="用户编号">
-          <el-input type="number" v-model="newOutput.user_id"></el-input>
-        </el-form-item>
-        <el-form-item label="出库方式">
-          <el-radio v-model="newOutput.outbound_type" label="0">普通出库</el-radio>
-          <el-radio v-model="newOutput.outbound_type" label="1">退税出库</el-radio>
         </el-form-item>
         <el-form-item label="收货地址">
           <el-input v-model="newOutput.address"></el-input>
         </el-form-item>
+        <el-form-item label="出库方式">
+          <el-radio v-model="newOutput.outbound_type" label="0">普通出库</el-radio>
+          <el-radio v-model="newOutput.outbound_type" label="1">退税出库</el-radio>
+          <div style="color:#aaa" v-if="newOutput.outbound_type==='0'">之后无法申请选中商品的退税操作</div>
+          <div style="color:#aaa" v-if="newOutput.outbound_type==1">请上传退税材料</div>
+        </el-form-item>
         <el-form-item v-if="newOutput.outbound_type==1" label="退税材料">
           <el-upload
-            ref="uploadImgStorage"
+            ref="uploadImgOutputAdd"
             class="upload-demo"
             action="#"
             accept="image/jpeg,image/gif,image/png"
-            :on-change='handleChangeImg'
-            :on-exceed='handleExceed'
-            :limit='1'
             list-type="picture"
             :auto-upload="false">
             <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
@@ -138,6 +151,64 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="修改出库信息" :visible.sync="dialogEditVisible">
+      <span>首先输入用户编号，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
+      <el-form label-width="100px" size="mini" style="margin-top:30px">
+        <el-form-item label="用户编号">
+          <el-row>
+            <el-col :span='15'>
+              <el-input v-model="editOutput.user_id" @input="userStorage=[]"></el-input>
+            </el-col>
+            <el-col :span='3'>
+              <el-button style="margin-left:20px" @click="_getUserStorage(editOutput.user_id)" size="mini">获取库存信息</el-button>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="货品编号" v-if="userStorage.length>0">
+          <el-select 
+            v-model="editOutput.article_nums" 
+            multiple 
+            filterable
+            default-first-option
+            placeholder="请选择"
+            width='100%'
+          >
+            <el-option
+              v-for="(item,index) in userStorage"
+              :key="index"
+              :label="item.article_num"
+              :value="item.article_num">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="收货地址">
+          <el-input v-model="editOutput.address"></el-input>
+        </el-form-item>
+        <el-form-item label="出库方式">
+          <el-radio v-model="editOutput.outbound_type" label="0">普通出库</el-radio>
+          <el-radio v-model="editOutput.outbound_type" label="1">退税出库</el-radio>
+          <div style="color:#aaa" v-if="editOutput.outbound_type==='0'">之后无法申请选中商品的退税操作</div>
+          <div style="color:#aaa" v-if="editOutput.outbound_type==1">请上传退税材料</div>
+        </el-form-item>
+        <el-form-item v-if="editOutput.outbound_type==1" label="退税材料">
+          <el-upload
+            ref="uploadImgOutputEdit"
+            class="upload-demo"
+            action="#"
+            accept="image/jpeg,image/gif,image/png"
+            list-type="picture"
+            :auto-upload="false">
+            <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png/gif文件，且不超过1MB</div>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogEditVisible = false" size="mini">取 消</el-button>
+        <el-button type="primary" @click="goEdit()" size="mini">确 定</el-button>
+      </div>
+    </el-dialog>
+
     <div class="pagination">
       <el-pagination
         small
@@ -152,7 +223,7 @@
 
 <script>
   import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply } from '@/network/transship.js'
-  import { addOutput,delOutput,editOutput,getOutputList,changeOutput,filterOutput } from '@/network/transship.js'
+  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,filterOutput } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { validateEmail } from '@/utils/validate.js'
   export default {
@@ -204,13 +275,22 @@
           'user_id': {name:'用户ID'},
           'outbound_type': {name:'出库方式'},
           'outbound_status': {name:'状态'},
-        }
+        },
+        userStorage: []
+      }
+    },
+    computed: {
+      getStorage: function () {
+        return []
       }
     },
     mounted() {
       this._getList(this.currentPage);
     },
     methods:{
+      test() {
+        console.log(123);
+      },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
@@ -220,7 +300,7 @@
               this.tableData = res.data.data;
               this.loading = false;
               for(let item in this.tableData) {
-                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',');
+                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
               }
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -234,7 +314,7 @@
               this.tableData = res.data.data;
               this.loading = false;
               for(let item in this.tableData) {
-                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',');
+                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
               }
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -254,18 +334,76 @@
         this.dialogAddVisible = true;
       },
       goAdd() {
-        if(this.newOutput.article_nums.length==0) {
-          this.$message({type: 'warning',message: '请填写货品编号'});
-        } else if(this.newOutput.user_id=='') {
+        let imgList = [];
+        let imgNum = (this.$refs.uploadImgOutputAdd)?this.$refs.uploadImgOutputAdd.uploadFiles.length:0;
+        console.log(imgNum);
+        if(this.newOutput.user_id=='') {
           this.$message({type: 'warning',message: '请填写用户编号'});
+        } else if(this.newOutput.article_nums.length==0) {
+          this.$message({type: 'warning',message: '请选择货品编号'});
+          this._getUserStorage(this.newOutput.user_id);
         } else if(this.newOutput.address=='') {
           this.$message({type: 'warning',message: '请填写收货地址'});
-        } else if(this.newOutput.address=='') {
-          this.$message({type: 'warning',message: '请填写收货地址'});
+        } else if(this.newOutput.outbound_type=='') {
+          this.$message({type: 'warning',message: '请选择出库方式'});
+        } else if(this.newOutput.outbound_type==1&&imgNum==0) {
+          this.$message({type: 'warning',message: '请上传退税材料'});
         } else {
-          this.newOutput.article_nums = this.newOutput.article_nums.join(',');
+          while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
+            let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
+            let fileName = new Date().getTime() + '-' +file.name;
+            let uploadFile = new File([file], fileName, {type: file.type});
+            addCoverImg(uploadFile).then(res=>{
+              if(res.data.status=='201') {
+                imgList.push(res.data.cover_img_url);
+                if(imgList.length==imgNum) {
+                  this.newOutput.material = imgList.join(',');
+                  this.goDeploy('new')
+                }
+              }
+            })
+          }
+        }
+      },
+      _getUserStorage(id) {
+        this.newOutput.article_nums = [];
+        getUserStorage(id).then(res=>{
+          if(res.data.status=='200') {
+            if(res.data.data.length==0) {
+              this.$message({type: 'warning',message: '未查到该用户的库存信息'});
+            }
+            this.userStorage = res.data.data
+          } else {
+            this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
+          }
+        })
+      },
+      handleEdit(index,row) {
+        this.editOutput.user_id = row.user_id;
+        this.editOutput.outbound_ID = row.outbound_ID;
+        this.editOutput.article_nums = row.article_nums;
+        this.userStorage = row.article_nums;
+        this.editOutput.outbound_type = row.outbound_type;
+        this.editOutput.material = row.material;
+        this.editOutput.address = row.address;
+        this.dialogEditVisible = true;
+      },
+      goEdit() {
+        if(this.editApplyExpressid=='') {
+          this.$message({type: 'warning',message: '请填写快递单号'});
+        } else if(this.editApplyEmail=='') {
+          this.$message({type: 'warning',message: '请填写邮箱地址'});
+        } else if(validateEmail(this.editApplyEmail)==false) {
+          this.$message({type: 'warning',message: '邮箱格式不符合规范'});
+        } else {
+        }
+        if(this.editOutput.outbound_type==0) {
+          
+        }
+      },
+      goDeploy(type) {
+        if(type=='new') {
           addOutput(this.newOutput).then(res=>{
-            console.log(res);
             if(res.data.status=='200') {
               this.dialogAddVisible = false;
               this.currentPage = 1;
@@ -277,23 +415,8 @@
               this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
             }
           })
-        }
-      },
-      handleEdit(index,row) {
-        this.editApplyID = row.outbound_ID;
-        this.editApplyExpressid = row.article_nums;
-        this.editApplyEmail = row.outbound_type;
-        this.dialogEditVisible = true;
-      },
-      goEdit() {
-        if(this.editApplyExpressid=='') {
-          this.$message({type: 'warning',message: '请填写快递单号'});
-        } else if(this.editApplyEmail=='') {
-          this.$message({type: 'warning',message: '请填写邮箱地址'});
-        } else if(validateEmail(this.editApplyEmail)==false) {
-          this.$message({type: 'warning',message: '邮箱格式不符合规范'});
-        } else {
-          editApply(this.editApplyID,this.editApplyExpressid,this.editApplyEmail).then(res=>{
+        } else if(type=='edit') {
+          editOutput(this.editOutput).then(res=>{
             if(res.data.status=='200') {
               this.dialogEditVisible = false;
               this.currentPage = 1;
@@ -303,7 +426,7 @@
               this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
             }
           })
-        }       
+        }
       },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.outbound_ID +'的出库信息, 是否继续?', '提示', {
