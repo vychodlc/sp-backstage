@@ -22,6 +22,7 @@
             <template slot="title"><i class="el-icon-menu"></i>转运</template>
             <el-menu-item-group>
               <el-menu-item index="/home/transmit"><i class="el-icon-menu"></i>申报管理</el-menu-item>
+              <el-menu-item index="/home/input"><i class="el-icon-menu"></i>入库管理</el-menu-item>
               <el-menu-item index="/home/storage"><i class="el-icon-menu"></i>库存管理</el-menu-item>
               <el-menu-item index="/home/output"><i class="el-icon-menu"></i>出库管理</el-menu-item>
             </el-menu-item-group>
@@ -61,7 +62,7 @@
     },
     created() {
       if(this.$store.state.token==''||!localStorage.token){
-        this.$router.push('/login')
+        this.$router.replace('/login')
       }
     },
     mounted() {
@@ -75,7 +76,7 @@
           type: 'success'
         });
         this.$store.commit('rmToken');
-        this.$router.push('/login')
+        this.$router.replace('/login')
       }
     }
   }

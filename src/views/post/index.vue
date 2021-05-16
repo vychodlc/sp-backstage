@@ -69,7 +69,7 @@
       <el-table-column label="状态" prop="post_status" width="100">
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.post_status==0" type="warning">未发布</el-tag>
-          <el-tag size="mini" v-if="scope.row.post_status==1" type="success">发布中</el-tag>
+          <el-tag size="mini" v-if="scope.row.post_status==1" type="success">已发布</el-tag>
           <el-tag size="mini" v-if="scope.row.post_status==2" type="info">已下架</el-tag>
           <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
         </template>
@@ -265,15 +265,24 @@
         this._getPostList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        this.searchWord = this.search;
-        this.filterWord = this.interpret[this.filter].name;
-        // if(thi.search=='title') {
-        //   this.searchWord = '标题'
-        // }
-        this.loading = true;
-        this.currentPage = 1;
-        this._getPostList(this.currentPage)
+        if(this.search==null||this.search=='') {
+          this.isSearch=false;
+          this.search=null;
+          this.$message({type: 'warning',message: '请输入搜索关键词'});
+        } else {
+          this.isSearch = true;
+          if(this.filter=='post_status') {
+            if(this.search=='0') {this.searchWord='未发布'}
+            if(this.search=='1') {this.searchWord='已发布'}
+            if(this.search=='2') {this.searchWord='已下架'}
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getPostList(this.currentPage)
+        }
       },
       goBack() {
         this.isSearch=false;

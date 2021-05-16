@@ -7,7 +7,7 @@
       <el-option label="状态" value="outbound_status"></el-option>
     </el-select>
     <template v-if="this.filter=='outbound_status'">
-      <el-radio v-model="search" label="0">未出库</el-radio>
+      <el-radio v-model="search" label="0">待审核</el-radio>
       <el-radio v-model="search" label="1">已驳回</el-radio>
       <el-radio v-model="search" label="2">待出库</el-radio>
       <el-radio v-model="search" label="3">转运中</el-radio>
@@ -27,7 +27,7 @@
       <el-table-column label="出库单号" prop="outbound_ID"></el-table-column>
       <el-table-column label="货物编号" width="150">
         <template slot-scope="scope">
-          <el-tag size="mini" style="margin:2px" v-for="(item,index) in scope.row.article_nums" :key="index">{{ item }}</el-tag>
+          <el-tag size="mini" style="margin:2px" v-for="(item,index) in scope.row.storage_nums" :key="index">{{ item }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="收货地址" prop="address"></el-table-column>
@@ -37,13 +37,17 @@
       <el-table-column label="出库方式" prop="outbound_type">
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.outbound_type==0" type="success">普通出库</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_type==2" type="info">退税出库</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_type==1" type="primary">退税出库</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="退税材料" prop="material"></el-table-column>
+      <el-table-column label="退税材料" prop="material">
+        <template slot-scope="scope" v-if="scope.row.outbound_type=='1'">
+          <el-image class="material" v-for="(item,index) in scope.row.material" :key="index" :src="item" alt="" :preview-src-list="scope.row.material"></el-image>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" prop="outbound_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="warning">未出库</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="warning">待审核</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==1" type="success">已驳回</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">待出库</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==3" type="success">转运中</el-tag>
@@ -92,7 +96,7 @@
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
           <el-select 
-            v-model="newOutput.article_nums" 
+            v-model="newOutput.storage_nums" 
             multiple 
             filterable
             default-first-option
@@ -102,8 +106,8 @@
             <el-option
               v-for="(item,index) in userStorage"
               :key="index"
-              :label="item.article_num"
-              :value="item.article_num">
+              :label="item.storage_ID"
+              :value="item.storage_ID">
             </el-option>
           </el-select>
         </el-form-item>
@@ -137,7 +141,7 @@
     <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible">
       <el-form>
         <el-form-item>
-          <el-radio v-model="dialogChange" label="0">未出库</el-radio>
+          <el-radio v-model="dialogChange" label="0">待审核</el-radio>
           <el-radio v-model="dialogChange" label="1">已驳回</el-radio>
           <el-radio v-model="dialogChange" label="2">待出库</el-radio>
           <el-radio v-model="dialogChange" label="3">转运中</el-radio>
@@ -166,7 +170,7 @@
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
           <el-select 
-            v-model="editOutput.article_nums" 
+            v-model="editOutput.storage_nums" 
             multiple 
             filterable
             default-first-option
@@ -176,8 +180,8 @@
             <el-option
               v-for="(item,index) in userStorage"
               :key="index"
-              :label="item.article_num"
-              :value="item.article_num">
+              :label="item.storage_ID"
+              :value="item.storage_ID">
             </el-option>
           </el-select>
         </el-form-item>
@@ -189,6 +193,14 @@
           <el-radio v-model="editOutput.outbound_type" label="1">退税出库</el-radio>
           <div style="color:#aaa" v-if="editOutput.outbound_type==='0'">之后无法申请选中商品的退税操作</div>
           <div style="color:#aaa" v-if="editOutput.outbound_type==1">请上传退税材料</div>
+          <div>
+            <template v-if="(editOutput.outbound_type=='1')&&(editOutput.material.length!=0)">
+              <div class="editImgBox" v-for="(item,index) in editOutput.material" :key="index">
+                <el-image class="material" :src="item" alt="" :preview-src-list="editOutput.material"></el-image>
+                <div class="boxDel" @click="editDelImg(index)">×</div>
+              </div>
+            </template>
+          </div>
         </el-form-item>
         <el-form-item v-if="editOutput.outbound_type==1" label="退税材料">
           <el-upload
@@ -245,10 +257,10 @@
 
         dialogEditVisible: false,
         editOutput: {
-          article_nums: [],
+          storage_nums: [],
           user_id: '',
           outbound_type: '',
-          material: '',
+          material: [],
           address: ''
         },
 
@@ -261,10 +273,10 @@
         oldApply: null,
 
         newOutput: {
-          article_nums: [],
+          storage_nums: [],
           user_id: '',
           outbound_type: '',
-          material: '',
+          material: [],
           address: ''
         },
 
@@ -300,7 +312,8 @@
               this.tableData = res.data.data;
               this.loading = false;
               for(let item in this.tableData) {
-                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
+                this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
+                this.tableData[item].material = this.tableData[item].material.split(',');
               }
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -314,7 +327,8 @@
               this.tableData = res.data.data;
               this.loading = false;
               for(let item in this.tableData) {
-                this.tableData[item].article_nums = this.tableData[item].article_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
+                this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
+                this.tableData[item].material = this.tableData[item].material.split(',');
               }
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -325,10 +339,10 @@
       },
       handleAdd() {
         this.newOutput = {
-          article_nums: [],
+          storage_nums: [],
           user_id: '',
           outbound_type: '',
-          material: '',
+          material: [],
           address: ''
         };
         this.dialogAddVisible = true;
@@ -336,10 +350,9 @@
       goAdd() {
         let imgList = [];
         let imgNum = (this.$refs.uploadImgOutputAdd)?this.$refs.uploadImgOutputAdd.uploadFiles.length:0;
-        console.log(imgNum);
         if(this.newOutput.user_id=='') {
           this.$message({type: 'warning',message: '请填写用户编号'});
-        } else if(this.newOutput.article_nums.length==0) {
+        } else if(this.newOutput.storage_nums.length==0) {
           this.$message({type: 'warning',message: '请选择货品编号'});
           this._getUserStorage(this.newOutput.user_id);
         } else if(this.newOutput.address=='') {
@@ -357,48 +370,84 @@
               if(res.data.status=='201') {
                 imgList.push(res.data.cover_img_url);
                 if(imgList.length==imgNum) {
-                  this.newOutput.material = imgList.join(',');
+                  this.newOutput.material = imgList;
                   this.goDeploy('new')
                 }
+              } else {
+                this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
               }
             })
           }
         }
       },
       _getUserStorage(id) {
-        this.newOutput.article_nums = [];
-        getUserStorage(id).then(res=>{
-          if(res.data.status=='200') {
-            if(res.data.data.length==0) {
-              this.$message({type: 'warning',message: '未查到该用户的库存信息'});
+        this.newOutput.storage_nums = [];
+        if(id=='') {
+          this.$message({type: 'warning',message: '请输入用户编号'});
+        } else {
+          getUserStorage(id).then(res=>{
+            if(res.data.status=='200') {
+              if(res.data.data.length==0) {
+                this.$message({type: 'warning',message: '未查到该用户的库存信息'});
+              }
+              this.userStorage = res.data.data;
+            } else {
+              this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
             }
-            this.userStorage = res.data.data
-          } else {
-            this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
-          }
-        })
+          })
+        }
       },
       handleEdit(index,row) {
         this.editOutput.user_id = row.user_id;
         this.editOutput.outbound_ID = row.outbound_ID;
-        this.editOutput.article_nums = row.article_nums;
-        this.userStorage = row.article_nums;
+        this.editOutput.storage_nums = row.storage_nums;
+        this.userStorage = row.storage_nums;
         this.editOutput.outbound_type = row.outbound_type;
-        this.editOutput.material = row.material;
+        if(row.material[0]=='') {
+          this.editOutput.material = []
+        } else {
+          this.editOutput.material = JSON.parse(JSON.stringify(row.material));
+        }
         this.editOutput.address = row.address;
         this.dialogEditVisible = true;
       },
       goEdit() {
-        if(this.editApplyExpressid=='') {
-          this.$message({type: 'warning',message: '请填写快递单号'});
-        } else if(this.editApplyEmail=='') {
-          this.$message({type: 'warning',message: '请填写邮箱地址'});
-        } else if(validateEmail(this.editApplyEmail)==false) {
-          this.$message({type: 'warning',message: '邮箱格式不符合规范'});
+        let imgList = [];
+        let imgNum = ((this.$refs.uploadImgOutputEdit)?this.$refs.uploadImgOutputEdit.uploadFiles.length:0)+this.editOutput.material.length;
+        if(this.editOutput.user_id=='') {
+          this.$message({type: 'warning',message: '请填写用户编号'});
+        } else if(this.editOutput.storage_nums.length==0) {
+          this.$message({type: 'warning',message: '请选择货品编号'});
+          this._getUserStorage(this.editOutput.user_id);
+        } else if(this.editOutput.address=='') {
+          this.$message({type: 'warning',message: '请填写收货地址'});
+        } else if(this.editOutput.outbound_type=='') {
+          this.$message({type: 'warning',message: '请选择出库方式'});
+        } else if(this.editOutput.outbound_type==1&&imgNum==0) {
+          this.$message({type: 'warning',message: '请上传退税材料'});
         } else {
-        }
-        if(this.editOutput.outbound_type==0) {
-          
+          if(this.editOutput.outbound_type==1) {
+            console.log(this.editOutput.material);
+            while(this.$refs.uploadImgOutputEdit.uploadFiles.length!=0) {
+              let file = this.$refs.uploadImgOutputEdit.uploadFiles.pop().raw;
+              let fileName = new Date().getTime() + '-' +file.name;
+              let uploadFile = new File([file], fileName, {type: file.type});
+              addCoverImg(uploadFile).then(res=>{
+                if(res.data.status=='201') {
+                  imgList.push(res.data.cover_img_url);
+                  if(imgList.length==imgNum) {
+                    this.editOutput.material = imgList;
+                    this.goDeploy('edit')
+                  }
+                } else {
+                  this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
+                }
+              })
+            }
+          } else {
+            this.editOutput.material = [];
+            this.goDeploy('edit')
+          }
         }
       },
       goDeploy(type) {
@@ -427,6 +476,10 @@
             }
           })
         }
+      },
+      editDelImg(index) {
+        this.editOutput.material.splice(index,1);
+        console.log(this.editOutput);
       },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.outbound_ID +'的出库信息, 是否继续?', '提示', {
@@ -516,7 +569,7 @@
         this.searchWord = this.search;
         if(this.filter=='apply_status') {
           if(this.search=='0') {
-            this.searchWord = '未出库'
+            this.searchWord = '待审核'
           } else if(this.search=='1') { 
             this.searchWord = '已驳回'
           } else if(this.search=='2') { 
@@ -557,5 +610,25 @@
   .pagination {
     position: absolute;
     right: 20px;
+  }
+  .editImgBox {
+    position: relative;
+  }
+  .editImgBox .material {
+    width: 50%;
+  }
+  .boxDel {
+    position: absolute;
+    top: 0px;
+    right: 50%;
+    transform: translateX(150%);
+    font-size: 30px;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    background-color: #777777;
+    border-radius: 50%;
   }
 </style>

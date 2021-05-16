@@ -17,6 +17,10 @@
         label="uid">
       </el-table-column>
       <el-table-column
+        prop="id"
+        label="user_id">
+      </el-table-column>
+      <el-table-column
         prop="user_nickname"
         label="nickname"
         width="100">
@@ -211,6 +215,7 @@
       _getUser() {
         getUser().then(res=>{
           this.tableData = res.data.data;
+          console.log(this.tableData);
           this.loading = false;
         })
       },

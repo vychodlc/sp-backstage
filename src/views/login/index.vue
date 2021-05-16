@@ -177,7 +177,11 @@ export default {
   },
   created() {
     if(!localStorage.token) {
-      this.$router.replace('/')
+      if(this.$route.fullPath=='/login') {
+        
+      } else {
+        this.$router.replace('/')
+      }
     } else {
       this.$router.replace('/home')
     }
@@ -199,10 +203,11 @@ export default {
             auth(localStorage.token).then(res=>{
               localStorage.uuid = res.data.data.sub;
               getUserInfo(localStorage.uuid).then(res=>{
+                console.log(res);
                 localStorage.right = res.data.data.user_right;
                 localStorage.ID = res.data.data.ID;
                 localStorage.nickname = res.data.data.user_nickname;
-                this.$store.commit('setUser',res.data.data.ID,res.data.data.user_nickname,res.data.data.user_right);
+                this.$store.commit('setUser',{id:res.data.data.ID,nickname:res.data.data.user_nickname,right:res.data.data.user_right});
                 this.$message({message: '登陆成功',type: 'success'});
                 this.loading = false;
                 this.$router.push({ path:'/home' });
@@ -243,7 +248,6 @@ export default {
             this.registerForm.email = '';
             this.registerForm.password = '';
             this.registerForm.nickname = '';
-            // this.$router.push({ path:'/home' });
           } else {
             this.$message({type: 'error',message: res.data.msg});
             this.registerForm.password = '';

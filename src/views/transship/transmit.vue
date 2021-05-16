@@ -31,7 +31,7 @@
           <el-tag size="mini" v-if="scope.row.apply_status==0" type="warning">未入库</el-tag>
           <el-tag size="mini" v-if="scope.row.apply_status==1" type="success">已入库</el-tag>
           <el-tag size="mini" v-if="scope.row.apply_status==2" type="info">已驳回</el-tag>
-          <!-- <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link> -->
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="right" width="300">
@@ -65,6 +65,9 @@
     
     <el-dialog title="新增申报信息" :visible.sync="dialogAddVisible">
       <el-form>
+        <el-form-item label="用户编号">
+          <el-input v-model="newApplyUserId" autocomplete="off"></el-input>
+        </el-form-item>
         <el-form-item label="快递单号">
           <el-input v-model="newApplyExpressid" autocomplete="off"></el-input>
         </el-form-item>
@@ -111,9 +114,6 @@
         </el-form-item>
         <el-form-item label="邮箱地址">
           <el-input v-model="newStorage.email" disabled></el-input>
-        </el-form-item>
-        <el-form-item label="库存编号">
-          <el-input v-model="newStorage.article_num" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="货品尺寸">
           <el-row>
@@ -188,6 +188,7 @@
         tags: null,
 
         dialogAddVisible: false,
+        newApplyUserId: '', 
         newApplyExpressid: '',
         newApplyEmail: '',
 
@@ -253,14 +254,16 @@
         }
       },
       handleAdd() {
-        if(this.newApplyExpressid=='') {
+        if(this.newApplyUserId=='') {
+          this.$message({type: 'warning',message: '请填写用户编号'});
+        } else if(this.newApplyExpressid=='') {
           this.$message({type: 'warning',message: '请填写快递单号'});
         } else if(this.newApplyEmail=='') {
           this.$message({type: 'warning',message: '请填写邮箱地址'});
         } else if(validateEmail(this.newApplyEmail)==false) {
           this.$message({type: 'warning',message: '邮箱格式不符合规范'});
         } else {
-          addApply(this.$store.state.user.id,[{'id':this.newApplyExpressid,'email':this.newApplyEmail}]).then(res=>{
+          addApply(this.newApplyUserId,[{'id':this.newApplyExpressid,'email':this.newApplyEmail}]).then(res=>{
             if(res.data.status=='200') {
               this.dialogAddVisible = false;
               this.currentPage = 1;

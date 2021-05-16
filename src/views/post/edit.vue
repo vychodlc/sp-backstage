@@ -4,10 +4,10 @@
       <div class="post_form">
         <el-form :model="postForm" ref="postForm" label-width="100px" class="postForm" size="mini">
           <el-form-item label="标题" prop="title">
-            <el-input v-model="postForm.title"></el-input>
+            <el-input v-model="postForm.title" @input="test()"></el-input>
           </el-form-item>
           <el-form-item label="标签" prop="tags">
-            <el-select v-model="postForm.tags" multiple placeholder="请选择">
+            <el-select v-model="postForm.tags" multiple placeholder="请选择" style="width:100%">
               <el-option
                 v-for="(key,item) in tags"
                 :key="key"
@@ -158,6 +158,10 @@ export default {
     }
   },
   methods: {
+    test() {
+      // console.log(this.postForm);
+      // console.log(this.getBLen(this.postForm.title));
+    },
     onEditorReady(editor) {}, // 准备编辑器
     onEditorBlur(){}, // 失去焦点事件
     onEditorFocus(){}, // 获得焦点事件
@@ -169,7 +173,9 @@ export default {
       return str;
     },
     getHtml() {
-      return '<h1>'+this.postForm.title+'</h1>'+'<h4>'+'</h4>'+this.escapeStringHTML(this.postForm.content);
+      let h = '<h1>'+this.escapeStringHTML(this.postForm.title)+'</h1>'+'<h4>'+'</h4>'+this.escapeStringHTML(this.postForm.content);
+      console.log(h);
+      return h;
     },
     handleChange(file,filelist) {
       const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');
@@ -200,7 +206,6 @@ export default {
         let uploadFile = new File([file], fileName, {type: file.type});
         addCoverImg(uploadFile).then(res=>{
           if(res.data.status=='201') {
-            // console.log(res.data);
             const quill=this.$refs.myQuillEditor.quill;
             const pos=quill.getSelection().index;
             quill.insertEmbed(pos,'image',res.data.cover_img_url);
@@ -212,7 +217,6 @@ export default {
       this.$message({type: 'error',message: '请删除当前封面再上传其他封面!'});
     },
     submitForm() {
-      // console.log(this.postForm,this.isEdit);
       if(this.postForm.title=='') {
         this.$message({type: 'error',message: '请填写文章标题!'});
       } else if (this.postForm.title.length>30||this.postForm.title.length<5) {
@@ -231,8 +235,6 @@ export default {
         this.$message({type: 'error',message: '请选择活动结束时间!'});
       } else if (this.postForm.activity==1&&(this.postForm.act_start_time>this.postForm.act_end_time)) {
         this.$message({type: 'error',message: '请保证活动结束时间晚于开始时间'});
-      } else if (this.postForm.activity==1&&(this.postForm.act_link=='')) {
-        this.$message({type: 'error',message: '请填写活动链接!'});
       } else if (this.postForm.rank==0) {
         this.$message({type: 'error',message: '请选择文章优先级!'});
       } else if (this.postForm.content=='') {
@@ -307,17 +309,17 @@ export default {
           })
         }
       }
-      
     },
     uploadImg() {
 
     },
-    quillSuccess(res) {
-      console.log(res);
+    getBLen(str) {
+      if (str == null) return 0;
+      if (typeof str != "string"){
+        str += "";
+      }
+      return str.replace(/[^\x00-\xff]/g,"01").length;
     },
-    test() {
-      console.log(this.$refs.myQuillEditor.quill);
-    }
   },
   computed: {
     editor() {
@@ -325,15 +327,6 @@ export default {
     },
   },
   mounted() {
-    // var vm =this
-    // var imgHandler = function(image) {
-    //   vm.addImgRange = vm.$refs.myQuillEditor.quill.getSelection()
-    //   if (image) {
-    //     var fileInput = document.getElementById('goImage');
-    //     fileInput.click();
-    //   }
-    // }
-    // vm.$refs.myQuillEditor.quill.getModule("toolbar").addHandler("image", imgHandler)
     getTag().then(res=> {
       if(res.data.status=='200') {
         this.tags = res.data.data;

@@ -1,10 +1,10 @@
 import { request } from "./request";
 
-
 /* 申报api */ 
 export function addApply(user_id,order) {
   let formData = new FormData();
   formData.append('user_id',user_id);
+  formData.append('brand',brand);
   formData.append('order',JSON.stringify(order));
   return request({
     method: 'POST',
@@ -55,11 +55,15 @@ export function changeApply(apply_ID,apply_status) {
     data: formData
   })
 }
+export function getApplyIdByExpressid(expressid) {
+  return request({
+    url: '/get_transship_applyid.php',
+    params: {expressid}
+  })
+}
 /* 库存api */
 export function addStorage(info) {
-  console.log(info);
   let formData = new FormData();
-  formData.append('article_num',info.article_num);
   formData.append('user_id',info.user_id);
   formData.append('apply_id',info.apply_id);
   formData.append('size',info.size);
@@ -97,7 +101,6 @@ export function editStorage(info) {
   console.log(info);
   let formData = new FormData();
   formData.append('storage_ID',info.storage_ID);
-  formData.append('article_num',info.article_num);
   formData.append('size',info.size);
   formData.append('weight',info.weight);
   formData.append('pic',info.pic);
@@ -125,12 +128,11 @@ export function getUserStorage(user_id) {
 }
 /* 出库api */
 export function addOutput(info) {
-  console.log(info);
   let formData = new FormData();
-  formData.append('article_nums',info.article_nums.map(item=>('"'+item+'"')).join(','));
+  formData.append('storage_nums',info.storage_nums.map(item=>('"'+item+'"')).join(','));
   formData.append('user_id',info.user_id);
   formData.append('outbound_type',info.outbound_type);
-  formData.append('material',info.material);
+  formData.append('material',info.material.join(','));
   formData.append('address',info.address);
   return request({
     method: 'POST',
@@ -160,11 +162,14 @@ export function filterOutput(filter,value,p) {
   })
 }
 export function editOutput(info) {
+  console.log(info);
   let formData = new FormData();
+  formData.append('user_id',info.user_id);
+  formData.append('address',info.address);
   formData.append('outbound_ID',info.outbound_ID);
-  formData.append('article_nums',info.article_nums);
+  formData.append('storage_nums',info.storage_nums.map(item=>('"'+item+'"')).join(','));
   formData.append('outbound_type',info.outbound_type);
-  formData.append('material',info.material);
+  formData.append('material',info.material.join(','));
   return request({
     method: 'POST',
     url: '/edit_transship_outbound.php',
@@ -195,6 +200,12 @@ export function getTransshipCode(user_id) {
   return request({
     url: '/get_transship_code.php',
     params: {user_id}
+  })
+}
+export function getUserByTransshipCode(code) {
+  return request({
+    url: '/get_user_by_transship_code.php',
+    params: {code}
   })
 }
 

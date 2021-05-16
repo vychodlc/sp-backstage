@@ -23,10 +23,10 @@ export default new Vuex.Store({
       state.refresh_token = refresh_token
       localStorage.refresh_token = refresh_token
     },
-    setUser(state, id, nickname, right) {
-      state.user.nickname = nickname
-      state.user.id = id
-      state.user.right = right
+    setUser(state, user) {
+      state.user.nickname = user.nickname
+      state.user.id = user.id
+      state.user.right = user.right
     },
     rmToken(state) {
       state.token = ''

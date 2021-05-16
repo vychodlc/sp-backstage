@@ -2,7 +2,6 @@
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="库存编号" value="storage_ID"></el-option>
-      <el-option label="货品编号" value="article_num"></el-option>
       <el-option label="用户ID" value="user_id"></el-option>
       <el-option label="尺寸" value="size"></el-option>
       <el-option label="重量" value="weight"></el-option>
@@ -23,7 +22,6 @@
       style="width: 100%"
       height="75vh">
       <el-table-column label="库存编号" prop="storage_ID"></el-table-column>
-      <el-table-column label="货品编号" prop="article_num"></el-table-column>
       <el-table-column label="用户编号" prop="user_id"></el-table-column>
       <el-table-column label="尺寸" prop="size"></el-table-column>
       <el-table-column label="重量" prop="weight"></el-table-column>
@@ -63,9 +61,6 @@
     
     <el-dialog title="新增库存信息" :visible.sync="dialogAddVisible">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="货品编号">
-          <el-input v-model="newStorage.article_num"></el-input>
-        </el-form-item>
         <el-form-item label="用户编号">
           <el-input type="number" v-model="newStorage.user_id"></el-input>
         </el-form-item>
@@ -119,9 +114,6 @@
       <el-form label-width="100px" size="mini">
         <el-form-item label="库存编号">
           <el-input v-model="editStorageID" disabled autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="货品编号">
-          <el-input v-model="editStorageNumber" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="货品尺寸">
           <el-row>
@@ -239,7 +231,6 @@
         currentPage: 1,
         interpret: {
           'storage_ID': {name:'库存编号'},
-          'article_num': {name:'货品编号'},
           'user_id': {name:'用户ID'},
           'size': {name:'尺寸'},
           'weight': {name:'重量'},
@@ -292,9 +283,7 @@
         this.dialogAddVisible = true;
       },
       goAdd() {
-        if(this.newStorage.article_num=='') {
-          this.$message({type: 'warning',message: '请填写货品编号'});
-        } else if(this.newStorage.user_id=='') {
+        if(this.newStorage.user_id=='') {
           this.$message({type: 'warning',message: '请填写用户编号'});
         } else if(this.newStorage.apply_id=='') {
           this.$message({type: 'warning',message: '请填写申报单号'});
@@ -352,9 +341,7 @@
         this.dialogEditVisible = true;
       },
       goEdit() {
-        if(this.editStorageNumber=='') {
-          this.$message({type: 'warning',message: '请填写货品编号'});
-        } else if (this.editStorageSize[0]=='') {
+        if (this.editStorageSize[0]=='') {
           this.$message({type: 'warning',message: '请填写长度'});
         } else if (this.editStorageSize[1]=='') {
           this.$message({type: 'warning',message: '请填写宽度'});

@@ -24,6 +24,7 @@ const routes = [
       {path: 'tag',name: 'Tag',component: () => import('../views/post/tag.vue')},
       {path: 'user',name: 'User',component: () => import('../views/user/index.vue')},
       {path: 'transmit',name: 'Transmit',component: () => import('../views/transship/transmit.vue')},
+      {path: 'input',name: 'Input',component: () => import('../views/transship/input.vue')},
       {path: 'storage',name: 'Storage',component: () => import('../views/transship/storage.vue')},
       {path: 'output',name: 'Output',component: () => import('../views/transship/output.vue')},
     ]
