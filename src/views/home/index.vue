@@ -27,7 +27,24 @@
               <el-menu-item index="/home/output"><i class="el-icon-menu"></i>出库管理</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
-          <el-menu-item index="/home/user"><i class="el-icon-menu"></i>用户管理</el-menu-item>
+          <el-submenu index="4">
+            <template slot="title"><i class="el-icon-menu"></i>代购</template>
+            <el-menu-item-group>
+              <el-menu-item index="/home/order"><i class="el-icon-menu"></i>订单管理</el-menu-item>
+              <el-menu-item index="/home/giftcard"><i class="el-icon-menu"></i>礼品卡</el-menu-item>
+              <el-menu-item index="/home/account"><i class="el-icon-menu"></i>购物账号</el-menu-item>
+              <el-menu-item index="/home/discount"><i class="el-icon-menu"></i>折扣码</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
+          <el-submenu index="5">
+            <template slot="title"><i class="el-icon-menu"></i>用户</template>
+            <el-menu-item-group>
+              <el-menu-item index="/home/user"><i class="el-icon-menu"></i>用户管理</el-menu-item>
+              <el-menu-item index="/home/address"><i class="el-icon-menu"></i>地址管理</el-menu-item>
+              <el-menu-item index="/home/storage"><i class="el-icon-menu"></i>余额管理</el-menu-item>
+              <el-menu-item index="/home/output"><i class="el-icon-menu"></i>银行卡管理</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
         </el-menu>
       </el-aside>
       

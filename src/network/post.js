@@ -1,4 +1,5 @@
 import { request } from "./request";
+import { compress } from "../utils/compress"
 
 export function getPostList(p) {
   return request({

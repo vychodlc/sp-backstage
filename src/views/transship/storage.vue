@@ -64,9 +64,6 @@
         <el-form-item label="用户编号">
           <el-input type="number" v-model="newStorage.user_id"></el-input>
         </el-form-item>
-        <el-form-item label="申报单号">
-          <el-input type="number" v-model="newStorage.apply_id"></el-input>
-        </el-form-item>
         <el-form-item label="货品尺寸">
           <el-row>
             <el-col>
@@ -190,6 +187,7 @@
   import { addStorage,delStorage,editStorage,getStorageList,changeStorage,filterStorage } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { validateEmail } from '@/utils/validate.js'
+  import { compress } from '@/utils/compress.js'
   export default {
     name: "Transmit",
     data () {
@@ -272,7 +270,7 @@
       handleAdd() {
         this.newStorage = {
           user_id: '',
-          apply_id: '',
+          apply_id: '0',
           email: '',
           expressid: '',
           article_num: '',

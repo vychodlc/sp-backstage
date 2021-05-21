@@ -124,6 +124,7 @@
           <el-upload
             ref="uploadImgOutputAdd"
             class="upload-demo"
+            :on-change='handleChangeImgAdd'
             action="#"
             accept="image/jpeg,image/gif,image/png"
             list-type="picture"
@@ -208,6 +209,7 @@
             class="upload-demo"
             action="#"
             accept="image/jpeg,image/gif,image/png"
+            :on-change='handleChangeImgEdit'
             list-type="picture"
             :auto-upload="false">
             <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
@@ -362,21 +364,25 @@
         } else if(this.newOutput.outbound_type==1&&imgNum==0) {
           this.$message({type: 'warning',message: '请上传退税材料'});
         } else {
-          while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
-            let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
-            let fileName = new Date().getTime() + '-' +file.name;
-            let uploadFile = new File([file], fileName, {type: file.type});
-            addCoverImg(uploadFile).then(res=>{
-              if(res.data.status=='201') {
-                imgList.push(res.data.cover_img_url);
-                if(imgList.length==imgNum) {
-                  this.newOutput.material = imgList;
-                  this.goDeploy('new')
+          if(this.newOutput.outbound_type==1) {
+            while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
+              let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
+              let fileName = new Date().getTime() + '-' +file.name;
+              let uploadFile = new File([file], fileName, {type: file.type});
+              addCoverImg(uploadFile).then(res=>{
+                if(res.data.status=='201') {
+                  imgList.push(res.data.cover_img_url);
+                  if(imgList.length==imgNum) {
+                    this.newOutput.material = imgList;
+                    this.goDeploy('new')
+                  }
+                } else {
+                  this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
                 }
-              } else {
-                this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
-              }
-            })
+              })
+            }
+          } else {
+            this.goDeploy('new');
           }
         }
       },
@@ -502,15 +508,28 @@
       },
 
       
-      handleChangeImg(file,filelist) {
+      handleChangeImgAdd(file,filelist) {
         const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');
         const isLt1M = file.raw.size / 1024 / 1024 < 1;
         if (!isIMAGE) {
-          this.$refs.uploadImg.uploadFiles.pop().raw;
+          this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
           this.$message.error('上传文件只能是图片格式!');
         }
         if (!isLt1M) {
-          this.$refs.uploadImg.uploadFiles.pop().raw;
+          this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
+          this.$message.error('上传文件大小不能超过 1MB!');
+        }
+        return isIMAGE && isLt1M;
+      },
+      handleChangeImgEdit(file,filelist) {
+        const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');
+        const isLt1M = file.raw.size / 1024 / 1024 < 1;
+        if (!isIMAGE) {
+          this.$refs.uploadImgOutputEdit.uploadFiles.pop().raw;
+          this.$message.error('上传文件只能是图片格式!');
+        }
+        if (!isLt1M) {
+          this.$refs.uploadImgOutputEdit.uploadFiles.pop().raw;
           this.$message.error('上传文件大小不能超过 1MB!');
         }
         return isIMAGE && isLt1M;

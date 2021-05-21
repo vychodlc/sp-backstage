@@ -98,7 +98,6 @@ export function filterStorage(filter,value,p) {
   })
 }
 export function editStorage(info) {
-  console.log(info);
   let formData = new FormData();
   formData.append('storage_ID',info.storage_ID);
   formData.append('size',info.size);
