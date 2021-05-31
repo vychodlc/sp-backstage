@@ -22,8 +22,8 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-      style="width: 100%"
-      height="75vh">
+      style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
+      class="elTable">
       <el-table-column label="出库单号" prop="outbound_ID"></el-table-column>
       <el-table-column label="货物编号" width="150">
         <template slot-scope="scope">
@@ -42,19 +42,19 @@
       </el-table-column>
       <el-table-column label="退税材料" prop="material">
         <template slot-scope="scope" v-if="scope.row.outbound_type=='1'">
-          <el-image class="material" v-for="(item,index) in scope.row.material" :key="index" :src="item" alt="" :preview-src-list="scope.row.material"></el-image>
+          <el-image class="material" v-for="(item,index) in scope.row.material.slice(0,1)" :key="index" :src="item" alt="" :preview-src-list="scope.row.material"></el-image>
         </template>
       </el-table-column>
       <el-table-column label="状态" prop="outbound_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="warning">待审核</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==1" type="success">已驳回</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">待出库</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==3" type="success">转运中</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==4" type="info">清关中</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==5" type="success">国内配送中</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==6" type="info">已完成</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
+          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="warning">待付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==1" type="success">待审核</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">已取消</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==3" type="info">已驳回</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==4" type="primary">运输中</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==5" type="info">已完成</el-tag>
+          <el-link v-if="scope.row.outbound_status!=5&&scope.row.outbound_status!=3&&scope.row.outbound_status!=2" 
+          style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="right" width="250">
@@ -67,11 +67,17 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            type="warning"
+            type="success"
             v-if="scope.row.outbound_status==0"
+            @click="handlePay(scope.row)">付款</el-button>
+          <el-button
+            size="mini"
+            type="warning"
+            v-if="scope.row.outbound_status==1"
             @click="handleRefuse(scope.row)">驳回</el-button>
           <el-button
             size="mini"
+            v-if="scope.row.outbound_status==0"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
@@ -82,37 +88,56 @@
     </el-table>
     
     <el-dialog title="新增出库信息" :visible.sync="dialogAddVisible">
-      <span>首先输入用户编号，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
+      <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
-        <el-form-item label="用户编号">
+        <!-- <el-form-item label="用户编号">
           <el-row>
-            <el-col :span='15'>
+            <el-col :span='18'>
               <el-input v-model="newOutput.user_id" @input="userStorage=[]"></el-input>
             </el-col>
-            <el-col :span='3'>
+            <el-col :span='1'>
               <el-button style="margin-left:20px" @click="_getUserStorage(newOutput.user_id)" size="mini">获取库存信息</el-button>
             </el-col>
           </el-row>
+        </el-form-item> -->
+        <el-form-item label="用户邮箱">
+          <el-input v-model="newOutput.email" @input="userStorage=[]">
+            <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(newOutput.email)"></el-button>
+          </el-input>
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
-          <el-select 
+          <el-select
             v-model="newOutput.storage_nums" 
             multiple 
             filterable
             default-first-option
             placeholder="请选择"
-            width='100%'
+            style="width:100%"
+            @change="selectChanged"
           >
             <el-option
               v-for="(item,index) in userStorage"
               :key="index"
-              :label="item.storage_ID"
+              :label="item.storage_ID+' | '+item.description"
               :value="item.storage_ID">
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="收货地址">
-          <el-input v-model="newOutput.address"></el-input>
+        <el-form-item label="收货地址" v-if="userAddress.length>0">
+          <el-select 
+            v-model="newOutput.address"
+            placeholder="请选择"
+            style="width:100%">
+            <el-option
+              v-for="(item,index) in userAddress"
+              :key="index"
+              :label="item.user_name+' | '+item.addr+' | '+item.phone"
+              :value="item.addr">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="出库费用">
+          <span>￡{{parseFloat(newOutput.price/100)}}</span>
         </el-form-item>
         <el-form-item label="出库方式">
           <el-radio v-model="newOutput.outbound_type" label="0">普通出库</el-radio>
@@ -141,14 +166,18 @@
     </el-dialog>
     <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible">
       <el-form>
-        <el-form-item>
-          <el-radio v-model="dialogChange" label="0">待审核</el-radio>
-          <el-radio v-model="dialogChange" label="1">已驳回</el-radio>
-          <el-radio v-model="dialogChange" label="2">待出库</el-radio>
-          <el-radio v-model="dialogChange" label="3">转运中</el-radio>
-          <el-radio v-model="dialogChange" label="4">清关中</el-radio>
-          <el-radio v-model="dialogChange" label="5">国内配送中</el-radio>
-          <el-radio v-model="dialogChange" label="6">已完成</el-radio>
+        <el-form-item v-if="oldRow!=null&&oldRow.outbound_status==0">
+          <el-radio v-model="dialogChange" label="0">待付款</el-radio>
+          <el-radio v-model="dialogChange" label="2">已取消</el-radio>
+        </el-form-item>
+        <el-form-item v-else-if="oldRow!=null&&oldRow.outbound_status==1">
+          <el-radio v-model="dialogChange" label="1">待审核</el-radio>
+          <el-radio v-model="dialogChange" label="3">已驳回</el-radio>
+          <el-radio v-model="dialogChange" label="4">运输中</el-radio>
+        </el-form-item>
+        <el-form-item v-else-if="oldRow!=null&&oldRow.outbound_status==4">
+          <el-radio v-model="dialogChange" label="4">运输中</el-radio>
+          <el-radio v-model="dialogChange" label="5">已完成</el-radio>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -157,37 +186,46 @@
       </div>
     </el-dialog>
     <el-dialog title="修改出库信息" :visible.sync="dialogEditVisible">
-      <span>首先输入用户编号，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
+      <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
-        <el-form-item label="用户编号">
-          <el-row>
-            <el-col :span='15'>
-              <el-input v-model="editOutput.user_id" @input="userStorage=[]"></el-input>
-            </el-col>
-            <el-col :span='3'>
-              <el-button style="margin-left:20px" @click="_getUserStorage(editOutput.user_id)" size="mini">获取库存信息</el-button>
-            </el-col>
-          </el-row>
+        <el-form-item label="用户邮箱">
+          <el-input v-model="editOutput.email" @input="userStorage=[]">
+            <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(editOutput.email)"></el-button>
+          </el-input>
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
-          <el-select 
+          <el-select
             v-model="editOutput.storage_nums" 
             multiple 
             filterable
             default-first-option
             placeholder="请选择"
-            width='100%'
+            style="width:100%"
+            @change="selectChanged"
           >
             <el-option
               v-for="(item,index) in userStorage"
               :key="index"
-              :label="item.storage_ID"
+              :label="item.storage_ID+' | '+item.description"
               :value="item.storage_ID">
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="收货地址">
-          <el-input v-model="editOutput.address"></el-input>
+        <el-form-item label="收货地址" v-if="userAddress.length>0">
+          <el-select 
+            v-model="editOutput.address"
+            placeholder="请选择"
+            style="width:100%">
+            <el-option
+              v-for="(item,index) in userAddress"
+              :key="index"
+              :label="item.user_name+' | '+item.addr+' | '+item.phone"
+              :value="item.addr">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="出库费用">
+          <span>￡{{parseFloat(editOutput.price/100)}}</span>
         </el-form-item>
         <el-form-item label="出库方式">
           <el-radio v-model="editOutput.outbound_type" label="0">普通出库</el-radio>
@@ -236,10 +274,13 @@
 </template>
 
 <script>
-  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply } from '@/network/transship.js'
-  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,filterOutput } from '@/network/transship.js'
+  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,filterOutput,filterStorage } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
-  import { validateEmail } from '@/utils/validate.js'
+  import { payBalance } from '@/network/payment.js'
+  import { getUserByEmail,getUserInfoById } from '@/network/user.js'
+  import * as imageConversion from 'image-conversion';
+  import { validateEmail } from '@/utils/validate.js';
+  import { filterAddress } from '@/network/address.js'
   export default {
     name: "Transmit",
     data () {
@@ -251,11 +292,8 @@
         isSearch: false,
         loading: true,
         tableData: [],
-        tags: null,
 
         dialogAddVisible: false,
-        newApplyExpressid: '',
-        newApplyEmail: '',
 
         dialogEditVisible: false,
         editOutput: {
@@ -263,23 +301,24 @@
           user_id: '',
           outbound_type: '',
           material: [],
-          address: ''
+          address: '',
+          email: '',
+          price: '',
         },
-
-        editApplyID: '',
-        editApplyExpressid: '',
-        editApplyEmail: '',
         
         dialogChangeVisible: false,
         dialogChange: '',
-        oldApply: null,
+        oldRow: null,
+        editStorages: [],
 
         newOutput: {
           storage_nums: [],
           user_id: '',
           outbound_type: '',
           material: [],
-          address: ''
+          address: '',
+          email: '',
+          price: '',
         },
 
         pageNum: null,
@@ -290,7 +329,8 @@
           'outbound_type': {name:'出库方式'},
           'outbound_status': {name:'状态'},
         },
-        userStorage: []
+        userStorage: [],
+        userAddress: [],
       }
     },
     computed: {
@@ -340,23 +380,27 @@
         }
       },
       handleAdd() {
+        this.userStorage = [];
+        this.userAddress = [];
         this.newOutput = {
           storage_nums: [],
           user_id: '',
           outbound_type: '',
           material: [],
-          address: ''
+          address: '',
+          price: 0,
+          email: '',
         };
         this.dialogAddVisible = true;
       },
       goAdd() {
         let imgList = [];
         let imgNum = (this.$refs.uploadImgOutputAdd)?this.$refs.uploadImgOutputAdd.uploadFiles.length:0;
-        if(this.newOutput.user_id=='') {
-          this.$message({type: 'warning',message: '请填写用户编号'});
+        if(this.newOutput.email=='') {
+          this.$message({type: 'warning',message: '请填写用户邮箱'});
         } else if(this.newOutput.storage_nums.length==0) {
           this.$message({type: 'warning',message: '请选择货品编号'});
-          this._getUserStorage(this.newOutput.user_id);
+          this._getUserStorage(this.newOutput.email);
         } else if(this.newOutput.address=='') {
           this.$message({type: 'warning',message: '请填写收货地址'});
         } else if(this.newOutput.outbound_type=='') {
@@ -368,17 +412,19 @@
             while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
               let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
               let fileName = new Date().getTime() + '-' +file.name;
-              let uploadFile = new File([file], fileName, {type: file.type});
-              addCoverImg(uploadFile).then(res=>{
-                if(res.data.status=='201') {
-                  imgList.push(res.data.cover_img_url);
-                  if(imgList.length==imgNum) {
-                    this.newOutput.material = imgList;
-                    this.goDeploy('new')
+              imageConversion.compress(file,0.6).then(res=>{
+                let uploadFile = new File([res], fileName, {type: res.type});
+                addCoverImg(uploadFile).then(res=>{
+                  if(res.data.status=='201') {
+                    imgList.push(res.data.cover_img_url);
+                    if(imgList.length==imgNum) {
+                      this.newOutput.material = imgList;
+                      this.goDeploy('new')
+                    }
+                  } else {
+                    this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
                   }
-                } else {
-                  this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
-                }
+                })
               })
             }
           } else {
@@ -386,25 +432,40 @@
           }
         }
       },
-      _getUserStorage(id) {
+      _getUserStorage(email) {
         this.newOutput.storage_nums = [];
-        if(id=='') {
-          this.$message({type: 'warning',message: '请输入用户编号'});
+        if(email=='') {
+          this.$message({type: 'warning',message: '请输入用户注册邮箱地址'});
         } else {
-          getUserStorage(id).then(res=>{
+          getUserByEmail(email).then(res=>{
             if(res.data.status=='200') {
-              if(res.data.data.length==0) {
-                this.$message({type: 'warning',message: '未查到该用户的库存信息'});
-              }
-              this.userStorage = res.data.data;
+              let user_id = res.data.user_ID;
+              this.newOutput.user_id = user_id;
+              getUserStorage(res.data.user_ID).then(res=>{
+                if(res.data.status=='200') {
+                  if(res.data.data.length==0) {
+                    this.$message({type: 'warning',message: '未查到该用户的库存信息'});
+                  }
+                  this.userStorage = res.data.data;
+                  filterAddress(0,'user_id',user_id).then(res=>{
+                    this.userAddress = res.data.data;
+                    let defaultAddr = this.userAddress.filter(item=>item.default=='1');
+                    this.newOutput.address = (defaultAddr.length==1)?defaultAddr[0].addr:this.userAddress[0].addr;
+                  })
+                } else {
+                  this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
+                }
+              })
             } else {
-              this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
-            }
+              this.$message({type: 'warning',message: res.data.msg});
+            } 
           })
         }
       },
       handleEdit(index,row) {
+        this.loading = true;
         this.editOutput.user_id = row.user_id;
+        this.editOutput.price = row.price;
         this.editOutput.outbound_ID = row.outbound_ID;
         this.editOutput.storage_nums = row.storage_nums;
         this.userStorage = row.storage_nums;
@@ -415,16 +476,44 @@
           this.editOutput.material = JSON.parse(JSON.stringify(row.material));
         }
         this.editOutput.address = row.address;
-        this.dialogEditVisible = true;
+        
+        getUserInfoById(row.user_id).then(res=>{
+          this.editOutput.email = res.data.data.user_email;
+          getUserStorage(row.user_id).then(res=>{
+            if(res.data.status=='200') {
+              if(res.data.data.length==0) {
+                this.$message({type: 'warning',message: '未查到该用户的库存信息'});
+              }
+              this.userStorage = res.data.data;
+              filterStorage('user_id',row.user_id,0).then(res=>{
+                let data = res.data.data;
+                for(let i=0;i<data.length;i++) {
+                  if(this.editOutput.storage_nums.indexOf(data[i].storage_ID)!=-1) {
+                    this.userStorage.push(data[i])
+                  }
+                }
+                this.selectChanged(this.editOutput.storage_nums)
+                filterAddress(0,'user_id',row.user_id).then(res=>{
+                  this.userAddress = res.data.data;
+                  this.loading = false;
+                  this.dialogEditVisible = true;
+                })
+              })
+            } else {
+              this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
+              this.loading = false;
+            }
+          })
+        })
       },
       goEdit() {
         let imgList = [];
         let imgNum = ((this.$refs.uploadImgOutputEdit)?this.$refs.uploadImgOutputEdit.uploadFiles.length:0)+this.editOutput.material.length;
-        if(this.editOutput.user_id=='') {
-          this.$message({type: 'warning',message: '请填写用户编号'});
+        if(this.editOutput.email=='') {
+          this.$message({type: 'warning',message: '请填写邮箱地址'});
         } else if(this.editOutput.storage_nums.length==0) {
           this.$message({type: 'warning',message: '请选择货品编号'});
-          this._getUserStorage(this.editOutput.user_id);
+          this._getUserStorage(this.editOutput.email);
         } else if(this.editOutput.address=='') {
           this.$message({type: 'warning',message: '请填写收货地址'});
         } else if(this.editOutput.outbound_type=='') {
@@ -433,22 +522,27 @@
           this.$message({type: 'warning',message: '请上传退税材料'});
         } else {
           if(this.editOutput.outbound_type==1) {
-            console.log(this.editOutput.material);
-            while(this.$refs.uploadImgOutputEdit.uploadFiles.length!=0) {
-              let file = this.$refs.uploadImgOutputEdit.uploadFiles.pop().raw;
-              let fileName = new Date().getTime() + '-' +file.name;
-              let uploadFile = new File([file], fileName, {type: file.type});
-              addCoverImg(uploadFile).then(res=>{
-                if(res.data.status=='201') {
-                  imgList.push(res.data.cover_img_url);
-                  if(imgList.length==imgNum) {
-                    this.editOutput.material = imgList;
-                    this.goDeploy('edit')
-                  }
-                } else {
-                  this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
-                }
-              })
+            if(this.$refs.uploadImgOutputEdit.uploadFiles.length==0) {
+              this.goDeploy('edit')
+            } else {
+              while(this.$refs.uploadImgOutputEdit.uploadFiles.length!=0) {
+                let file = this.$refs.uploadImgOutputEdit.uploadFiles.pop().raw;
+                let fileName = new Date().getTime() + '-' +file.name;
+                imageConversion.compress(file,0.6).then(res=>{
+                  let uploadFile = new File([res], fileName, {type: res.type});
+                  addCoverImg(uploadFile).then(res=>{
+                    if(res.data.status=='201') {
+                      imgList.push(res.data.cover_img_url);
+                      if(imgList.length==imgNum) {
+                        this.editOutput.material = imgList;
+                        this.goDeploy('edit')
+                      }
+                    } else {
+                      this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
+                    }
+                  })
+                })
+              }
             }
           } else {
             this.editOutput.material = [];
@@ -461,11 +555,10 @@
           addOutput(this.newOutput).then(res=>{
             if(res.data.status=='200') {
               this.dialogAddVisible = false;
+              this.loading = false;
               this.currentPage = 1;
               this._getList(this.currentPage);
               this.$message({type: 'success',message: '添加成功'});
-              this.newApplyExpressid = '';
-              this.newApplyEmail = '';
             } else {
               this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
             }
@@ -474,6 +567,7 @@
           editOutput(this.editOutput).then(res=>{
             if(res.data.status=='200') {
               this.dialogEditVisible = false;
+              this.loading = false;
               this.currentPage = 1;
               this._getList(this.currentPage);
               this.$message({type: 'success',message: '修改成功'});
@@ -507,7 +601,6 @@
         });
       },
 
-      
       handleChangeImgAdd(file,filelist) {
         const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');
         const isLt1M = file.raw.size / 1024 / 1024 < 1;
@@ -540,12 +633,12 @@
 
       handleChange(row) {
         this.dialogChange = row.outbound_status;
-        this.oldApply = row;
+        this.oldRow = row;
         this.dialogChangeVisible = true;
       },
       goChange() {
-        if(this.oldApply.outbound_status!=this.dialogChange) {
-          changeOutput(this.oldApply.outbound_ID,this.dialogChange).then(res => {
+        if(this.oldRow.outbound_status!=this.dialogChange) {
+          changeOutput(this.oldRow.outbound_ID,this.dialogChange).then(res => {
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -560,13 +653,35 @@
         }
       },
 
+      handlePay(row) {
+        this.$confirm('此操作将为这条单号为：'+ row.outbound_ID +'的出库信息付款, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          payBalance({
+            order_type: 'o',
+            id: row.outbound_ID
+          }).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '付款成功!'});
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+            }else {
+              this.$message({type: 'warning',message: '付款失败'+res.data.msg});
+            }
+          })
+        }).catch(() => {
+          this.$message({type: 'info',message: '已取消付款'});          
+        });
+      },
       handleRefuse(row) {
         this.$confirm('此操作将驳回这条单号为：'+ row.outbound_ID +'的出库信息, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          changeOutput(row.outbound_ID,1).then(res=>{
+          changeOutput(row.outbound_ID,3).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '驳回成功!'});
               this.currentPage = 1;
@@ -588,18 +703,16 @@
         this.searchWord = this.search;
         if(this.filter=='apply_status') {
           if(this.search=='0') {
-            this.searchWord = '待审核'
+            this.searchWord = '待付款'
           } else if(this.search=='1') { 
-            this.searchWord = '已驳回'
+            this.searchWord = '待审核'
           } else if(this.search=='2') { 
-            this.searchWord = '待出库'
+            this.searchWord = '已取消'
           } else if(this.search=='3') { 
-            this.searchWord = '转运中'
+            this.searchWord = '已驳回'
           } else if(this.search=='4') { 
-            this.searchWord = '清关中'
+            this.searchWord = '运输中'
           } else if(this.search=='5') { 
-            this.searchWord = '国内配送中'
-          } else if(this.search=='6') { 
             this.searchWord = '已完成'
           }
         } else {
@@ -618,6 +731,19 @@
       },
       filterChange() {
         this.search = '';
+      },
+      selectChanged(value) {
+        let data = this.userStorage;
+        let weight = 0;
+        data.filter(item=>value.indexOf(item.storage_ID)!=-1).map(item=>weight+=parseFloat(item.weight));
+        weight = parseInt(weight/0.5);
+        if(weight>59) {
+          this.newOutput.price = 11800;
+          this.editOutput.price = 11800;
+        } else {
+          this.newOutput.price = this.$store.state.expressPrice[weight]*100;
+          this.editOutput.price = this.$store.state.expressPrice[weight]*100;
+        }
       }
     }
   }

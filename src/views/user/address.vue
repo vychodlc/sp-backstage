@@ -7,6 +7,8 @@
       <el-option label="用户ID" value="user_id"></el-option>
       <el-option label="uuid" value="uuid"></el-option>
       <el-option label="邮箱地址" value="email"></el-option>
+      <el-option label="收货人" value="user_name"></el-option>
+      <el-option label="手机号" value="phone"></el-option>
     </el-select>
     <template v-if="this.filter=='default'">
       <el-radio v-model="search" label="0">默认地址</el-radio>
@@ -19,9 +21,11 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-      style="width: 100%"
-      height="75vh">
+      style="width: 100%;max-height: calc(100vh - 142px);overflow-y:scroll"
+      class="elTable">
       <el-table-column label="地址编号" prop="address_ID"></el-table-column>
+      <el-table-column label="收货人" prop="user_name"></el-table-column>
+      <el-table-column label="手机号" prop="phone"></el-table-column>
       <el-table-column label="详细地址" prop="addr"></el-table-column>
       <el-table-column label="地址种类" prop="default">
         <template slot-scope="scope">
@@ -30,7 +34,7 @@
           <el-link v-if="scope.row.default==0" style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="uuid" prop="uuid"></el-table-column>
+      <el-table-column label="用户名" prop="user_nickname"></el-table-column>
       <el-table-column label="操作" align="right" width="200">
         <template slot="header">
           <el-button
@@ -51,12 +55,18 @@
     </el-table>
     
     <el-dialog title="新增地址信息" :visible.sync="dialogAddVisible">
-      <el-form>
+      <el-form size="mini">
         <el-form-item label="用户编号">
           <el-input v-model="newAddress.user_id"></el-input>
         </el-form-item>
+        <el-form-item label="收货人">
+          <el-input v-model="newAddress.name"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="newAddress.phone"></el-input>
+        </el-form-item>
         <el-form-item label="详细地址">
-          <el-input v-model="newAddress.addr"></el-input>
+          <el-input v-model="newAddress.address"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -69,8 +79,14 @@
         <el-form-item label="地址编号">
           <el-input v-model="editAddress.address_ID" disabled></el-input>
         </el-form-item>
+        <el-form-item label="收货人">
+          <el-input v-model="editAddress.name"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editAddress.phone"></el-input>
+        </el-form-item>
         <el-form-item label="详细地址">
-          <el-input v-model="editAddress.addr"></el-input>
+          <el-input v-model="editAddress.address"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -118,7 +134,9 @@
         newApplyEmail: '',
         newAddress: {
           user_id: '',
-          addr: '',
+          address: '',
+          name: '',
+          phone: '',
         },
 
         dialogEditVisible: false,
@@ -127,7 +145,9 @@
         editApplyEmail: '',
         editAddress: {
           address_ID: '',
-          addr: ''
+          address: '',
+          name: '',
+          phone: '',
         },
         
         dialogChangeVisible: false,
@@ -154,6 +174,8 @@
           'user_id': {name:'用户ID'},
           'uuid': {name:'uuid'},
           'email': {name:'邮箱地址'},
+          'user_name': {name:'收货人'},
+          'phone': {name:'手机号'},
         }
       }
     },
@@ -190,6 +212,7 @@
         } else {
           getAddressList(pageIndex).then(res => {
             if(res.data.status=='200') {
+              console.log(res.data);
               this.pageNum = parseInt(res.data.address_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -203,10 +226,14 @@
       handleAdd() {
         if(this.newAddress.user_id=='') {
           this.$message({type: 'warning',message: '请填写用户编号'});
-        } else if(this.newAddress.addr=='') {
+        } else if(this.newAddress.name=='') {
+          this.$message({type: 'warning',message: '请填写收货人'});
+        } else if(this.newAddress.phone=='') {
+          this.$message({type: 'warning',message: '请填写手机号码'});
+        } else if(this.newAddress.address=='') {
           this.$message({type: 'warning',message: '请填写详细地址'});
         } else {
-          addAddress(this.newAddress.addr,this.newAddress.user_id).then(res=>{
+          addAddress(this.newAddress).then(res=>{
             if(res.data.status=='200') {
               this.dialogAddVisible = false;
               this.currentPage = 1;
@@ -221,16 +248,20 @@
       },
       handleEdit(index,row) {
         this.editAddress.address_ID = row.address_ID;
-        this.editAddress.addr = row.addr;
+        this.editAddress.address = row.addr;
+        this.editAddress.name = row.user_name;
+        this.editAddress.phone = row.phone;
         this.dialogEditVisible = true;
       },
       goEdit() {
-        if(this.editAddress.address_ID=='') {
-          this.$message({type: 'warning',message: '请填写快递单号'});
-        } else if(this.editAddress.addr=='') {
-          this.$message({type: 'warning',message: '请填写邮箱地址'});
+        if(this.editAddress.name=='') {
+          this.$message({type: 'warning',message: '请填写收货人'});
+        } else if(this.editAddress.phone=='') {
+          this.$message({type: 'warning',message: '请填写手机号码'});
+        } else if(this.editAddress.address=='') {
+          this.$message({type: 'warning',message: '请填写收获地址'});
         } else {
-          editAddress(this.editAddress.address_ID,this.editAddress.addr).then(res=>{
+          editAddress(this.editAddress).then(res=>{
             console.log(res);
             if(res.data.status=='200') {
               this.dialogEditVisible = false;

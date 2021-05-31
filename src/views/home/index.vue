@@ -41,8 +41,8 @@
             <el-menu-item-group>
               <el-menu-item index="/home/user"><i class="el-icon-menu"></i>用户管理</el-menu-item>
               <el-menu-item index="/home/address"><i class="el-icon-menu"></i>地址管理</el-menu-item>
-              <el-menu-item index="/home/storage"><i class="el-icon-menu"></i>余额管理</el-menu-item>
-              <el-menu-item index="/home/output"><i class="el-icon-menu"></i>银行卡管理</el-menu-item>
+              <!-- <el-menu-item index="/home/storage"><i class="el-icon-menu"></i>余额管理</el-menu-item>
+              <el-menu-item index="/home/output"><i class="el-icon-menu"></i>银行卡管理</el-menu-item> -->
             </el-menu-item-group>
           </el-submenu>
         </el-menu>

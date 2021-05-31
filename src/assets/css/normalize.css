@@ -339,3 +339,10 @@ template {
 [hidden] {
   display: none;
 }
+
+.elTable {
+  width: 100%;height: calc(100vh - 142px);overflow-y:scroll
+}
+.el-table {
+  width: 100%;height: calc(100vh - 142px);overflow-y:scroll
+}

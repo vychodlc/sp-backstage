@@ -3,8 +3,8 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-      style="width: 100%"
-      height="80vh">
+      style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
+      class="elTable">
       <el-table-column
         label="标签编号"
         prop="id">

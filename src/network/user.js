@@ -20,6 +20,14 @@ export function getUserInfo(id) {
     }
   })
 }
+export function getUserInfoById(id) {
+  return request({
+    url: '/get_user_info.php',
+    params: {
+      id: id
+    }
+  })
+}
 
 export function login(loginForm) {
   let formData = new FormData();
@@ -84,5 +92,12 @@ export function setUserRight(id,newRight) {
     method: 'POST',
     url: '/set_user_right.php',
     data: form
+  })
+}
+
+export function getUserByEmail(user_email) {
+  return request({
+    url: '/get_user_by_email.php',
+    params: {user_email}
   })
 }

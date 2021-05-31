@@ -19,7 +19,19 @@
             localStorage.nickname = res.data.data.user_nickname;
           })
         });
-      }
+      };
+
+      this.$axios({
+        method: 'post',
+        url: 'https://www.adidas.co.uk/api/orders/track-data',
+        data: JSON.stringify({
+          'orderNo': 'AUK36293125',
+          'orderNo': 'huangxing77888877@gmail.com',
+          'returnHub': false,
+        })
+      }).then(res=>{
+        console.log(res);
+      })
     },
   }
 </script>

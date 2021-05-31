@@ -1,9 +1,11 @@
 import {request} from './request'
 
-export function addAddress(address,user_id) {
+export function addAddress(info) {
   let formData = new FormData();
-  formData.append('address',address)
-  formData.append('user_id',user_id)
+  formData.append('address',info.address)
+  formData.append('user_id',info.user_id)
+  formData.append('phone',info.phone)
+  formData.append('name',info.name)
   return request({
     method: 'POST',
     url: '/add_address.php',
@@ -20,11 +22,12 @@ export function changeDefaultAddress(address_ID,uuid) {
     data: formData
   })
 }
-export function editAddress(address_ID,address) {
-  console.log(address_ID,address);
+export function editAddress(info) {
   let formData = new FormData();
-  formData.append('address_ID',address_ID)
-  formData.append('address',address)
+  formData.append('address_ID',info.address_ID)
+  formData.append('address',info.address)
+  formData.append('name',info.name)
+  formData.append('phone',info.phone)
   return request({
     method: 'POST',
     url: '/edit_address.php',

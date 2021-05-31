@@ -19,10 +19,14 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-      style="width: 100%"
-      height="75vh">
+      style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
+      class="elTable">
       <el-table-column label="库存编号" prop="storage_ID"></el-table-column>
-      <el-table-column label="用户编号" prop="user_id"></el-table-column>
+      <el-table-column label="用户编号" prop="user_id">
+        <template slot-scope="scope">
+          <span>{{scope.row.user_id}}-{{scope.row.code}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="尺寸" prop="size"></el-table-column>
       <el-table-column label="重量" prop="weight"></el-table-column>
       <el-table-column label="图片" prop="pic">
@@ -30,6 +34,7 @@
           <el-image class="storage_pic" :src="scope.row.pic" alt="" :preview-src-list="[scope.row.pic]"></el-image>
         </template>
       </el-table-column>
+      <el-table-column label="描述" prop="description"></el-table-column>
       <el-table-column label="入库员" prop="recorder"></el-table-column>
       <el-table-column label="入库时间" prop="storage_time"></el-table-column>
       <el-table-column label="状态" prop="storage_status">
@@ -45,7 +50,7 @@
           <el-button
             size="mini"
             type="primary"
-            @click="handleAdd">新增</el-button>
+            @click="$router.replace({name:'Input'})">新增</el-button>
         </template>
         <template slot-scope="scope">
           <el-button
@@ -183,9 +188,9 @@
 </template>
 
 <script>
-  import { addApply,delApply,editApply,getApplyList,changeApply } from '@/network/transship.js'
   import { addStorage,delStorage,editStorage,getStorageList,changeStorage,filterStorage } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
+  import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js'
   import { compress } from '@/utils/compress.js'
   export default {
@@ -209,7 +214,8 @@
           article_num: '',
           size: ['','',''],
           weight: '',
-          pic: ''
+          pic: '',
+          description: '',
         },
         newStorageExpressid: '',
         newStorageEmail: '',
@@ -260,6 +266,7 @@
               this.pageNum = parseInt(res.data.storages_num);
               this.tableData = res.data.data;
               this.loading = false;
+              console.log(this.tableData);
             } else {
               this.$message({type: 'error',message: res.data.msg})
             }      
@@ -301,32 +308,34 @@
           this.loading = true;
           let file = this.$refs.uploadImgStorage.uploadFiles.pop().raw;
           let fileName = new Date().getTime() + '-' +file.name;
-          let uploadFile = new File([file], fileName, {type: file.type});
-          addCoverImg(uploadFile).then(res=>{
-            if(res.data.status=='201') {
-              this.dialogAddVisible = false;
-              addStorage({
-                article_num: this.newStorage.article_num, 
-                user_id: this.newStorage.user_id,
-                apply_id: this.newStorage.apply_id,
-                size: this.newStorage.size.join('*'), 
-                weight: this.newStorage.weight,
-                pic: res.data.cover_img_url,
-              }).then(resAdd=>{
-                if(resAdd.data.status=='200') {
-                  this.loading = false;
-                  this.currentPage = 1;
-                  this.$message({type: 'success',message: '新增成功'});
-                  this._getList(this.currentPage);
-                }
-                else {
-                  this.$message({type: 'warning',message: '新增失败——'+resAdd.data.msg});
-                }
-              })
-            } else {
-              this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
-              this.loading = false;
-            }
+          imageConversion.compress(file,0.6).then(res=>{
+            let uploadFile = new File([res], fileName, {type: res.type});
+            addCoverImg(uploadFile).then(res=>{
+              if(res.data.status=='201') {
+                this.dialogAddVisible = false;
+                addStorage({
+                  article_num: this.newStorage.article_num, 
+                  user_id: this.newStorage.user_id,
+                  apply_id: this.newStorage.apply_id,
+                  size: this.newStorage.size.join('*'), 
+                  weight: this.newStorage.weight,
+                  pic: res.data.cover_img_url,
+                }).then(resAdd=>{
+                  if(resAdd.data.status=='200') {
+                    this.loading = false;
+                    this.currentPage = 1;
+                    this.$message({type: 'success',message: '新增成功'});
+                    this._getList(this.currentPage);
+                  }
+                  else {
+                    this.$message({type: 'warning',message: '新增失败——'+resAdd.data.msg});
+                  }
+                })
+              } else {
+                this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
+                this.loading = false;
+              }
+            })
           })
         }
       },
@@ -355,16 +364,18 @@
           } else {
             let file = this.$refs.uploadImgStorageEdit.uploadFiles.pop().raw;
             let fileName = new Date().getTime() + '-' +file.name;
-            let uploadFile = new File([file], fileName, {type: file.type});
-            addCoverImg(uploadFile).then(res=>{
-              if(res.data.status=='201') {
-                this.dialogAddVisible = false;
-                this.editStoragePic = res.data.cover_img_url;
-                this.goEditDeploy();
-              } else {
-                this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
-                this.loading = false;
-              }
+            imageConversion.compress(file,0.6).then(res=>{
+              let uploadFile = new File([res], fileName, {type: res.type});
+              addCoverImg(uploadFile).then(res=>{
+                if(res.data.status=='201') {
+                  this.dialogAddVisible = false;
+                  this.editStoragePic = res.data.cover_img_url;
+                  this.goEditDeploy();
+                } else {
+                  this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
+                  this.loading = false;
+                }
+              })
             })
           }
         }       

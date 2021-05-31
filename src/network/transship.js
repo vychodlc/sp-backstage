@@ -1,7 +1,8 @@
 import { request } from "./request";
 
 /* 申报api */ 
-export function addApply(user_id,order) {
+export function addApply(user_id,order,brand) {
+  console.log(user_id,order,brand);
   let formData = new FormData();
   formData.append('user_id',user_id);
   formData.append('brand',brand);
@@ -69,6 +70,7 @@ export function addStorage(info) {
   formData.append('size',info.size);
   formData.append('weight',info.weight);
   formData.append('pic',info.pic);
+  formData.append('description',info.description);
   return request({
     method: 'POST',
     url: '/add_transship_storage.php',
@@ -128,11 +130,12 @@ export function getUserStorage(user_id) {
 /* 出库api */
 export function addOutput(info) {
   let formData = new FormData();
-  formData.append('storage_nums',info.storage_nums.map(item=>('"'+item+'"')).join(','));
+  formData.append('storage_nums',info.storage_nums.join(','));
   formData.append('user_id',info.user_id);
   formData.append('outbound_type',info.outbound_type);
   formData.append('material',info.material.join(','));
   formData.append('address',info.address);
+  formData.append('price',info.price);
   return request({
     method: 'POST',
     url: '/add_transship_outbound.php',
@@ -161,7 +164,6 @@ export function filterOutput(filter,value,p) {
   })
 }
 export function editOutput(info) {
-  console.log(info);
   let formData = new FormData();
   formData.append('user_id',info.user_id);
   formData.append('address',info.address);
@@ -169,6 +171,7 @@ export function editOutput(info) {
   formData.append('storage_nums',info.storage_nums.map(item=>('"'+item+'"')).join(','));
   formData.append('outbound_type',info.outbound_type);
   formData.append('material',info.material.join(','));
+  formData.append('price',info.price);
   return request({
     method: 'POST',
     url: '/edit_transship_outbound.php',
@@ -185,7 +188,7 @@ export function changeOutput(outbound_ID,outbound_status) {
     data: formData
   })
 }
-/* 货号api */
+/* 转运码api */
 export function addTransshipCode(user_id) {
   let formData = new FormData();
   formData.append('user_id',user_id);
@@ -199,6 +202,11 @@ export function getTransshipCode(user_id) {
   return request({
     url: '/get_transship_code.php',
     params: {user_id}
+  })
+}
+export function getTransshipCodeList() {
+  return request({
+    url: '/get_transship_code_list.php',
   })
 }
 export function getUserByTransshipCode(code) {

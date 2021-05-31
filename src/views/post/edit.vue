@@ -18,9 +18,9 @@
           </el-form-item>
           <el-form-item label="归档" prop="menu">
             <el-radio-group v-model="postForm.menu">
-              <el-radio label="品牌" border>品牌</el-radio>
-              <el-radio label="种类" border>种类</el-radio>
-              <el-radio label="年代" border>年代</el-radio>
+              <el-radio style="margin-right:0" label="品牌" border>品牌</el-radio>
+              <el-radio style="margin-right:0" label="种类" border>种类</el-radio>
+              <el-radio style="margin-right:0" label="年代" border>年代</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="封面图片" prop="cover">
@@ -42,8 +42,8 @@
           </el-form-item>
           <el-form-item label="活动" :inline='true' prop="activity">
             <el-radio-group v-model="postForm.activity">
-              <el-radio label="0" border>无</el-radio>
-              <el-radio label="1" border>代购</el-radio>
+              <el-radio style="margin-right:0" label="0" border>无</el-radio>
+              <el-radio style="margin-right:0" label="1" border>代购</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="活动开始时间" v-if="postForm.activity!=0&&postForm.activity!=null" prop="act_start_time">
@@ -106,6 +106,7 @@ import { getTag } from '@/network/tag.js'
 import { addPost,editPost,addCoverImg,getPostDetail } from '@/network/post.js'
 import { msToDate } from '@/utils/time.js'
 import { imgUrlToFile,dataURLtoFile,Url2Base64 } from '@/utils/image.js'
+import * as imageConversion from 'image-conversion';
 
 import { quillEditor } from "vue-quill-editor"; //调用编辑器
 import 'quill/dist/quill.core.css';
@@ -174,7 +175,7 @@ export default {
     },
     getHtml() {
       let h = '<h1>'+this.escapeStringHTML(this.postForm.title)+'</h1>'+'<h4>'+'</h4>'+this.escapeStringHTML(this.postForm.content);
-      console.log(h);
+      // console.log(h);
       return h;
     },
     handleChange(file,filelist) {
@@ -203,14 +204,16 @@ export default {
       } else {
         let file = this.$refs.uploadContentImg.uploadFiles.pop().raw;
         let fileName = new Date().getTime() + '-' +file.name;
-        let uploadFile = new File([file], fileName, {type: file.type});
-        addCoverImg(uploadFile).then(res=>{
-          if(res.data.status=='201') {
-            const quill=this.$refs.myQuillEditor.quill;
-            const pos=quill.getSelection().index;
-            quill.insertEmbed(pos,'image',res.data.cover_img_url);
-          }
-        })
+        imageConversion.compress(file,0.6).then(res=>{
+          let uploadFile = new File([res], fileName, {type: res.type});
+          addCoverImg(uploadFile).then(res=>{
+            if(res.data.status=='201') {
+              const quill=this.$refs.myQuillEditor.quill;
+              const pos=quill.getSelection().index;
+              quill.insertEmbed(pos,'image',res.data.cover_img_url);
+            }
+          })
+		    })
       }
     },
     handleExceed() {
@@ -263,49 +266,51 @@ export default {
         } else {
           let file = this.$refs.uploadCover.uploadFiles.pop().raw;
           let fileName = new Date().getTime() + '-' +file.name;
-          let uploadFile = new File([file], fileName, {type: file.type});
-          addCoverImg(uploadFile).then(res=>{
-            if(res.data.status=='201') {
-              this.postForm.cover = res.data.cover_img_url;
-              if(this.postForm.activity==0) {
-                this.postForm.act_start_time=''
-                this.postForm.act_end_time=''
-                this.postForm.act_link=''
-              }
-              if(this.postForm.act_start_time!=''){this.postForm.act_start_time = msToDate(this.postForm.act_start_time.getTime()).hasTime};
-              if(this.postForm.act_end_time!=''){this.postForm.act_end_time = msToDate(this.postForm.act_end_time.getTime()).hasTime};  
-              
-              if(this.isEdit==true) {
-                editPost(this.postForm).then(res=>{
-                  console.log('EDIT HAS IMG');
-                  if(res.data.status='200') {
-                    this.$message({type: 'success',message: '修改文章成功!'});
-                    this.$router.replace('/home/post')
-                    this.loading = false;
-                  } else {
-                    this.$message({type: 'error',message: res.data.msg});
-                    this.loading = false;
-                  }
-                })
+          imageConversion.compress(file,0.6).then(res=>{
+            let uploadFile = new File([res], fileName, {type: res.type});
+            addCoverImg(uploadFile).then(res=>{
+              if(res.data.status=='201') {
+                this.postForm.cover = res.data.cover_img_url;
+                if(this.postForm.activity==0) {
+                  this.postForm.act_start_time=''
+                  this.postForm.act_end_time=''
+                  this.postForm.act_link=''
+                }
+                if(this.postForm.act_start_time!=''){this.postForm.act_start_time = msToDate(this.postForm.act_start_time.getTime()).hasTime};
+                if(this.postForm.act_end_time!=''){this.postForm.act_end_time = msToDate(this.postForm.act_end_time.getTime()).hasTime};  
+                
+                if(this.isEdit==true) {
+                  editPost(this.postForm).then(res=>{
+                    console.log('EDIT HAS IMG');
+                    if(res.data.status='200') {
+                      this.$message({type: 'success',message: '修改文章成功!'});
+                      this.$router.replace('/home/post')
+                      this.loading = false;
+                    } else {
+                      this.$message({type: 'error',message: res.data.msg});
+                      this.loading = false;
+                    }
+                  })
+                } else {
+                  this.postForm.author = localStorage.nickname;
+                  this.postForm.author_id = localStorage.uuid;
+                  addPost(this.postForm).then(res=>{
+                    console.log('ADD HAS IMG');
+                    if(res.data.status='200') {
+                      this.$message({type: 'success',message: '新建文章成功!'});
+                      this.$router.replace('/home/post')
+                      this.loading = false;
+                    } else {
+                      this.$message({type: 'error',message: res.data.msg});
+                      this.loading = false;
+                    }
+                  })
+                }
               } else {
-                this.postForm.author = localStorage.nickname;
-                this.postForm.author_id = localStorage.uuid;
-                addPost(this.postForm).then(res=>{
-                  console.log('ADD HAS IMG');
-                  if(res.data.status='200') {
-                    this.$message({type: 'success',message: '新建文章成功!'});
-                    this.$router.replace('/home/post')
-                    this.loading = false;
-                  } else {
-                    this.$message({type: 'error',message: res.data.msg});
-                    this.loading = false;
-                  }
-                })
+                this.$message({type: 'error',message: res.data.msg});
+                this.loading = false;
               }
-            } else {
-              this.$message({type: 'error',message: res.data.msg});
-              this.loading = false;
-            }
+            })
           })
         }
       }

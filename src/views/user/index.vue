@@ -4,8 +4,8 @@
     v-loading="loading"
     ref="userTable"
     :data="tableData.filter(data => !search || data.user_nickname.toLowerCase().includes(search.toLowerCase()))"
-    style="width: 100%"
-    height="80vh"
+    class="elTable"
+    style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
     @selection-change="handleSelectionChange">
       <el-table-column
         type="selection"
