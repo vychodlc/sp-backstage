@@ -45,59 +45,68 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="卡号">
-          <el-input v-model="newItem.card_num"></el-input>
-        </el-form-item>
-        <el-form-item label="PIN码">
-          <el-input v-model="newItem.pin"></el-input>
-        </el-form-item>
-        <el-form-item label="余额">
-          <el-input v-model="newItem.balance"></el-input>
-        </el-form-item>
-        <el-form-item label="品牌">
-          <el-radio v-model="newItem.brand" label="N">Nike</el-radio>
-          <el-radio v-model="newItem.brand" label="A">Adidas</el-radio>
-          <el-radio v-model="newItem.brand" label="JD">JDsports</el-radio>  
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="卡号" label-width="80px">
+              <el-input v-model="newItem.card_num"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="PIN" label-width="80px">
+              <el-input v-model="newItem.pin"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="品牌" label-width="80px">
+              <el-select v-model="newItem.brand" placeholder="请选择品牌">
+                <el-option label="Nike" value="N"></el-option>
+                <el-option label="Adidas" value="A"></el-option>
+                <el-option label="JD·Sports" value="JD"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item style="float:right">
+          <el-button type="success" @click="dialogEditVisible=true">批量添加</el-button>
+          <el-button type="primary" @click="handleAddAdd()">添加</el-button>
         </el-form-item>
       </el-form>
+      <el-table
+      height="400"
+      style="width: 100%;overflow:hidden;"
+      :data="newItems">
+        <el-table-column min-width="30%" label="卡号" prop="card_num"></el-table-column>
+        <el-table-column min-width="20%" label="PIN" prop="pin"></el-table-column>
+        <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
+        <el-table-column min-width="20%" label="余额" prop="balance"></el-table-column>
+        <el-table-column
+          prop="right"
+          label=""
+          width="100">
+          <template slot-scope="scope">
+            <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+            <el-tag v-else type="success" size="mini">OK</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogAddVisible = false" size="mini">取 消</el-button>
         <el-button type="primary" @click="goAdd()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改库存信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="批量导入礼品卡" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="库存编号">
-          <el-input v-model="editStorageID" disabled autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="货品尺寸">
-          <el-row>
-            <el-col>
-              <el-form-item label="长(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[0]"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col>
-              <el-form-item label="宽(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[1]"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col>
-              <el-form-item label="高(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[2]"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item label="重量">
-          <el-input v-model="editStorageWeight"></el-input>
+        <el-form-item label="文本信息">
+          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx
+xxxx xxxx xxxx
+卡号 PIN 品牌"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogEditVisible = false">取 消</el-button>
-        <el-button type="primary" @click="goEdit()">确 定</el-button>
+        <el-button @click="dialogEditVisible = false" size="mini">取 消</el-button>
+        <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
     <div class="pagination">
@@ -118,6 +127,7 @@
     name: "giftcard",
     data () {
       return {
+        showDialog: true,
         brand: 'N',
         search: null,
         searchWord: null,
@@ -133,9 +143,11 @@
           pin: '',
           balance: '',
           brand: '',
+          right: false
         },
-        newItemExpressid: '',
-        newItemEmail: '',
+        newItemText: '',
+        newItems: [],
+        handleNum: 0,
 
         dialogEditVisible: false,
         editStorageID: '',
@@ -157,6 +169,9 @@
       }
     },
     methods:{
+      test(index) {
+        console.log(index);
+      },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
@@ -190,77 +205,107 @@
           pin: '',
           balance: '',
           brand: '',
+          right: false,
         };
         this.dialogAddVisible = true;
       },
-      goAdd() {
+      handleAddAdd() {
         if(this.newItem.card_num=='') {
           this.$message({type: 'warning',message: '请填写礼品卡号'});
         } else if(this.newItem.pin=='') {
           this.$message({type: 'warning',message: '请填写礼品卡PIN码'});
-        } else if(this.newItem.balance=='') {
-          this.$message({type: 'warning',message: '请填写礼品卡余额'});
         } else if(this.newItem.brand=='') {
           this.$message({type: 'warning',message: '请填写礼品卡品牌'});
-        } else {        
-          this.loading = true;
-          addGiftcard({
-            card_num: this.newItem.card_num,
-            pin: this.newItem.pin,
-            balance: this.newItem.balance,
-            brand: this.newItem.brand,
+        } else {
+          this.addItem(this.newItem);
+          this.newItem = {
+            card_num: '',
+            pin: '',
+            balance: '',
+            brand: '',
+          };
+        } 
+      },
+      addItem(item) {
+        if(item.brand.toUpperCase().indexOf('N')!=-1) {
+          console.log('Nike go go go');
+          this.$axios({
+            method: 'post',
+            url: 'https://api.nike.com/payment/giftcard_balance/v1/',
+            data: JSON.stringify({
+              'accountNumber': item.card_num.toString(),
+              'currency': 'GBP',
+              'pin': item.pin.toString(),
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              "appid":"orders",
+              "x-nike-visitid":"3",
+              "x-nike-visitorid":this.guid(),
+            }
           }).then(res=>{
-            if(res.data.status=='200') {
-              this.loading = false;
-              this.currentPage = 1;
-              this.$message({type: 'success',message: '新增成功'});
-              this._getList(this.currentPage);
-              this.dialogAddVisible = false;
-            }
-            else {
-              this.$message({type: 'warning',message: '新增失败——'+res.data.msg});
-            }
+            item.balance = res.data.balance;
+            item.right = true;
+            this.newItems.push(item);
+          }).catch(e=>{
+            this.$message({type: 'warning',message: '卡号或PIN码错误'});
+            item.balance = 0;
+            item.right = false;
+            this.newItems.push(item);
           })
+        } else if(item.brand.toUpperCase().indexOf('A')!=-1) {
+          console.log('Adidas go go go');
+        } else if(item.brand.toUpperCase().indexOf('J')!=-1) {
+          console.log('JD go go go');
         }
       },
-      handleEdit(index,row) {
-        this.editStorageID = row.storage_ID;
-        this.editStorageSize = row.size.split('*').map(item=>parseInt(item));
-        this.editStorageNumber = row.article_num;
-        this.editStorageWeight = row.weight;
-        this.editStoragePic = row.pic;
-        this.dialogEditVisible = true;
-      },
-      goEdit() {
-        if (this.editStorageSize[0]=='') {
-          this.$message({type: 'warning',message: '请填写长度'});
-        } else if (this.editStorageSize[1]=='') {
-          this.$message({type: 'warning',message: '请填写宽度'});
-        } else if (this.editStorageSize[2]=='') {
-          this.$message({type: 'warning',message: '请填写高度'});
-        } else if (this.editStorageWeight=='') {
-          this.$message({type: 'warning',message: '请填写重量'});
+      enterItems() {
+        if(this.newItemText=='') {
+          this.$message({type: 'warning',message: '请输入内容'});
         } else {
-          this.dialogEditVisible = false;
-          this.loading = true;
-          editStorage({
-            'storage_ID': this.editStorageID,
-            'article_num': this.editStorageNumber,
-            'size': this.editStorageSize.join('*'),
-            'weight': this.editStorageWeight,
-            'pic': this.editStoragePic,
-          }).then(res=>{
-            if(res.data.status=='200') {
+          let items = [];
+          let rows = this.newItemText.split('\n');
+          rows.map(row=>{
+            if(row!='') {
+              let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
+              this.addItem({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
               this.dialogEditVisible = false;
-              this.currentPage = 1;
-              this._getList(this.currentPage);
-              this.$message({type: 'success',message: '修改成功'});
-            } else {
-              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
-              this.loading = false;
             }
           })
-        }       
+          this.newItemText = '';
+        }
+      },
+      goAdd() {
+        if(this.newItems.length==0) {
+          this.$message({type: 'warning',message: '请添加礼品卡信息'});
+        } else {
+          this.handleNum = this.newItems.filter(item=>{return item.right==true}).length;
+          if(this.handleNum==0) {
+            this.loading = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          } else {
+            this.loading = true;
+          }
+          this.dialogAddVisible = false;
+          while(this.newItems.length!=0) {
+            let data = this.newItems.pop();
+            if(data.right==true) {
+              this._addGiftcard(data);
+            }
+          }
+        }
+      },
+      _addGiftcard(item) {
+        addGiftcard(item).then(res=>{
+          console.log(res);
+          this.handleNum--
+          if(this.handleNum==0) {
+            this.loading = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          }
+        })
       },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.giftcard_ID +'的礼品卡, 是否继续?', '提示', {
@@ -310,7 +355,13 @@
         this.brand = brand;
         this.pageIndex = 1;
         this._getList(this.pageIndex);
-      }
+      },
+      guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      },
     },
     mounted() {
       this._getList(this.currentPage)

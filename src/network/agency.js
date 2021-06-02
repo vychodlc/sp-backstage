@@ -2,6 +2,7 @@ import {request} from './request'
 
 // 增
 export function addGiftcard(info) {
+  console.log(info);
   let formData = new FormData();
   formData.append('card_num',info.card_num);
   formData.append('pin',info.pin);
