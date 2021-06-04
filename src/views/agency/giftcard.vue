@@ -255,6 +255,27 @@ xxxx xxxx xxxx
           })
         } else if(item.brand.toUpperCase().indexOf('A')!=-1) {
           console.log('Adidas go go go');
+          this.$axios({
+            method: 'post',
+            url: 'https://www.jdsports.co.uk/gift-cards/'+item.card_num,
+            data: JSON.stringify({
+              'cardPin': item.pin.toString(),
+            }),
+            headers: {
+              "Content-Type": "application/json",
+		          "accept": "*/*",
+		          "x-requested-with": "XMLHttpRequest",
+            }
+          }).then(res=>{
+            item.balance = res.data.balance;
+            item.right = true;
+            this.newItems.push(item);
+          }).catch(e=>{
+            this.$message({type: 'warning',message: '卡号或PIN码错误'});
+            item.balance = 0;
+            item.right = false;
+            this.newItems.push(item);
+          })
         } else if(item.brand.toUpperCase().indexOf('J')!=-1) {
           console.log('JD go go go');
         }

@@ -18,7 +18,6 @@
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
     <el-table
       :data="tableData"
-      style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
       <el-table-column label="申报单号" prop="apply_ID"></el-table-column>
       <el-table-column label="快递单号" prop="expressid"></el-table-column>
@@ -585,8 +584,17 @@
           }))
         } else if(this.newApplyBrand=='JD') {
           let url = "https://data.smartagent.io/v1/jdsports/track-my-order?orderNumber=" + id + "&facia=jdsportsuk&emailAddress=" + email;
-
-          this.$axios.get(url).catch(e=>{
+          let header = {
+            'accept': '*/*',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'zh-CN,zh;q=0.9',
+            'content-type': 'application/json',
+            'origin': 'https:/trackmyorder-v2.smartagent.io',
+            'referer': 'https://trackmyorder-v2.smartagent.io/',
+          }
+          this.$axios.get(url,
+            {headers: headers,}
+          ).catch(e=>{
             this.$message({type: 'warning',message: '订单不存在'});
           }).then(res=>{
             let data = res.data;

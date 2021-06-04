@@ -1,6 +1,26 @@
 import {request} from './request'
 
 // 增
+export function addAgency(info) {
+  let formData = new FormData();
+  formData.append('user_id',info.user_id);
+  formData.append('brand',info.brand);
+  formData.append('storage_link',info.storage_link);
+  formData.append('account_type',info.account_type);
+  formData.append('size',info.size);
+  formData.append('discount_type',info.discount_type);
+  formData.append('discount_code',info.discount_code);
+  formData.append('order_num',info.order_num);
+  formData.append('interval',info.interval);
+  formData.append('giftcard_type',info.giftcard_type);
+  formData.append('giftcards',info.giftcards.join(''));
+  formData.append('price',info.price);
+  return request({
+    method: 'POST',
+    url: '/add_agency.php',
+    data: formData
+  })
+}
 export function addGiftcard(info) {
   console.log(info);
   let formData = new FormData();
@@ -46,6 +66,12 @@ export function delDiscount(discount_ID) {
   })
 }
 // 查
+export function getAgency(p) {
+  return request({
+    url: '/get_agency_list.php',
+    params: {p}
+  })
+}
 export function getGiftcard(p,brand) {
   return request({
     url: '/get_giftcard_list.php',

@@ -46,6 +46,58 @@
       // }).then(res=>{
       //   console.log(res);
       // })
+      // document.addEventListener('plusready', function(){
+      //   var xhr = new plus.net.XMLHttpRequest();
+      //   xhr.onreadystatechange = function () {
+      //     switch ( xhr.readyState ) {
+      //       case 0:
+      //         alert( "xhr请求已初始化" );
+      //       break;
+      //       case 1:
+      //         alert( "xhr请求已打开" );
+      //       break;
+      //       case 2:
+      //         alert( "xhr请求已发送" );
+      //       break;
+      //       case 3:
+      //         alert( "xhr请求已响应");
+      //         break;
+      //       case 4:
+      //         if ( xhr.status == 200 ) {
+      //           alert( "xhr请求成功："+xhr.responseText );
+      //         } else {
+      //           alert( "xhr请求失败："+xhr.readyState );
+      //         }
+      //         break;
+      //       default :
+      //         break;
+      //     }
+      //   }
+        
+      //   let item = {card_num:5948883129,pin:"S61V"}
+      //   xhr.open( "POST", "https://www.jdsports.co.uk/gift-cards/"+item.card_num);
+      //   xhr.send();
+      //   xhr.send(JSON.stringify({'card_num':'5948883129'}));
+      // }, false );
+
+      
+      // let item = {card_num:5948883129,pin:"S61V"}
+      // this.$axios({
+      //   method: 'post',
+      //   url: 'https://www.jdsports.co.uk/gift-cards/'+item.card_num,
+      //   data: JSON.stringify({
+      //     'cardPin': item.pin.toString(),
+      //   }),
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "accept": "*/*",
+      //     "x-requested-with": "XMLHttpRequest",
+      //   }
+      // }).then(res=>{
+      //   item.balance = res.data.balance;
+      //   item.right = true;
+      //   this.newItems.push(item);
+      // })
     },
   }
 </script>

@@ -340,9 +340,22 @@ template {
   display: none;
 }
 
-.elTable {
-  width: 100%;height: calc(100vh - 142px);overflow-y:scroll
-}
+/* .elTable {
+  width: 100%;max-height: calc(100vh - 142px);overflow-y:scroll
+} */
 .el-table {
   width: 100%;height: calc(100vh - 142px);overflow-y:scroll
+}
+.el-table__row {
+  height: calc((100vh - 142px - 53px) / 10);
+}
+
+#giftCardTable .el-table__row {
+  height: auto;
+}
+#giftCardTable td {
+  padding: 0; 
+}
+#giftCardTable th {
+  padding: 3px 0;
 }
