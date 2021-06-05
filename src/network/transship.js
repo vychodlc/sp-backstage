@@ -168,7 +168,7 @@ export function editOutput(info) {
   formData.append('user_id',info.user_id);
   formData.append('address',info.address);
   formData.append('outbound_ID',info.outbound_ID);
-  formData.append('storage_nums',info.storage_nums.map(item=>('"'+item+'"')).join(','));
+  formData.append('storage_nums',info.storage_nums.join(','));
   formData.append('outbound_type',info.outbound_type);
   formData.append('material',info.material.join(','));
   formData.append('price',info.price);

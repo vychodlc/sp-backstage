@@ -151,6 +151,7 @@
             class="upload-demo"
             :on-change='handleChangeImgAdd'
             action="#"
+            multiple
             accept="image/jpeg,image/gif,image/png"
             list-type="picture"
             :auto-upload="false">
@@ -246,6 +247,7 @@
             ref="uploadImgOutputEdit"
             class="upload-demo"
             action="#"
+            multiple
             accept="image/jpeg,image/gif,image/png"
             :on-change='handleChangeImgEdit'
             list-type="picture"
