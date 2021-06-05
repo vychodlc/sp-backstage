@@ -101,7 +101,7 @@
           </el-row>
         </el-form-item> -->
         <el-form-item label="用户邮箱">
-          <el-input v-model="newOutput.email" @input="userStorage=[]">
+          <el-input v-model="newOutput.email" @input="userStorage=[];userAddress=[]">
             <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(newOutput.email)"></el-button>
           </el-input>
         </el-form-item>
@@ -189,8 +189,8 @@
       <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
         <el-form-item label="用户邮箱">
-          <el-input v-model="editOutput.email" @input="userStorage=[]">
-            <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(editOutput.email)"></el-button>
+          <el-input v-model="editOutput.email" disabled>
+            <!-- <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(editOutput.email)"></el-button> -->
           </el-input>
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
@@ -441,16 +441,20 @@
             if(res.data.status=='200') {
               let user_id = res.data.user_ID;
               this.newOutput.user_id = user_id;
-              getUserStorage(res.data.user_ID).then(res=>{
-                if(res.data.status=='200') {
-                  if(res.data.data.length==0) {
+              getUserStorage(res.data.user_ID).then(res1=>{
+                if(res1.data.status=='200') {
+                  if(res1.data.data.length==0) {
                     this.$message({type: 'warning',message: '未查到该用户的库存信息'});
                   }
-                  this.userStorage = res.data.data;
-                  filterAddress(0,'user_id',user_id).then(res=>{
-                    this.userAddress = res.data.data;
-                    let defaultAddr = this.userAddress.filter(item=>item.default=='1');
-                    this.newOutput.address = (defaultAddr.length==1)?defaultAddr[0].addr:this.userAddress[0].addr;
+                  filterAddress(0,'user_id',user_id).then(res2=>{
+                    if(res2.data.address_num=='0') {
+                      this.$message({type: 'warning',message: '未查到该用户的地址信息'});
+                    } else {
+                      this.userStorage = res1.data.data;
+                      this.userAddress = res2.data.data;
+                      let defaultAddr = this.userAddress.filter(item=>item.default=='1');
+                      this.newOutput.address = (defaultAddr.length==1)?defaultAddr[0].addr:this.userAddress[0].addr;
+                    }
                   })
                 } else {
                   this.$message({type: 'warning',message: '获取库存信息失败\n'+res.data.msg});
@@ -579,7 +583,6 @@
       },
       editDelImg(index) {
         this.editOutput.material.splice(index,1);
-        console.log(this.editOutput);
       },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.outbound_ID +'的出库信息, 是否继续?', '提示', {

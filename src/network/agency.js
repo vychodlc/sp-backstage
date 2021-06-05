@@ -7,13 +7,15 @@ export function addAgency(info) {
   formData.append('brand',info.brand);
   formData.append('storage_link',info.storage_link);
   formData.append('account_type',info.account_type);
-  formData.append('size',info.size);
+  formData.append('size',info.size.join(','));
   formData.append('discount_type',info.discount_type);
   formData.append('discount_code',info.discount_code);
   formData.append('order_num',info.order_num);
   formData.append('interval',info.interval);
   formData.append('giftcard_type',info.giftcard_type);
-  formData.append('giftcards',info.giftcards.join(''));
+  let giftcards = info.giftcards;
+  // let giftcards = info.giftcards.filter(item=>{return item.right==true||item.right=='true'})
+  formData.append('giftcards',JSON.stringify(giftcards));
   formData.append('price',info.price);
   return request({
     method: 'POST',
@@ -22,7 +24,6 @@ export function addAgency(info) {
   })
 }
 export function addGiftcard(info) {
-  console.log(info);
   let formData = new FormData();
   formData.append('card_num',info.card_num);
   formData.append('pin',info.pin);
@@ -85,3 +86,13 @@ export function getDiscount(p,brand) {
   })
 }
 // 改
+export function changeAgency(info) {
+  let formData = new FormData()
+  formData.append('agency_ID',info.agency_ID);
+  formData.append('agency_status',info.agency_status);
+  return request({
+    method: 'POST',
+    url: '/change_agency.php',
+    data: formData
+  })
+}

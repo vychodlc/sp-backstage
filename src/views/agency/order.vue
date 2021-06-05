@@ -70,10 +70,13 @@
       <el-table-column label="采购时间" prop="interval"></el-table-column>
       <el-table-column label="状态" prop="agency_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.agency_status==0" type="warning">待审核</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==1" type="primary">采购中</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==2" type="success">已完成</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==0" type="warning">待支付</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==1" type="primary">待受理</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==2" type="info">支付取消</el-tag>
           <el-tag size="mini" v-if="scope.row.agency_status==3" type="info">已驳回</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==4" type="success">进行中</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==5" type="info">已完成</el-tag>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="right" width="80">
@@ -83,12 +86,12 @@
             type="primary"
             @click="handleAdd()">新增</el-button>
         </template>
-        <template slot-scope="scope">
+        <!-- <template slot-scope="scope">
           <el-button
             size="mini"
             type="danger"
             @click="handleDelete(scope.index, scope.row)">删除</el-button>
-        </template>
+        </template> -->
       </el-table-column>
     </el-table>
     
@@ -126,7 +129,7 @@
             <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
             <el-table-column min-width="20%" label="" prop="right">
               <template slot-scope="scope">
-                <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+                <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItem.giftcards.splice(scope.$index,1)"></el-button>
                 <el-tag v-else type="success" size="mini">OK</el-tag>
               </template>
               <template slot="header">
@@ -180,6 +183,22 @@ xxxx xxxx xxxx
         <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="订单状态修改" :visible.sync="dialogStatusVisible">
+      <el-form>
+        <el-form-item>
+          <el-radio v-model="dialogStatus" label="0">待支付</el-radio>
+          <el-radio v-model="dialogStatus" label="1">待受理</el-radio>
+          <el-radio v-model="dialogStatus" label="2">支付取消</el-radio>
+          <el-radio v-model="dialogStatus" label="3">已驳回</el-radio>
+          <el-radio v-model="dialogStatus" label="4">进行中</el-radio>
+          <el-radio v-model="dialogStatus" label="5">已完成</el-radio>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogStatusVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goStatusChange()">确 定</el-button>
+      </div>
+    </el-dialog>
     <div class="pagination">
       <el-pagination
         small
@@ -193,7 +212,7 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency } from '@/network/agency.js'
+  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency } from '@/network/agency.js'
   import { getUserByEmail } from '@/network/user.js'
   export default {
     name: "giftcard",
@@ -234,6 +253,9 @@ xxxx xxxx xxxx
         handleNum: 0,
 
         dialogEditVisible: false,
+        dialogStatusVisible: false,
+        oldAgency: null,
+        dialogStatus: '',
         editStorageID: '',
         editStorageSize: '',
         editStorageNumber: '',
@@ -254,14 +276,12 @@ xxxx xxxx xxxx
     },
     methods:{
       test(index) {
-        console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
         } else {
           getAgency(pageIndex).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.agencys_num);
               this.tableData = res.data.data;
@@ -320,7 +340,6 @@ xxxx xxxx xxxx
           getUserByEmail(this.newItem.user_email).then(res=>{
             if(res.data.status=='200') {
               this.newItem.user_id = res.data.user_ID;
-              this.newItem.size = this.newItem.size.join(',');
               addAgency(this.newItem).then(res=>{
                 if(res.data.status=='200') {
                   this.dialogAddVisible = false;
@@ -410,6 +429,26 @@ xxxx xxxx xxxx
       },
       _addGiftcard(item) {
         this.newItem.giftcards.push(item);
+      },
+      changeStatus(row) {
+        this.dialogStatusVisible = true;
+        this.dialogStatus = row.agency_status;
+        this.oldAgency = row;
+      },
+      goStatusChange() {
+        if(this.oldAgency.agency_status!=this.dialogStatus) {
+          changeAgency({
+            'agency_ID': this.oldAgency.agency_ID,
+            'agency_status': this.dialogStatus,
+          }).then(res => {
+            this.$message({type: 'success',message: '状态修改成功'});
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+            this.dialogStatusVisible = false;
+          })
+        } else {
+          this.$message({type: 'warning',message: '状态未修改'});
+        }
       },
     },
     mounted() {
