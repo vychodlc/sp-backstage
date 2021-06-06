@@ -20,20 +20,24 @@ export function request(config) {
 
   instance.interceptors.response.use(res => {
     if(res.data.status=='401'||res.data.status=='408') {
-      localStorage.removeItem('token');
-      router.replace({
-        path: '/login',
-      })
+      localStorage.clear();
+      if(router.currentRoute.fullPath!='/login') {
+        router.replace({
+          path: '/login',
+        })
+      }
     }
     return res
   }, err => {
     if(err){
       switch(err.status){
         case "401":
-          localStorage.removeItem('token');
-          router.replace({
-            path: '/login',
-          })
+          localStorage.clear();
+          if(router.currentRoute.fullPath!='/login') {
+            router.replace({
+              path: '/login',
+            })
+          }
       }
     }
   })

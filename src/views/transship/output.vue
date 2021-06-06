@@ -352,7 +352,7 @@
         if(this.isSearch==true) {
           filterOutput(this.filter,this.search,pageIndex).then(res => {
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.filter_num);
+              this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
               this.loading = false;
               for(let item in this.tableData) {
@@ -487,9 +487,6 @@
           this.editOutput.email = res.data.data.user_email;
           getUserStorage(row.user_id).then(res=>{
             if(res.data.status=='200') {
-              if(res.data.data.length==0) {
-                this.$message({type: 'warning',message: '未查到该用户的库存信息'});
-              }
               this.userStorage = res.data.data;
               filterStorage('user_id',row.user_id,0).then(res=>{
                 let data = res.data.data;

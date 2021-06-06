@@ -234,3 +234,15 @@ export function getUserByTransshipCode(code) {
 //     }
 //   })
 // }
+
+export function getCrawlerOrder(info) {
+  console.log(info);
+  return request({
+    url: '/get_crawler_order_demo.php',
+    params: {
+      id: info.id,
+      email: info.email,
+      brand: info.brand
+    }
+  })
+}

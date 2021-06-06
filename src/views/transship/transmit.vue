@@ -183,7 +183,7 @@
 </template>
 
 <script>
-  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply } from '@/network/transship.js'
+  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply,getCrawlerOrder } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { getUserByEmail } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
@@ -247,8 +247,9 @@
         this.loading = true;
         if(this.isSearch==true) {
           filterApply(this.filter,this.search,pageIndex).then(res => {
+            console.log(res);
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.filter_num);
+              this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
               this.loading = false;
             } else {
@@ -262,7 +263,6 @@
               this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
               this.loading = false;
-              console.log(this.tableData);
             } else {
               this.$message({type: 'error',message: res.data.msg})
             }      
@@ -565,7 +565,6 @@
             getUserByEmail(this.newApplyUserEmail).then(res=>{
               if(res.data.status=='200') {
                 addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  console.log(res);
                   if(res.data.status=='200') {
                     this.dialogAddVisible = false;
                     this.currentPage = 1;
@@ -593,7 +592,7 @@
             'referer': 'https://trackmyorder-v2.smartagent.io/',
           }
           this.$axios.get(url,
-            {headers: headers,}
+            {headers: header,}
           ).catch(e=>{
             this.$message({type: 'warning',message: '订单不存在'});
           }).then(res=>{
@@ -639,7 +638,6 @@
             getUserByEmail(this.newApplyUserEmail).then(res=>{
               if(res.data.status=='200') {
                 addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  console.log(res);
                   if(res.data.status=='200') {
                     this.dialogAddVisible = false;
                     this.currentPage = 1;
@@ -657,54 +655,37 @@
             })
           })
         } else if(this.newApplyBrand=='A') {
-          
-          let url = "https://www.adidas.co.uk/api/orders/search" + id + "&facia=jdsportsuk&emailAddress=" + email;
-
-          this.$axios.get(url).catch(e=>{
-            this.$message({type: 'warning',message: '订单不存在'});
+          getCrawlerOrder({
+            id:id,
+            email:email,
+            brand:'A'
           }).then(res=>{
+            
             let data = res.data;
+            returnItem.order_time = data[1];
+            returnItem.price = data[2];
+            returnItem.maxOrderLineStatus = data[3].filter(item=>{return item!=''}).join(',');
+            returnItem.minOrderLineStatus = data[4].filter(item=>{return item!=''}).join(',');
+            returnItem.rolledUpStatus = data[5].filter(item=>{return item!=''}).join(',');
+            returnItem.size = data[6].filter(item=>{return item!=''}).join(',');
+            returnItem.style = data[7].filter(item=>{return item!=''}).join(',');
+            returnItem.op_date = data[8];
+            returnItem.op_description = data[9];
+            returnItem.op_quantity = data[10].filter(item=>{return item!=''}).join(',');
+            returnItem.first_address = data[11];
+            returnItem.second_address = data[12];
+            returnItem.city = data[13];
+            returnItem.postal = data[14];
+            returnItem.country = data[15];
+            returnItem.gift = data[16];
+            returnItem.tracker = data[17];
 
-            returnItem.order_time.push(data.creationDate?data.creationDate:'');
-            returnItem.price.push(data.totalAmount?data.totalAmount:'');
-            if(data.productLineItems) {
-              data.productLineItems.map(productLineItem=>{
-                returnItem.op_description.push(productLineItem.productName?productLineItem.productName:'');
-                returnItem.op_date.push(productLineItem.statusDate?productLineItem.statusDate:'')
-                returnItem.style.push((productLineItem.articleNumber&&productLineItem.color)?(productLineItem.articleNumber+productLineItem.color):'')
-                returnItem.size.push(productLineItem.literalSize?productLineItem.literalSize:'')
-                returnItem.rolledUpStatus.push(productLineItem.status?productLineItem.status:'')
-              })
-            }
-            if(data.paymentMethods) {
-              data.paymentMethods.map(paymentMethod=>{
-                returnItem.gift.push(paymentMethod.giftCardNumber)
-              })
-            }
-            if(data.shipping&&data.shipping.shippingAddress) {
-              returnItem.first_address.push(data.shipping.shippingAddress.addressLine1?data.shipping.shippingAddress.addressLine1:'')
-              returnItem.second_address.push(data.shipping.shippingAddress.addressLine2?data.shipping.shippingAddress.addressLine2:'')
-              returnItem.city.push(data.shipping.shippingAddress.city?data.shipping.shippingAddress.city:'')
-              returnItem.country.push(data.shipping.shippingAddress.country?data.shipping.shippingAddress.country:'')
-              returnItem.postal.push(data.shipping.shippingAddress.postalCode?data.shipping.shippingAddress.postalCode:'')
-            }
-            if(data.shipments) {
-              data.shipments.map(shipment=>{
-                returnItem.tracker.push(shipment.trackingNo?shipment.trackingNo:'')
-              })
-            }
-            
-            for(let item in returnItem) {
-              returnItem[item] = returnItem[item].join(',')
-            }
-            
             returnItem.id = this.newApplyExpressid;
             returnItem.email = this.newApplyEmail;
             
             getUserByEmail(this.newApplyUserEmail).then(res=>{
               if(res.data.status=='200') {
                 addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  console.log(res);
                   if(res.data.status=='200') {
                     this.dialogAddVisible = false;
                     this.currentPage = 1;
@@ -720,6 +701,14 @@
                 this.$message({type: 'warning',message: '查无用户'});
               }
             })
+            
+            // if(res.data.status=='200') {
+            //   let data = res.data;
+            // } else {
+            //   this.$message({type: 'warning',message: '订单不存在'});
+            // }
+          }).catch(res=>{
+            this.$message({type: 'warning',message: '订单不存在'});
           })
         } else {
           this.$message({type: 'warning',message: '当前只支持 Nike Adidas 和 JD'});
