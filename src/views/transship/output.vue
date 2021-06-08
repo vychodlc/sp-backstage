@@ -1,21 +1,41 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="申报单号" value="outbound_ID"></el-option>
-      <el-option label="用户编号" value="user_id"></el-option>
+      <el-option label="出库单号" value="outbound_ID"></el-option>
+      <el-option label="地址" value="address"></el-option>
+      <!-- <el-option label="用户编号" value="user_id"></el-option> -->
       <el-option label="出库方式" value="outbound_type"></el-option>
+      <el-option label="支付状态" value="pay_status"></el-option>
       <el-option label="状态" value="outbound_status"></el-option>
     </el-select>
-    <template v-if="this.filter=='outbound_status'">
+    <template v-if="filter=='outbound_status'">
       <el-radio v-model="search" label="0">待审核</el-radio>
-      <el-radio v-model="search" label="1">已驳回</el-radio>
-      <el-radio v-model="search" label="2">待出库</el-radio>
-      <el-radio v-model="search" label="3">转运中</el-radio>
-      <el-radio v-model="search" label="4">清关中</el-radio>
-      <el-radio v-model="search" label="5">国内配送中</el-radio>
-      <el-radio v-model="search" label="6">已完成</el-radio>
+      <el-radio v-model="search" label="1">已取消</el-radio>
+      <el-radio v-model="search" label="2">已驳回</el-radio>
+      <el-radio v-model="search" label="3">待出库</el-radio>
+      <el-radio v-model="search" label="4">转运中</el-radio>
+      <el-radio v-model="search" label="5">已完成</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <template v-else-if="filter=='outbound_type'">
+      <el-radio v-model="search" label="0">普通出库</el-radio>
+      <el-radio v-model="search" label="1">退税出库</el-radio>
+    </template>
+    <template v-else-if="filter=='pay_status'">
+      <el-radio v-model="search" label="0">未支付</el-radio>
+      <el-radio v-model="search" label="1">已支付</el-radio>
+    </template>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -47,17 +67,19 @@
       </el-table-column>
       <el-table-column label="状态" prop="outbound_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="warning">待付款</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==1" type="success">待审核</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">已取消</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==3" type="info">已驳回</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==4" type="primary">运输中</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="success">待审核</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==1" type="info">已取消</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">已驳回</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==3" type="primary">待出库</el-tag>
+          <el-tag size="mini" v-if="scope.row.outbound_status==4" type="warning">转运中</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==5" type="info">已完成</el-tag>
-          <el-link v-if="scope.row.outbound_status!=5&&scope.row.outbound_status!=3&&scope.row.outbound_status!=2" 
-          style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,0)"></el-link><br>
+          <el-tag size="mini" v-if="scope.row.pay_status==0" type="warning">未支付</el-tag>
+          <el-tag size="mini" v-if="scope.row.pay_status==1" type="success">已支付</el-tag>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,1)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="250">
+      <el-table-column label="操作" align="right" width="150">
         <template slot="header">
           <el-button
             size="mini"
@@ -65,16 +87,6 @@
             @click="handleAdd()">新增</el-button>
         </template>
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="success"
-            v-if="scope.row.outbound_status==0"
-            @click="handlePay(scope.row)">付款</el-button>
-          <el-button
-            size="mini"
-            type="warning"
-            v-if="scope.row.outbound_status==1"
-            @click="handleRefuse(scope.row)">驳回</el-button>
           <el-button
             size="mini"
             v-if="scope.row.outbound_status==0"
@@ -132,7 +144,7 @@
               v-for="(item,index) in userAddress"
               :key="index"
               :label="item.user_name+' | '+item.addr+' | '+item.phone"
-              :value="item.addr">
+              :value="item.user_name+' | '+item.addr+' | '+item.phone">
             </el-option>
           </el-select>
         </el-form-item>
@@ -166,19 +178,19 @@
       </div>
     </el-dialog>
     <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible">
-      <el-form>
-        <el-form-item v-if="oldRow!=null&&oldRow.outbound_status==0">
-          <el-radio v-model="dialogChange" label="0">待付款</el-radio>
-          <el-radio v-model="dialogChange" label="2">已取消</el-radio>
-        </el-form-item>
-        <el-form-item v-else-if="oldRow!=null&&oldRow.outbound_status==1">
-          <el-radio v-model="dialogChange" label="1">待审核</el-radio>
-          <el-radio v-model="dialogChange" label="3">已驳回</el-radio>
-          <el-radio v-model="dialogChange" label="4">运输中</el-radio>
-        </el-form-item>
-        <el-form-item v-else-if="oldRow!=null&&oldRow.outbound_status==4">
-          <el-radio v-model="dialogChange" label="4">运输中</el-radio>
+      <el-form v-if="changeType==0">
+        <el-form-item>
+          <el-radio v-model="dialogChange" label="0">待审核</el-radio>
+          <el-radio v-model="dialogChange" label="2">已驳回</el-radio>
+          <el-radio v-model="dialogChange" label="3">待出库</el-radio>
+          <el-radio v-model="dialogChange" label="4">转运中</el-radio>
           <el-radio v-model="dialogChange" label="5">已完成</el-radio>
+        </el-form-item>
+      </el-form>
+      <el-form v-else>
+        <el-form-item>
+          <el-radio v-model="dialogChange" label="0">未支付</el-radio>
+          <el-radio v-model="dialogChange" label="1">已支付</el-radio>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -221,7 +233,7 @@
               v-for="(item,index) in userAddress"
               :key="index"
               :label="item.user_name+' | '+item.addr+' | '+item.phone"
-              :value="item.addr">
+              :value="item.user_name+' | '+item.addr+' | '+item.phone">
             </el-option>
           </el-select>
         </el-form-item>
@@ -276,10 +288,10 @@
 </template>
 
 <script>
-  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,filterOutput,filterStorage } from '@/network/transship.js'
+  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { payBalance } from '@/network/payment.js'
-  import { getUserByEmail,getUserInfoById } from '@/network/user.js'
+  import { getUserByEmail,getUserInfoById,getUser } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js';
   import { filterAddress } from '@/network/address.js'
@@ -309,6 +321,7 @@
         },
         
         dialogChangeVisible: false,
+        changeType: null,
         dialogChange: '',
         oldRow: null,
         editStorages: [],
@@ -322,6 +335,8 @@
           email: '',
           price: '',
         },
+        
+        selectList: {},
 
         pageNum: null,
         currentPage: 1,
@@ -341,9 +356,49 @@
       }
     },
     mounted() {
-      this._getList(this.currentPage);
+      getOutputList(0).then(res=>{
+        let data1 = [];
+        let data2 = [];
+        let items = res.data.data;
+        
+        items.map(item=>{
+          data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
+          data2.push({id: 'outbound_ID', key: 'address',value: item.address})
+        })
+        this.selectList.outbound_ID = data1;
+        this.selectList.address = data2;
+        getUser().then(res=>{
+          let data = res.data.data;
+          for(let i=0;i<data.length;i++) {
+            data[i].value = data[i].user_email;
+          }
+          this.selectList.user_email = data;
+          this.loading = false;
+          console.log(this.selectList);
+          this._getList(this.currentPage);
+        })
+      })
     },
     methods:{
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+
+        if(this.filter=='outbound_ID') {
+          let query = this.selectList.outbound_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='address') {
+          let query = this.selectList.address;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {},
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+        };
+      },
       test() {
         console.log(123);
       },
@@ -367,6 +422,7 @@
         } else {
           getOutputList(pageIndex).then(res => {
             if(res.data.status=='200') {
+              console.log(res.data.data);
               this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -633,14 +689,28 @@
         this.$message({type: 'error',message: '请删除当前图片再上传其他图片!'});
       },
 
-      handleChange(row) {
-        this.dialogChange = row.outbound_status;
+      handleChange(row,type) {
+        this.dialogChange = (type==0)?row.outbound_status:row.pay_status;
         this.oldRow = row;
+        this.changeType = type;
         this.dialogChangeVisible = true;
       },
       goChange() {
-        if(this.oldRow.outbound_status!=this.dialogChange) {
+        if(this.oldRow.outbound_status!=this.dialogChange&&this.changeType==0) {
           changeOutput(this.oldRow.outbound_ID,this.dialogChange).then(res => {
+            console.log(res);
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '状态修改成功'});
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+              this.dialogChangeVisible = false;
+            } else {
+              this.$message({type: 'warning',message: '状态修改失败'});
+            }
+          })
+        } else if(this.oldRow.pay_status!=this.dialogChange&&this.changeType==1) {
+          changeOutputPay(this.oldRow.outbound_ID,this.dialogChange).then(res => {
+            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -701,29 +771,33 @@
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        this.searchWord = this.search;
-        if(this.filter=='apply_status') {
-          if(this.search=='0') {
-            this.searchWord = '待付款'
-          } else if(this.search=='1') { 
-            this.searchWord = '待审核'
-          } else if(this.search=='2') { 
-            this.searchWord = '已取消'
-          } else if(this.search=='3') { 
-            this.searchWord = '已驳回'
-          } else if(this.search=='4') { 
-            this.searchWord = '运输中'
-          } else if(this.search=='5') { 
-            this.searchWord = '已完成'
-          }
+        if(this.search==''||this.search==null) {
+          this.$message({type: 'warning',message: '请输入搜索词'});
         } else {
+          this.isSearch = true;
           this.searchWord = this.search;
+          if(this.filter=='apply_status') {
+            if(this.search=='0') {
+              this.searchWord = '待付款'
+            } else if(this.search=='1') { 
+              this.searchWord = '待审核'
+            } else if(this.search=='2') { 
+              this.searchWord = '已取消'
+            } else if(this.search=='3') { 
+              this.searchWord = '已驳回'
+            } else if(this.search=='4') { 
+              this.searchWord = '运输中'
+            } else if(this.search=='5') { 
+              this.searchWord = '已完成'
+            }
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;
@@ -761,8 +835,11 @@
   .editImgBox {
     position: relative;
   }
+  .material {
+    width: 80px;
+  }
   .editImgBox .material {
-    width: 50%;
+    width: 30%;
   }
   .boxDel {
     position: absolute;

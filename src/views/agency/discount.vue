@@ -1,17 +1,351 @@
 <template>
-  <div>discount</div>
+  <div class="post-container">
+    <template>
+      <el-radio style="margin-right:20px" @input="changeBrand('N')" v-model="brand" label="N">Nike</el-radio>
+      <el-radio style="margin-right:20px" @input="changeBrand('A')" v-model="brand" label="A">Adidas</el-radio>
+      <el-radio style="margin-right:20px" @input="changeBrand('JD')" v-model="brand" label="JD">JDSports</el-radio>
+    </template>
+    <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
+      <el-option label="编号" value="discount_ID"></el-option>
+      <el-option label="卡号" value="card_num"></el-option>
+    </el-select>
+    <template v-if="this.filter=='storage_status'">
+      <el-radio v-model="search" label="0">库存中</el-radio>
+      <el-radio v-model="search" label="1">已出库</el-radio>
+    </template>
+    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-button size="small" type="" @click="goSearch">搜索</el-button>
+    <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
+    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
+    
+    <el-table
+      v-loading="loading"
+      :data="tableData"
+      style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
+      class="elTable">
+      <el-table-column label="编号" prop="discount_ID"></el-table-column>
+      <el-table-column label="折扣码" prop="code"></el-table-column>
+      <el-table-column label="种类" prop="type">
+        <template></template>
+      </el-table-column>
+      <el-table-column label="品牌" prop="brand"></el-table-column>
+      <el-table-column label="有效期限" prop="valid_date"></el-table-column>
+      <el-table-column label="添加时间" prop="add_time"></el-table-column>
+      <el-table-column label="操作" align="right" width="200">
+        <template slot="header">
+          <el-button
+            size="mini"
+            type="primary"
+            @click="handleAdd()">新增</el-button>
+        </template>
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="danger"
+            @click="handleDelete(scope.index, scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    
+    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
+      <el-form label-width="100px" size="mini">
+        <el-form-item label="折扣码" label-width="80px">
+          <el-input v-model="newItem.code"></el-input>
+        </el-form-item>
+        <el-form-item label="种类" label-width="80px">
+          <el-radio v-model="newItem.type" label="2">单次码</el-radio>
+          <el-radio v-model="newItem.type" label="3">复用码</el-radio>
+        </el-form-item>
+        <el-form-item label="品牌" label-width="80px">
+          <el-radio v-model="newItem.brand" label="N">Nike</el-radio>
+          <el-radio v-model="newItem.brand" label="A">Adidas</el-radio>
+          <el-radio v-model="newItem.brand" label="JD">JD</el-radio>
+        </el-form-item>
+        <el-form-item label="有效期" label-width="80px">
+          <span>{{newItem.valid_date}}</span>
+          <el-date-picker
+            v-model="newItem.valid_date"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            style="width:100%">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item style="float:right;">
+          <el-button type="success" @click="dialogEditVisible=true">批量添加</el-button>
+          <el-button type="primary" @click="handleAddAdd()">添加</el-button>
+        </el-form-item>
+        <el-table
+        height='200'
+        style="width: 100%;overflow:hidden;"
+        :row-style="{height: '30px'}"
+        :data="newItems">
+          <el-table-column min-width="30%" label="折扣码" prop="code"></el-table-column>
+          <el-table-column min-width="20%" label="种类" prop="pin"></el-table-column>
+          <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
+          <el-table-column min-width="20%" label="余额" prop="balance"></el-table-column>
+          <el-table-column
+            prop="right"
+            label=""
+            width="100">
+            <template slot-scope="scope">
+              <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+              <el-tag v-else type="success" size="mini">OK</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogAddVisible = false" size="medium">取 消</el-button>
+        <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog title="批量导入礼品卡" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
+      <el-form label-width="100px" size="mini">
+        <el-form-item label="文本信息">
+          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxx-xxx
+xxxx xxxx xxxx xxx-xxx
+折扣码 种类 品牌 有效期"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogEditVisible = false" size="mini">取 消</el-button>
+        <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
+      </div>
+    </el-dialog>
+    <div class="pagination">
+      <el-pagination
+        small
+        layout="prev, pager, next, total"
+        :total="pageNum"
+        @current-change="handleCurrentChange"
+        :current-page.sync="currentPage">
+      </el-pagination>
+    </div>
+  </div>
 </template>
 
 <script>
+  import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
   export default {
     name: "discount",
     data () {
-      return {}
+      return {
+        showDialog: true,
+        brand: 'N',
+        search: null,
+        searchWord: null,
+        filter: 'discount_ID',
+        filterWord: null,
+        isSearch: false,
+        loading: true,
+        tableData: [],
+
+        dialogAddVisible: false,
+        newItem: {
+          code: '',type: '',brand: '',valid_date: '',
+          card_num: '',
+          pin: '',
+          balance: '',
+          right: false
+        },
+        newItemText: '',
+        newItems: [],
+        handleNum: 0,
+
+        dialogEditVisible: false,
+        editStorageID: '',
+        editStorageSize: '',
+        editStorageNumber: '',
+        editStorageWeight: '',
+        editStoragePic: '',
+        
+        dialogChangeVisible: false,
+        dialogChange: '',
+        oldStorage: null,
+
+        pageNum: null,
+        currentPage: 1,
+        interpret: {
+          'discount_ID': {name:'编号'},
+          'card_num': {name:'卡号'}
+        }
+      }
     },
-    methods:{}
+    methods:{
+      test(index) {
+        console.log(index);
+      },
+      _getList(pageIndex) {
+        this.loading = true;
+        if(this.isSearch==true) {
+          // filterStorage(this.filter,this.search,pageIndex).then(res => {
+          //   if(res.data.status=='200') {
+          //     this.pageNum = parseInt(res.data.storages_num);
+          //     this.tableData = res.data.data;
+          //     this.loading = false;
+          //   } else {
+          //     this.$message({type: 'error',message: res.data.msg})
+          //   }
+          //   this.loading = false;
+          // });
+        } else {
+          getDiscount(pageIndex,this.brand).then(res => {
+            console.log(res);
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.discounts_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }      
+            this.loading = false;
+          });
+        }
+      },
+      handleAdd() {
+        this.newItem = {
+          code: '',type: '',brand: '',valid_date: '',
+        };
+        this.dialogAddVisible = true;
+      },
+      handleAddAdd() {
+        if(this.newItem.code=='') {
+          this.$message({type: 'warning',message: '请填写折扣码'});
+        } else if(this.newItem.type=='') {
+          this.$message({type: 'warning',message: '请填写折扣码类别'});
+        } else if(this.newItem.brand=='') {
+          this.$message({type: 'warning',message: '请填写折扣码品牌'});
+        } else if(this.newItem.valid_date=='') {
+          this.$message({type: 'warning',message: '请填写有效期限'});
+        } else {
+          this.newItems.push(this.newItem);
+          this.newItem = {
+            code: '',type: '',brand: '',valid_date: '',
+          };
+        }
+      },
+      enterItems() {
+        if(this.newItemText=='') {
+          this.$message({type: 'warning',message: '请输入内容'});
+        } else {
+          let items = [];
+          let rows = this.newItemText.split('\n');
+          rows.map(row=>{
+            if(row!='') {
+              let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
+              this.newItems.push({code:rowData[0],type:rowData[1].indexOf('单')==-1?'3':'2',brand:rowData[2],valid_date:rowData[3],right:false});
+              this.dialogEditVisible = false;
+            }
+          })
+          this.newItemText = '';
+        }
+      },
+      goAdd() {
+        if(this.newItems.length==0) {
+          this.$message({type: 'warning',message: '请添加折扣码信息'});
+        } else {
+          // this.handleNum = this.newItems.filter(item=>{return item.right==true}).length;
+          this.handleNum = this.newItems.length;
+          if(this.handleNum==0) {
+            this.loading = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          } else {
+            this.loading = true;
+          }
+          this.dialogAddVisible = false;
+          while(this.newItems.length!=0) {
+            let data = this.newItems.pop();
+            if(data.right==true) {
+              this._addDiscount(data);
+            }
+          }
+        }
+      },
+      _addDiscount(item) {
+        addDiscount(item).then(res=>{
+          console.log(res);
+          this.handleNum--
+          if(this.handleNum==0) {
+            this.loading = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          }
+        })
+      },
+      handleDelete(index,row) {
+        this.$confirm('此操作将永久删除这条单号为：'+ row.discount_ID +'的礼品卡, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.loading = true;
+          delDiscount(row.discount_ID).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '删除成功!'});
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+            }else {
+              this.$message({type: 'warning',message: '删除失败'});
+            }
+          })
+        }).catch(() => {
+          this.$message({type: 'info',message: '已取消删除'});          
+        });
+      },
+      handleCurrentChange() {
+        this._getList(this.currentPage)
+      },
+      goSearch() {
+        this.isSearch = true;
+        if(this.filter=='storage_status') {
+          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        } else {
+          this.searchWord = this.search;
+        }
+        this.filterWord = this.interpret[this.filter].name;
+        this.loading = true;
+        this.currentPage = 1;
+        this._getList(this.currentPage)
+      },
+      goBack() {
+        this.isSearch=false;
+        this.search=null;
+        this.currentPage = 1;
+        this._getList(this.currentPage)
+      },
+      filterChange() {
+        this.search = '';
+      },
+      changeBrand(brand) {
+        this.brand = brand;
+        this.pageIndex = 1;
+        this._getList(this.pageIndex);
+      },
+      guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      },
+    },
+    mounted() {
+      this._getList(this.currentPage)
+    },
   }
 </script>
 
 <style scoped>
-  
+  .post-container {
+    position: relative;
+  }
+  .pagination {
+    position: absolute;
+    right: 20px;
+  }
+  .storage_pic {
+    width: 100px;
+  }
 </style>

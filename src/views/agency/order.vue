@@ -20,6 +20,7 @@
       class="elTable">
       <el-table-column label="编号" prop="agency_ID"></el-table-column>
       <el-table-column label="商品链接" prop="storage_link"></el-table-column>
+      <el-table-column label="转运码" prop="code"></el-table-column>
       <el-table-column label="价格" prop="price"></el-table-column>
       <el-table-column label="数量" prop="order_num"></el-table-column>
       <el-table-column label="尺寸" prop="size"></el-table-column>
@@ -283,6 +284,7 @@ xxxx xxxx xxxx
         } else {
           getAgency(pageIndex).then(res => {
             if(res.data.status=='200') {
+              console.log(res.data.data);
               this.pageNum = parseInt(res.data.agencys_num);
               this.tableData = res.data.data;
               this.loading = false;

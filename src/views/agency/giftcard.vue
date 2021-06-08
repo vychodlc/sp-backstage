@@ -74,8 +74,9 @@
         </el-form-item>
       </el-form>
       <el-table
-      height="400"
+      height='300'
       style="width: 100%;overflow:hidden;"
+      :row-style="{height: '30px'}"
       :data="newItems">
         <el-table-column min-width="30%" label="卡号" prop="card_num"></el-table-column>
         <el-table-column min-width="20%" label="PIN" prop="pin"></el-table-column>

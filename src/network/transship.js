@@ -188,6 +188,16 @@ export function changeOutput(outbound_ID,outbound_status) {
     data: formData
   })
 }
+export function changeOutputPay(outbound_ID,pay_status) {
+  let formData = new FormData();
+  formData.append('outbound_ID',outbound_ID);
+  formData.append('pay_status',pay_status);
+  return request({
+    method: 'POST',
+    url: '/change_transship_pay_status.php',
+    data: formData
+  })
+}
 /* 转运码api */
 export function addTransshipCode(user_id) {
   let formData = new FormData();

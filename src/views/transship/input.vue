@@ -27,19 +27,15 @@
           </el-row>
         </el-form-item> -->
         <el-form-item label="方式">
-          <el-row>
-            <el-col :span="10">
+          <!-- <el-row> -->
+            <!-- <el-col :span="8"> -->
               <el-radio-group v-model="inputInfo.method" @change="inputInfo.code=''">
                 <el-radio style="margin-right:0" label="0" border>快递单号</el-radio>
                 <el-radio style="margin-right:0" label="1" border>转运码</el-radio>
                 <el-radio style="margin-right:0" label="2" border>邮箱</el-radio>
               </el-radio-group>
-            </el-col>
-            <el-col :span="14">
-              <!-- <el-input v-model="inputInfo.code">
-                <template slot="prepend" v-if="inputInfo.method=='1'">@</template>
-              </el-input> -->
               <el-autocomplete
+                style="margin-left:20px;width:50%"
                 v-show="inputInfo.method!=''"
                 class="inline-input"
                 v-model="inputInfo.code"
@@ -49,8 +45,13 @@
                 :trigger-on-focus="false"
                 @select="handleSelect"
               ></el-autocomplete>
+            <!-- </el-col>
+            <el-col :span="14">
+              <el-input v-model="inputInfo.code">
+                <template slot="prepend" v-if="inputInfo.method=='1'">@</template>
+              </el-input>
             </el-col>
-          </el-row>
+          </el-row> -->
         </el-form-item>
         <el-form-item label="货品尺寸" style="height:28px">
           <el-row>
@@ -317,6 +318,7 @@
             }
             this.selectList.email = data;
             this.loading = false;
+            console.log(this.selectList);
           })
         })
       })
