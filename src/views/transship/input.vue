@@ -318,7 +318,6 @@
             }
             this.selectList.email = data;
             this.loading = false;
-            console.log(this.selectList);
           })
         })
       })

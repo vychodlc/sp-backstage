@@ -2,8 +2,9 @@
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="出库单号" value="outbound_ID"></el-option>
-      <el-option label="地址" value="address"></el-option>
-      <!-- <el-option label="用户编号" value="user_id"></el-option> -->
+      <el-option label="用户编号" value="user_id"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="转运码" value="code"></el-option>
       <el-option label="出库方式" value="outbound_type"></el-option>
       <el-option label="支付状态" value="pay_status"></el-option>
       <el-option label="状态" value="outbound_status"></el-option>
@@ -343,8 +344,11 @@
         interpret: {
           'outbound_ID': {name:'出库单号'},
           'user_id': {name:'用户ID'},
+          'user_email': {name:'用户邮箱'},
           'outbound_type': {name:'出库方式'},
           'outbound_status': {name:'状态'},
+          'pay_status': {name:'支付状态'},
+          'code': {name:'转运码'},
         },
         userStorage: [],
         userAddress: [],
@@ -358,23 +362,24 @@
     mounted() {
       getOutputList(0).then(res=>{
         let data1 = [];
-        let data2 = [];
         let items = res.data.data;
         
         items.map(item=>{
           data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
-          data2.push({id: 'outbound_ID', key: 'address',value: item.address})
         })
         this.selectList.outbound_ID = data1;
-        this.selectList.address = data2;
         getUser().then(res=>{
-          let data = res.data.data;
-          for(let i=0;i<data.length;i++) {
-            data[i].value = data[i].user_email;
-          }
-          this.selectList.user_email = data;
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.code = codes;
           this.loading = false;
-          console.log(this.selectList);
           this._getList(this.currentPage);
         })
       })
@@ -387,8 +392,16 @@
           let query = this.selectList.outbound_ID;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
-        } else if(this.filter=='address') {
-          let query = this.selectList.address;
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='code') {
+          let query = this.selectList.code;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         }
@@ -396,16 +409,31 @@
       handleSelect() {},
       createFilter(queryString) {
         return (item) => {
-          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
         };
       },
       test() {
-        console.log(123);
       },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          filterOutput(this.filter,this.search,pageIndex).then(res => {
+          let filter = this.filter,search = this.search;
+          if(filter=='user_email') {
+            this.selectList.user_email.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          } else if(filter=='code') {
+            this.selectList.code.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          }
+          filterOutput(filter,search,pageIndex).then(res => {
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
@@ -422,7 +450,6 @@
         } else {
           getOutputList(pageIndex).then(res => {
             if(res.data.status=='200') {
-              console.log(res.data.data);
               this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -698,7 +725,6 @@
       goChange() {
         if(this.oldRow.outbound_status!=this.dialogChange&&this.changeType==0) {
           changeOutput(this.oldRow.outbound_ID,this.dialogChange).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -710,7 +736,6 @@
           })
         } else if(this.oldRow.pay_status!=this.dialogChange&&this.changeType==1) {
           changeOutputPay(this.oldRow.outbound_ID,this.dialogChange).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -776,19 +801,31 @@
         } else {
           this.isSearch = true;
           this.searchWord = this.search;
-          if(this.filter=='apply_status') {
+          if(this.filter=='outbound_status') {
             if(this.search=='0') {
-              this.searchWord = '待付款'
-            } else if(this.search=='1') { 
               this.searchWord = '待审核'
-            } else if(this.search=='2') { 
+            } else if(this.search=='1') { 
               this.searchWord = '已取消'
-            } else if(this.search=='3') { 
+            } else if(this.search=='2') { 
               this.searchWord = '已驳回'
+            } else if(this.search=='3') { 
+              this.searchWord = '待出库'
             } else if(this.search=='4') { 
-              this.searchWord = '运输中'
+              this.searchWord = '转运中'
             } else if(this.search=='5') { 
               this.searchWord = '已完成'
+            }
+          } else if(this.filter=='pay_status') {
+            if(this.search=='0') {
+              this.searchWord = '未支付'
+            } else if(this.search=='1') { 
+              this.searchWord = '已支付'
+            }
+          } else if(this.filter=='outbound_type') {
+            if(this.search=='0') {
+              this.searchWord = '普通出库'
+            } else if(this.search=='1') { 
+              this.searchWord = '退税出库'
             }
           } else {
             this.searchWord = this.search;

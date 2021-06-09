@@ -2,9 +2,11 @@
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="申报单号" value="apply_ID"></el-option>
+      <!-- <el-option label="邮箱地址" value="email"></el-option> -->
       <el-option label="订单号" value="expressid"></el-option>
       <el-option label="用户编号" value="user_id"></el-option>
-      <el-option label="邮箱地址" value="email"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="转运码" value="code"></el-option>
       <el-option label="状态" value="apply_status"></el-option>
     </el-select>
     <template v-if="this.filter=='apply_status'">
@@ -17,6 +19,8 @@
       class="inline-input"
       v-model="search"
       size="small"
+      id="searchBox"
+      ref="searchBox"
       style="width:30vw;margin-right:10px"
       :fetch-suggestions="querySearch"
       placeholder="请输入内容"
@@ -248,7 +252,9 @@
           'apply_ID': {name:'申报单号'},
           'expressid': {name:'订单号'},
           'user_id': {name:'用户ID'},
+          'user_email': {name:'用户邮箱'},
           'email': {name:'邮箱地址'},
+          'code': {name:'转运码'},
           'apply_status': {name:'状态'},
         },
       }
@@ -269,46 +275,77 @@
         this.selectList.expressid = data2;
         this.selectList.email = data3;
         getUser().then(res=>{
-          let data = res.data.data;
-          for(let i=0;i<data.length;i++) {
-            data[i].value = data[i].user_email;
-          }
-          this.selectList.user_email = data;
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.code = codes;
           this.loading = false;
-          console.log(this.selectList);
           this._getApplyList(this.currentPage);
         })
       })
     },
     methods:{
-      
       querySearch(queryString, cb) {
         queryString = queryString.toString();
-        
+        let results = [];
         if(this.filter=='apply_ID') {
           let query = this.selectList.apply_ID;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } else if(this.filter=='expressid') {
           let query = this.selectList.expressid;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } else if(this.filter=='email') {
           let query = this.selectList.email;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='code') {
+          let query = this.selectList.code;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         }
       },
       handleSelect() {},
       createFilter(queryString) {
         return (item) => {
-          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
         };
       },
       _getApplyList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          filterApply(this.filter,this.search,pageIndex).then(res => {
+          let filter = this.filter,search = this.search;
+          if(filter=='user_email') {
+            this.selectList.user_email.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          } else if(filter=='code') {
+            this.selectList.code.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          }
+          filterApply(filter,search,pageIndex).then(res => {
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
@@ -320,7 +357,6 @@
           });
         } else {
           getApplyList(pageIndex).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
@@ -479,7 +515,6 @@
       handleExceed() {
         this.$message({type: 'error',message: '请删除当前图片再上传其他图片!'});
       },
-
       handleChange(row) {
         this.dialogChange = row.apply_status;
         this.oldApply = row;
@@ -501,7 +536,6 @@
           this.$message({type: 'warning',message: '状态未修改'});
         }
       },
-
       handleCurrentChange() {
         this._getApplyList(this.currentPage)
       },
@@ -778,7 +812,7 @@
           let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
         });
-      }
+      },
     }
   }
 </script>

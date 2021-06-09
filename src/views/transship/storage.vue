@@ -3,16 +3,28 @@
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="库存编号" value="storage_ID"></el-option>
       <el-option label="用户ID" value="user_id"></el-option>
-      <el-option label="尺寸" value="size"></el-option>
-      <el-option label="重量" value="weight"></el-option>
-      <el-option label="入库员ID" value="recorder"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="转运码" value="code"></el-option>
       <el-option label="状态" value="storage_status"></el-option>
     </el-select>
     <template v-if="this.filter=='storage_status'">
       <el-radio v-model="search" label="0">库存中</el-radio>
       <el-radio v-model="search" label="1">已出库</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      id="searchBox"
+      ref="searchBox"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -193,6 +205,7 @@
   import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js'
   import { compress } from '@/utils/compress.js'
+  import { getUser } from '@/network/user.js'
   export default {
     name: "Transmit",
     data () {
@@ -230,27 +243,92 @@
         dialogChangeVisible: false,
         dialogChange: '',
         oldStorage: null,
+        selectList: {},
 
         pageNum: null,
         currentPage: 1,
         interpret: {
           'storage_ID': {name:'库存编号'},
           'user_id': {name:'用户ID'},
-          'size': {name:'尺寸'},
-          'weight': {name:'重量'},
-          'recorder': {name:'入库员ID'},
-          'storage_status': {name:'状态'}
+          'user_email': {name:'用户邮箱'},
+          'code': {name:'转运码'},
+          'storage_status': {name:'状态'},
         }
       }
     },
     mounted() {
-      this._getList(this.currentPage);
+      getStorageList(0).then(res=>{
+        let data1 = [],data2 = [];
+        let storages = res.data.data;
+        
+        storages.map(storage=>{
+          data1.push({key: 'storage_ID',value: storage.storage_ID})
+        })
+        this.selectList.storage_ID = data1;
+        getUser().then(res=>{
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.code = codes;
+          this.loading = false;
+          this._getList(this.currentPage);
+        })
+      })
     },
     methods:{
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+        let results = [];
+        if(this.filter=='storage_ID') {
+          let query = this.selectList.storage_ID;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='code') {
+          let query = this.selectList.code;
+          results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {},
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          filterStorage(this.filter,this.search,pageIndex).then(res => {
+          let filter = this.filter,search = this.search;
+          if(filter=='user_email') {
+            this.selectList.user_email.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          } else if(filter=='code') {
+            this.selectList.code.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          }
+          filterStorage(filter,search,pageIndex).then(res => {
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.storages_num);
               this.tableData = res.data.data;
@@ -266,7 +344,6 @@
               this.pageNum = parseInt(res.data.storages_num);
               this.tableData = res.data.data;
               this.loading = false;
-              console.log(this.tableData);
             } else {
               this.$message({type: 'error',message: res.data.msg})
             }      
