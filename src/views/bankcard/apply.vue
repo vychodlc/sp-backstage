@@ -1,10 +1,5 @@
 <template>
   <div class="post-container">
-    <template>
-      <el-radio style="margin-right:20px" @input="changeBrand('N')" v-model="brand" label="N">Nike</el-radio>
-      <el-radio style="margin-right:20px" @input="changeBrand('A')" v-model="brand" label="A">Adidas</el-radio>
-      <el-radio style="margin-right:20px" @input="changeBrand('JD')" v-model="brand" label="JD">JDSports</el-radio>
-    </template>
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="编号" value="discount_ID"></el-option>
       <el-option label="卡号" value="card_num"></el-option>
@@ -24,21 +19,11 @@
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
       <el-table-column label="编号" prop="discount_ID"></el-table-column>
-      <el-table-column label="折扣码" prop="code"></el-table-column>
-      <el-table-column label="种类" prop="type">
-        <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.type==2" type="primary">单次码</el-tag>
-          <el-tag size="mini" v-if="scope.row.type==3" type="success">复用码</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="品牌" prop="brand">
-        <template slot-scope="scope">
-          <span v-if="scope.row.brand=='N'">Nike</span>
-          <span v-if="scope.row.brand=='A'">Adidas</span>
-          <span v-if="scope.row.brand=='JD'">JDSports</span>
-        </template></el-table-column>
-      <el-table-column label="有效期限" prop="valid_date"></el-table-column>
-      <el-table-column label="添加时间" prop="add_time"></el-table-column>
+      <el-table-column label="资料" prop="code"></el-table-column>
+      <el-table-column label="地址" prop="type"></el-table-column>
+      <el-table-column label="用户" prop="brand"></el-table-column>
+      <el-table-column label="申请时间" prop="add_time"></el-table-column>
+      <el-table-column label="状态" prop="add_time"></el-table-column>
       <el-table-column label="操作" align="right" width="200">
         <template slot="header">
           <el-button

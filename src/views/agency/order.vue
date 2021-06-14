@@ -2,13 +2,57 @@
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="编号" value="agency_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="商品链接" value="storage_link"></el-option>
+      <el-option label="账户种类" value="account_type"></el-option>
+      <el-option label="折扣码种类" value="discount_type"></el-option>
+      <el-option label="礼品卡种类" value="giftcard_type"></el-option>
+      <el-option label="订单状态" value="agency_status"></el-option>
+      <el-option label="品牌" value="brand"></el-option>
+      <el-option label="用户编号" value="user_id"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="转运码" value="code"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+    <template v-if="this.filter=='account_type'">
+      <el-radio v-model="search" @input="goSearch()" label="0">无</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">普通账号</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">生日账号</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <template v-else-if="this.filter=='discount_type'">
+      <el-radio v-model="search" @input="goSearch()" label="0">无</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">平台提供</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">单次码</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="3">复用码</el-radio>
+    </template>
+    <template v-else-if="this.filter=='giftcard_type'">
+      <el-radio v-model="search" @input="goSearch()" label="0">无</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">平台提供</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">自行提供</el-radio>
+    </template>
+    <template v-else-if="this.filter=='agency_status'">
+      <el-radio v-model="search" @input="goSearch()" label="0">待支付</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">待受理</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">支付取消</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="3">已驳回</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="4">进行中</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="5">已完成</el-radio>
+    </template>
+    <template v-else-if="this.filter=='brand'">
+      <el-radio v-model="search" @input="goSearch()" label="N">Nike</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="A">Adidas</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="JD">JDSports</el-radio>
+    </template>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -213,8 +257,8 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency } from '@/network/agency.js'
-  import { getUserByEmail } from '@/network/user.js'
+  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency,filterAgency } from '@/network/agency.js'
+  import { getUserByEmail,getUser } from '@/network/user.js'
   export default {
     name: "giftcard",
     data () {
@@ -267,11 +311,21 @@ xxxx xxxx xxxx
         dialogChange: '',
         oldStorage: null,
 
+        selectList: [],
+
         pageNum: null,
         currentPage: 1,
         interpret: {
           'agency_ID': {name:'编号'},
-          'card_num': {name:'卡号'}
+          'storage_link': {name:'商品链接'},
+          'brand': {name:'品牌'},
+          'account_type': {name:'账户种类'},
+          'discount_type': {name:'折扣码种类'},
+          'giftcard_type': {name:'礼品卡种类'},
+          'agency_status': {name:'订单状态'},
+          'user_id': {name:'用户编号'},
+          'user_email': {name:'邮箱'},
+          'code': {name:'转运码'},
         }
       }
     },
@@ -281,6 +335,33 @@ xxxx xxxx xxxx
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
+          let filter = this.filter,search = this.search;
+          if(filter=='user_email') {
+            this.selectList.user_email.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          } else if(filter=='code') {
+            this.selectList.code.map(item=>{
+              if(item.value==search) {
+                filter = 'user_id';
+                search = item.id;
+              }
+            })
+          }
+          filterAgency(filter,search,pageIndex).then(res => {
+            if(res.data.status=='200') {
+              console.log(res.data.data);
+              this.pageNum = parseInt(res.data.agencys_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }      
+            this.loading = false;
+          })
         } else {
           getAgency(pageIndex).then(res => {
             if(res.data.status=='200') {
@@ -379,16 +460,42 @@ xxxx xxxx xxxx
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='agency_status') {
+            if(this.search=='0')this.searchWord='待支付'
+            if(this.search=='1')this.searchWord='待受理'
+            if(this.search=='2')this.searchWord='支付取消'
+            if(this.search=='3')this.searchWord='已驳回'
+            if(this.search=='4')this.searchWord='进行中'
+            if(this.search=='5')this.searchWord='已完成'
+          } else if(this.filter=='account_type') {
+            if(this.search=='0')this.searchWord='无'
+            if(this.search=='1')this.searchWord='普通账号'
+            if(this.search=='2')this.searchWord='生日账号'
+          } else if(this.filter=='discount_type') {
+            if(this.search=='0')this.searchWord='无'
+            if(this.search=='1')this.searchWord='平台提供'
+            if(this.search=='2')this.searchWord='单次码'
+            if(this.search=='3')this.searchWord='复用码'
+          } else if(this.filter=='giftcard_type') {
+            if(this.search=='0')this.searchWord='无'
+            if(this.search=='1')this.searchWord='平台提供'
+            if(this.search=='2')this.searchWord='自行提供'
+          } else if(this.filter=='brand') {
+            if(this.search=='N')this.searchWord='Nike'
+            if(this.search=='A')this.searchWord='Adidas'
+            if(this.search=='JD')this.searchWord='JDSports'
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;
@@ -452,9 +559,77 @@ xxxx xxxx xxxx
           this.$message({type: 'warning',message: '状态未修改'});
         }
       },
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+
+        if(this.filter=='agency_ID') {
+          let query = this.selectList.agency_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='code') {
+          let query = this.selectList.code;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='storage_link') {
+          let query = this.selectList.storage_link;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } 
+      },
+      handleSelect() {
+        this.goSearch();
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
+      deWeight(items) {
+        let values = [];
+        return items.filter(item=>{
+          if(values.indexOf(item.value)==-1) {
+            values.push(item.value);
+            return item;
+          }
+        });
+      }
     },
     mounted() {
-      this._getList(this.currentPage)
+      getAgency(0).then(res=>{
+        let data1 = [];
+        let data2 = [];
+        let items = res.data.data;
+        
+        items.map(item=>{
+          data1.push({id: 'agency_ID', key: 'agency_ID',value: item.agency_ID})
+          data2.push({id: 'storage_link', key: 'storage_link',value: item.storage_link})
+        })
+        this.selectList.agency_ID = data1;
+        this.selectList.storage_link = this.deWeight(data2);
+        getUser().then(res=>{
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.code = codes;
+          this.loading = false;
+          this._getList(this.currentPage);
+          console.log(this.selectList);
+        })
+      })
     },
   }
 </script>

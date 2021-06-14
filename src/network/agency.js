@@ -47,6 +47,18 @@ export function addDiscount(info) {
     data: formData
   })
 }
+export function addAccount(info) {
+  let formData = new FormData();
+  formData.append('card_num',info.card_num);
+  formData.append('psd',info.psd);
+  formData.append('card_type',info.card_type);
+  formData.append('brand',info.brand);
+  return request({
+    method: 'POST',
+    url: '/add_account.php',
+    data: formData
+  })
+}
 // 删
 export function delGiftcard(giftcard_ID) {
   let formData = new FormData();
@@ -63,6 +75,15 @@ export function delDiscount(discount_ID) {
   return request({
     method: 'POST',
     url: '/del_discount.php',
+    data: formData
+  })
+}
+export function delAccount(account_ID) {
+  let formData = new FormData();
+  formData.append('account_ID',account_ID);
+  return request({
+    method: 'POST',
+    url: '/del_account.php',
     data: formData
   })
 }
@@ -85,6 +106,24 @@ export function getDiscount(p,brand) {
     params: {p,brand}
   })
 }
+export function getAccount(p,brand) {
+  return request({
+    url: '/get_account_list.php',
+    params: {p,brand}
+  })
+}
+export function filterAgency(filter,value,p) {
+  return request({
+    url: '/filter_agency.php',
+    params: {filter,value,p}
+  })
+}
+export function filterAccount(filter,value,p,brand) {
+  return request({
+    url: '/filter_account.php',
+    params: {filter,value,p,brand}
+  })
+}
 // 改
 export function changeAgency(info) {
   let formData = new FormData()
@@ -93,6 +132,18 @@ export function changeAgency(info) {
   return request({
     method: 'POST',
     url: '/change_agency.php',
+    data: formData
+  })
+}
+export function changeAccount(info) {
+  let formData = new FormData()
+  formData.append('account_ID',info.account_ID);
+  formData.append('psd',info.psd);
+  formData.append('card_type',info.card_type);
+  formData.append('brand',info.brand);
+  return request({
+    method: 'POST',
+    url: '/edit_account.php',
     data: formData
   })
 }

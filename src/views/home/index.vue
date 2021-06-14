@@ -45,6 +45,13 @@
               <el-menu-item index="/home/output"><i class="el-icon-menu"></i>银行卡管理</el-menu-item> -->
             </el-menu-item-group>
           </el-submenu>
+          <el-submenu index="6">
+            <template slot="title"><i class="el-icon-menu"></i>银行卡</template>
+            <el-menu-item-group>
+              <el-menu-item index="/home/bankcardapply"><i class="el-icon-menu"></i>申请管理</el-menu-item>
+              <el-menu-item index="/home/bankcardmanage"><i class="el-icon-menu"></i>银行卡管理</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
         </el-menu>
       </el-aside>
       

@@ -17,23 +17,25 @@
         label="uid">
       </el-table-column>
       <el-table-column
-        prop="id"
-        label="user_id">
+        label="用户">
+        <template slot-scope="scope">
+          <span>{{scope.row.id+'-'+scope.row.code}}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="user_nickname"
-        label="nickname"
+        label="昵称"
         width="100">
       </el-table-column>
       <el-table-column
         prop="user_email"
-        label="email"
+        label="邮箱"
         width="150">
       </el-table-column>      
       <el-table-column
         width="150"
         prop="user_right"
-        label="right">
+        label="权限">
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.user_right==-1" type="info">冻结</el-tag>
           <el-tag size="mini" v-if="scope.row.user_right==0" type="success">前台</el-tag>
@@ -47,7 +49,7 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column
+      <!-- <el-table-column
         label="permissions">
         <template slot-scope="scope">
           <span 
@@ -56,7 +58,7 @@
             {{ item | getPermission }}
           </span>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="option" width='300' align ='right'>
         <template slot="header">
           <el-input

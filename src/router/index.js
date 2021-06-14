@@ -34,6 +34,9 @@ const routes = [
       {path: 'discount',name: 'Discount',component: () => import('../views/agency/discount.vue')},
       {path: 'giftcard',name: 'Giftcard',component: () => import('../views/agency/giftcard.vue')},
       {path: 'account',name: 'Account',component: () => import('../views/agency/account.vue')},
+
+      {path: 'bankcardapply',name: 'BankcardApply',component: () => import('../views/bankcard/apply.vue')},
+      {path: 'bankcardmanage',name: 'BankcardManage',component: () => import('../views/bankcard/manage.vue')},
     ]
   }
 ]
