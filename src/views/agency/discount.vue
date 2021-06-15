@@ -37,7 +37,11 @@
           <span v-if="scope.row.brand=='A'">Adidas</span>
           <span v-if="scope.row.brand=='JD'">JDSports</span>
         </template></el-table-column>
-      <el-table-column label="有效期限" prop="valid_date"></el-table-column>
+      <el-table-column label="有效期限" prop="valid_date">
+        <template slot-scope="scope">
+          {{scope.row.start_date}} ~ {{scope.row.valid_date}}
+        </template>
+      </el-table-column>
       <el-table-column label="添加时间" prop="add_time"></el-table-column>
       <el-table-column label="操作" align="right" width="200">
         <template slot="header">
@@ -55,7 +59,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
+    <el-dialog title="新增折扣码信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
         <el-form-item label="折扣码" label-width="80px">
           <el-input v-model="newItem.code"></el-input>
@@ -70,9 +74,9 @@
           <el-radio v-model="newItem.brand" label="JD">JD</el-radio>
         </el-form-item>
         <el-form-item label="有效期" label-width="80px">
-          <span>{{newItem.valid_date}}</span>
+          <span>{{newItem.daterange}}</span>
           <el-date-picker
-            v-model="newItem.valid_date"
+            v-model="newItem.daterange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -90,16 +94,28 @@
         :row-style="{height: '30px'}"
         :data="newItems">
           <el-table-column min-width="30%" label="折扣码" prop="code"></el-table-column>
-          <el-table-column min-width="20%" label="种类" prop="pin"></el-table-column>
-          <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
-          <el-table-column min-width="20%" label="余额" prop="balance"></el-table-column>
+          <el-table-column min-width="10%" label="种类" prop="type">
+            <template slot-scope="scope">
+              <span v-if="scope.row.type==2">单次码</span>
+              <span v-if="scope.row.type==3">复用码</span>
+            </template>
+          </el-table-column>
+          <el-table-column min-width="10%" label="品牌" prop="brand">
+            <template slot-scope="scope">
+              <span v-if="scope.row.brand=='N'">Nike</span>
+              <span v-if="scope.row.brand=='A'">Adidas</span>
+              <span v-if="scope.row.brand=='JD'">JDSports</span>
+            </template>
+          </el-table-column>
+          <el-table-column min-width="50%" label="有效期限">
+            <template slot-scope="scope">{{scope.row.start_date}}  ~  {{scope.row.valid_date}}</template>
+          </el-table-column>
           <el-table-column
             prop="right"
             label=""
             width="100">
             <template slot-scope="scope">
-              <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
-              <el-tag v-else type="success" size="mini">OK</el-tag>
+              <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -136,6 +152,7 @@ xxxx xxxx xxxx xxx-xxx
 
 <script>
   import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
+  import { msToDate } from '@/utils/time.js'
   export default {
     name: "discount",
     data () {
@@ -152,7 +169,7 @@ xxxx xxxx xxxx xxx-xxx
 
         dialogAddVisible: false,
         newItem: {
-          code: '',type: '',brand: '',valid_date: '',
+          code: '',type: '',brand: '',valid_date: '',daterange: [],
           card_num: '',
           pin: '',
           balance: '',
@@ -200,7 +217,6 @@ xxxx xxxx xxxx xxx-xxx
           // });
         } else {
           getDiscount(pageIndex,this.brand).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.discounts_num);
               this.tableData = res.data.data;
@@ -212,9 +228,19 @@ xxxx xxxx xxxx xxx-xxx
           });
         }
       },
+      dateFormat(data) {
+        let date = new Date(data);
+        let y = date.getFullYear()
+        let m = date.getMonth()
+        let d = date.getDate()
+        m = m < 10 ? ('0' + m) : m;
+        d = d < 10 ? ('0' + d) : d;
+
+        return ''+y+'-'+m+'-'+d;
+      },
       handleAdd() {
         this.newItem = {
-          code: '',type: '',brand: '',valid_date: '',right:true,
+          code: '',type: '',brand: '',valid_date: '',
         };
         this.dialogAddVisible = true;
       },
@@ -225,12 +251,16 @@ xxxx xxxx xxxx xxx-xxx
           this.$message({type: 'warning',message: '请填写折扣码类别'});
         } else if(this.newItem.brand=='') {
           this.$message({type: 'warning',message: '请填写折扣码品牌'});
-        } else if(this.newItem.valid_date=='') {
+        } else if(this.newItem.daterange==[]||this.newItem.daterange==undefined) {
           this.$message({type: 'warning',message: '请填写有效期限'});
         } else {
+          let start_time = this.dateFormat(this.newItem.daterange[0]);
+          let end_time = this.dateFormat(this.newItem.daterange[1]);
+          this.newItem.start_date = start_time;
+          this.newItem.valid_date = end_time;
           this.newItems.push(this.newItem);
           this.newItem = {
-            code: '',type: '',brand: '',valid_date: '',right:true,
+            code: '',type: '',brand: '',valid_date: '',daterange: [],
           };
         }
       },
@@ -243,7 +273,7 @@ xxxx xxxx xxxx xxx-xxx
           rows.map(row=>{
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
-              this.newItems.push({code:rowData[0],type:rowData[1].indexOf('单')==-1?'3':'2',brand:rowData[2],valid_date:rowData[3],right:true});
+              this.newItems.push({code:rowData[0],type:rowData[1].indexOf('单')==-1?'3':'2',brand:rowData[2],valid_date:rowData[3]});
               this.dialogEditVisible = false;
             }
           })
@@ -254,7 +284,6 @@ xxxx xxxx xxxx xxx-xxx
         if(this.newItems.length==0) {
           this.$message({type: 'warning',message: '请添加折扣码信息'});
         } else {
-          // this.handleNum = this.newItems.filter(item=>{return item.right==true}).length;
           this.handleNum = this.newItems.length;
           if(this.handleNum==0) {
             this.loading = false;
@@ -266,15 +295,12 @@ xxxx xxxx xxxx xxx-xxx
           this.dialogAddVisible = false;
           while(this.newItems.length!=0) {
             let data = this.newItems.pop();
-            console.log(data);
-            if(data.right==true) {
-              this._addDiscount(data);
-            }
+            this._addDiscount(data);
           }
         }
       },
       _addDiscount(item) {
-        console.log(123);
+        console.log(item);
         addDiscount(item).then(res=>{
           console.log(res);
           this.handleNum--

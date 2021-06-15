@@ -39,7 +39,8 @@ export function addDiscount(info) {
   let formData = new FormData();
   formData.append('code',info.code);
   formData.append('type',info.type);
-  formData.append('valid_date',new Date(info.valid_date));
+  formData.append('start_date',info.start_date);
+  formData.append('valid_date',info.valid_date);
   formData.append('brand',info.brand);
   return request({
     method: 'POST',

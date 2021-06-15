@@ -10,20 +10,20 @@
       <el-option label="状态" value="outbound_status"></el-option>
     </el-select>
     <template v-if="filter=='outbound_status'">
-      <el-radio v-model="search" label="0">待审核</el-radio>
-      <el-radio v-model="search" label="1">已取消</el-radio>
-      <el-radio v-model="search" label="2">已驳回</el-radio>
-      <el-radio v-model="search" label="3">待出库</el-radio>
-      <el-radio v-model="search" label="4">转运中</el-radio>
-      <el-radio v-model="search" label="5">已完成</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="0">待审核</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">已取消</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">已驳回</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="3">待出库</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="4">转运中</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="5">已完成</el-radio>
     </template>
     <template v-else-if="filter=='outbound_type'">
-      <el-radio v-model="search" label="0">普通出库</el-radio>
-      <el-radio v-model="search" label="1">退税出库</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="0">普通出库</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">退税出库</el-radio>
     </template>
     <template v-else-if="filter=='pay_status'">
-      <el-radio v-model="search" label="0">未支付</el-radio>
-      <el-radio v-model="search" label="1">已支付</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="0">未支付</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">已支付</el-radio>
     </template>
     <el-autocomplete
       v-else
@@ -406,7 +406,9 @@
           cb(results);
         }
       },
-      handleSelect() {},
+      handleSelect() {
+        this.goSearch();
+      },
       createFilter(queryString) {
         return (item) => {
           return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);

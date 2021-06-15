@@ -8,8 +8,8 @@
       <el-option label="状态" value="storage_status"></el-option>
     </el-select>
     <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="0">库存中</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">已出库</el-radio>
     </template>
     <el-autocomplete
       v-else
@@ -303,7 +303,9 @@
           cb(results);
         }
       },
-      handleSelect() {},
+      handleSelect() {
+        this.goSearch();
+      },
       createFilter(queryString) {
         return (item) => {
           return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);

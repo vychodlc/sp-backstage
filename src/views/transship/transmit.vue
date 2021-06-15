@@ -320,7 +320,9 @@
           cb(results);
         }
       },
-      handleSelect() {},
+      handleSelect() {
+        this.goSearch();
+      },
       createFilter(queryString) {
         return (item) => {
           return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
