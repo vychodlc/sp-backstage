@@ -11,8 +11,8 @@
       <el-option label="种类" value="card_type"></el-option>
     </el-select>
     <template v-if="this.filter=='card_type'">
-      <el-radio v-model="search" label="1">普通账号</el-radio>
-      <el-radio v-model="search" label="2">生日账号</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">普通账号</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">生日账号</el-radio>
     </template>
     <el-autocomplete
       v-else
@@ -211,7 +211,7 @@ xxxx xxxx xxxx xxx-xxx
           card_type: '',
           brand: '',
         },
-        selectList: [],
+        selectList: [[],[],[]],
         
         dialogChangeVisible: false,
         dialogChange: '',
@@ -223,31 +223,25 @@ xxxx xxxx xxxx xxx-xxx
           'account_ID': {name:'编号'},
           'card_num': {name:'账号'},
           'card_type': {name:'种类'},
-        }
+        },
+
+        allItems: [],
       }
     },
     methods:{
       querySearch(queryString, cb) {
         queryString = queryString.toString();
+        let index = 0;
+        if(this.brand == 'N') {index = 0}
+        else if(this.brand == 'A') {index = 1}
+        else if(this.brand == 'JD') {index = 2}
 
         if(this.filter=='account_ID') {
-          let query = this.selectList.account_ID;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
-          cb(results);
-        } else if(this.filter=='user_email') {
-          let query = this.selectList.user_email;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
-          cb(results);
-        } else if(this.filter=='user_id') {
-          let query = this.selectList.user_id;
-          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
-          cb(results);
-        } else if(this.filter=='code') {
-          let query = this.selectList.code;
+          let query = this.selectList[index].account_ID;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } else if(this.filter=='card_num') {
-          let query = this.selectList.card_num;
+          let query = this.selectList[index].card_num;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         }
@@ -445,19 +439,33 @@ xxxx xxxx xxxx xxx-xxx
       },
     },
     mounted() {
-      getAccount(0,this.brand).then(res=>{
+      getAccount(0,'N').then(res=>{
         let data1 = [];
-        let data2 = [];
-        let items = res.data.data;
+        res.data.data.map(item=>{data1.push({id: 'account_ID', key: 'account_ID',value: item.account_ID});this.allItems.push(item)})
+        this.selectList[0].account_ID = data1;data1 = [];
+        res.data.data.map(item=>{data1.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+        this.selectList[0].card_num = data1;
         
-        items.map(item=>{
-          data1.push({id: 'account_ID', key: 'account_ID',value: item.account_ID})
-          data2.push({id: 'card_num', key: 'card_num',value: item.card_num})
+        getAccount(0,'N').then(res=>{
+          let data2 = [];
+          res.data.data.map(item=>{data2.push({id: 'account_ID', key: 'account_ID',value: item.account_ID});this.allItems.push(item)})
+          this.selectList[1].account_ID = data2;data2 = [];
+          res.data.data.map(item=>{data2.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+          this.selectList[1].card_num = data2;
+            
+          getAccount(0,'JD').then(res=>{
+            let data3 = [];
+            res.data.data.map(item=>{data3.push({id: 'account_ID', key: 'account_ID',value: item.account_ID});this.allItems.push(item)})
+            this.selectList[2].account_ID = data3;data3 = [];
+            res.data.data.map(item=>{data3.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+            this.selectList[2].card_num = data3;
+
+            this.loading = false;
+            this._getList(this.currentPage);
+
+            console.log(this.selectList);
+          })
         })
-        this.selectList.account_ID = data1;
-        this.selectList.card_num = data2;
-        this.loading = false;
-        this._getList(this.currentPage);
       })
     },
   }

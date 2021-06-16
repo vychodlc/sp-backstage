@@ -52,6 +52,12 @@
               <el-menu-item index="/home/bankcardmanage"><i class="el-icon-menu"></i>银行卡管理</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
+          <el-submenu index="7">
+            <template slot="title"><i class="el-icon-menu"></i>流水</template>
+            <el-menu-item-group>
+              <el-menu-item index="/home/blotter"><i class="el-icon-menu"></i>流水记录</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
         </el-menu>
       </el-aside>
       

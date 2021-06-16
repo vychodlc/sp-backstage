@@ -119,6 +119,12 @@ export function filterAgency(filter,value,p) {
     params: {filter,value,p}
   })
 }
+export function filterDiscount(filter,value,p) {
+  return request({
+    url: '/filter_discount.php',
+    params: {filter,value,p}
+  })
+}
 export function filterAccount(filter,value,p,brand) {
   return request({
     url: '/filter_account.php',

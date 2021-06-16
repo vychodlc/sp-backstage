@@ -7,13 +7,25 @@
     </template>
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="编号" value="discount_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="折扣码" value="code"></el-option>
+      <el-option label="种类" value="type"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+    <template v-if="this.filter=='type'">
+      <el-radio v-model="search" @input="goSearch()" label="2">单次码</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="3">复用码</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -151,7 +163,8 @@ xxxx xxxx xxxx xxx-xxx
 </template>
 
 <script>
-  import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
+  import { getDiscount,addDiscount,delDiscount,filterDiscount } from '@/network/agency.js'
+  import { getUser } from '@/network/user.js'
   import { msToDate } from '@/utils/time.js'
   export default {
     name: "discount",
@@ -194,29 +207,66 @@ xxxx xxxx xxxx xxx-xxx
         currentPage: 1,
         interpret: {
           'discount_ID': {name:'编号'},
-          'card_num': {name:'卡号'}
-        }
+          'code': {name:'折扣码'},
+          'type': {name:'种类'}
+        },
+        selectList: [[],[],[]]
       }
     },
     methods:{
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+        let index = 0;
+        if(this.brand == 'N') {index = 0}
+        else if(this.brand == 'A') {index = 1}
+        else if(this.brand == 'JD') {index = 2}
+
+        if(this.filter=='discount_ID') {
+          let query = this.selectList[index].discount_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='code') {
+          let query = this.selectList[index].code;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {
+        this.goSearch();
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
+      deWeight(items) {
+        let values = [];
+        return items.filter(item=>{
+          if(values.indexOf(item.value)==-1) {
+            values.push(item.value);
+            return item;
+          }
+        });
+      },
       test(index) {
         console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          // filterStorage(this.filter,this.search,pageIndex).then(res => {
-          //   if(res.data.status=='200') {
-          //     this.pageNum = parseInt(res.data.storages_num);
-          //     this.tableData = res.data.data;
-          //     this.loading = false;
-          //   } else {
-          //     this.$message({type: 'error',message: res.data.msg})
-          //   }
-          //   this.loading = false;
-          // });
+          filterDiscount(this.filter,this.search,pageIndex).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.discounts_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }
+            this.loading = false;
+          });
         } else {
           getDiscount(pageIndex,this.brand).then(res => {
+            console.log(res.data);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.discounts_num);
               this.tableData = res.data.data;
@@ -360,15 +410,36 @@ xxxx xxxx xxxx xxx-xxx
         this.pageIndex = 1;
         this._getList(this.pageIndex);
       },
-      guid() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      },
     },
-    mounted() {
-      this._getList(this.currentPage)
+    mounted() {      
+      getDiscount(0,'N').then(res=>{
+        let data1 = [];
+        res.data.data.map(item=>{data1.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+        this.selectList[0].discount_ID = data1;data1 = [];
+        res.data.data.map(item=>{data1.push({id: 'code', key: 'code',value: item.code})})
+        this.selectList[0].code = data1;
+        
+        getDiscount(0,'N').then(res=>{
+          let data2 = [];
+          res.data.data.map(item=>{data2.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+          this.selectList[1].discount_ID = data2;data2 = [];
+          res.data.data.map(item=>{data2.push({id: 'code', key: 'code',value: item.code})})
+          this.selectList[1].code = data2;
+            
+          getDiscount(0,'JD').then(res=>{
+            let data3 = [];
+            res.data.data.map(item=>{data3.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+            this.selectList[2].discount_ID = data3;data3 = [];
+            res.data.data.map(item=>{data3.push({id: 'code', key: 'code',value: item.code})})
+            this.selectList[2].code = data3;
+
+            this.loading = false;
+            this._getList(this.currentPage);
+
+            console.log(this.selectList);
+          })
+        })
+      })
     },
   }
 </script>
