@@ -7,7 +7,7 @@
     </template>
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="编号" value="account_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="账号" value="card_num"></el-option>
       <el-option label="种类" value="card_type"></el-option>
     </el-select>
     <template v-if="this.filter=='card_type'">
@@ -382,8 +382,10 @@ xxxx xxxx xxxx xxx-xxx
           if(res.data.status=='403') {
             this.$message({tyep:'warning',message:'未修改'})
           } else if(res.data.status=='200') {
-            this.$message({type: 'success',message: '修改成功!'});
+            this.currentPage = 1;
+            this._getList(this.currentPage);
             this.dialogEditVisible = false;
+            this.$message({type: 'success',message: '修改成功!'});
           }
         })
       },

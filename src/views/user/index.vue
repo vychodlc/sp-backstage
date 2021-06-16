@@ -84,13 +84,13 @@
     </el-table>
     <el-dialog title="新增用户" :visible.sync="dialogAddVisible">
       <el-form :model="dialogAdd">
-        <el-form-item label="nickname">
+        <el-form-item label="昵称">
           <el-input v-model="dialogAdd.nickname"></el-input>
         </el-form-item>
-        <el-form-item label="email">
+        <el-form-item label="邮箱">
           <el-input v-model="dialogAdd.email"></el-input>
         </el-form-item>
-        <el-form-item label="password">
+        <el-form-item label="密码">
           <el-input v-model="dialogAdd.password"></el-input>
         </el-form-item>
       </el-form>
@@ -126,6 +126,15 @@
         <el-button type="primary" @click="goRightEdit()">确 定</el-button>
       </div>
     </el-dialog>
+    <div class="pagination">
+      <el-pagination
+        small
+        layout="prev, pager, next, total"
+        :total="pageNum"
+        @current-change="handleCurrentChange"
+        :current-page.sync="currentPage">
+      </el-pagination>
+    </div>
   </div>
 </template>
 
@@ -136,6 +145,7 @@
     name: "User",
     data () {
       return {
+        currentPage: 1,
         loading: true,
         tableData: [],
         multipleSelection: [],
@@ -211,11 +221,12 @@
       }
     },
     mounted() {
-      this._getUser()
+      this.currentPage = 1;
+      this._getUser(this.currentPage)
     },
     methods:{
-      _getUser() {
-        getUser().then(res=>{
+      _getUser(currentPage) {
+        getUser(currentPage).then(res=>{
           this.tableData = res.data.data;
           console.log(this.tableData);
           this.loading = false;
@@ -244,10 +255,11 @@
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '修改成功!'});
               this.dialogFormVisible = false;
-              this._getUser();
             }else{
               this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
-            }          
+            }
+            this.currentPage = 1;
+            this._getUser(this.currentPage)
             this.loading = false;
           })
         }
@@ -272,10 +284,11 @@
               this.$message({type: 'success',message: '新增成功!'});
               this.dialogAdd = {nickname:'',email:'',password:''},
               this.dialogAddVisible = false;
-              this._getUser();
             }else{
               this.$message({type: 'warning',message: '新增失败——'+res.data.msg});
             }          
+            this.currentPage = 1;
+            this._getUser(this.currentPage)
             this.loading = false;
           })
         }
@@ -290,10 +303,11 @@
           delUser(row.uuid).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
-              this._getUser();
             }else {
               this.$message({type: 'warning',message: '删除失败'});
             }
+            this.currentPage = 1;
+            this._getUser(this.currentPage)
             this.loading = false;
           })
         }).catch(() => {
@@ -314,10 +328,11 @@
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '权限修改成功!'});
               this.dialogRightVisible = false;
-              this._getUser();
             }else{
               this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
             }
+            this.currentPage = 1;
+            this._getUser(this.currentPage)
           })
         }
       },
