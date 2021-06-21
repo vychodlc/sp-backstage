@@ -310,7 +310,6 @@ xxxx xxxx xxxx xxx-xxx
         if(this.newItemText=='') {
           this.$message({type: 'warning',message: '请输入内容'});
         } else {
-          let items = [];
           let rows = this.newItemText.split('\n');
           rows.map(row=>{
             if(row!='') {
@@ -334,7 +333,6 @@ xxxx xxxx xxxx xxx-xxx
         if(this.newItems.length==0) {
           this.$message({type: 'warning',message: '请添加购物账号信息'});
         } else {
-          // this.handleNum = this.newItems.filter(item=>{return item.right==true}).length;
           this.handleNum = this.newItems.length;
           if(this.handleNum==0) {
             this.loading = false;

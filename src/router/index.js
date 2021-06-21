@@ -38,7 +38,8 @@ const routes = [
       {path: 'bankcardapply',name: 'BankcardApply',component: () => import('../views/bankcard/apply.vue')},
       {path: 'bankcardmanage',name: 'BankcardManage',component: () => import('../views/bankcard/manage.vue')},
       
-      {path: 'blotter',name: 'Blotter',component: () => import('../views/blotter/index.vue')},
+      {path: 'blotter',name: 'Blotter',component: () => import('../views/finance/blotter.vue')},
+      {path: 'withdrawl',name: 'Withdrawl',component: () => import('../views/finance/withdrawl.vue')},
     ]
   }
 ]

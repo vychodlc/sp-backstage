@@ -76,7 +76,7 @@
 <script>
   import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
   export default {
-    name: "discount",
+    name: "Blotter",
     data () {
       return {
         showDialog: true,

@@ -1,10 +1,10 @@
 # Details
 
-Date : 2021-06-06 19:37:43
+Date : 2021-06-21 16:56:32
 
 Directory c:\Users\16473\Desktop\SmartPurchase\spbackstage
 
-Total : 43 files,  30730 codes, 574 comments, 291 blanks, all 31595 lines
+Total : 46 files,  32972 codes, 598 comments, 345 blanks, all 33915 lines
 
 [summary](results.md)
 
@@ -23,36 +23,39 @@ Total : 43 files,  30730 codes, 574 comments, 291 blanks, all 31595 lines
 | [src/components/HelloWorld.vue](/src/components/HelloWorld.vue) | Vue | 57 | 0 | 3 | 60 |
 | [src/main.js](/src/main.js) | JavaScript | 17 | 0 | 4 | 21 |
 | [src/network/address.js](/src/network/address.js) | JavaScript | 62 | 3 | 1 | 66 |
-| [src/network/agency.js](/src/network/agency.js) | JavaScript | 92 | 5 | 1 | 98 |
+| [src/network/agency.js](/src/network/agency.js) | JavaScript | 150 | 5 | 1 | 156 |
 | [src/network/common.js](/src/network/common.js) | JavaScript | 1 | 0 | 1 | 2 |
 | [src/network/payment.js](/src/network/payment.js) | JavaScript | 11 | 0 | 1 | 12 |
 | [src/network/post.js](/src/network/post.js) | JavaScript | 102 | 0 | 10 | 112 |
 | [src/network/request.js](/src/network/request.js) | JavaScript | 41 | 1 | 4 | 46 |
 | [src/network/tag.js](/src/network/tag.js) | JavaScript | 34 | 0 | 7 | 41 |
-| [src/network/transship.js](/src/network/transship.js) | JavaScript | 221 | 23 | 4 | 248 |
+| [src/network/transship.js](/src/network/transship.js) | JavaScript | 231 | 23 | 4 | 258 |
 | [src/network/user.js](/src/network/user.js) | JavaScript | 93 | 0 | 10 | 103 |
-| [src/router/index.js](/src/router/index.js) | JavaScript | 40 | 1 | 7 | 48 |
+| [src/router/index.js](/src/router/index.js) | JavaScript | 43 | 1 | 9 | 53 |
 | [src/store/index.js](/src/store/index.js) | JavaScript | 51 | 0 | 3 | 54 |
 | [src/utils/compress.js](/src/utils/compress.js) | JavaScript | 43 | 11 | 3 | 57 |
 | [src/utils/image.js](/src/utils/image.js) | JavaScript | 59 | 14 | 3 | 76 |
 | [src/utils/time.js](/src/utils/time.js) | JavaScript | 30 | 0 | 4 | 34 |
 | [src/utils/validate.js](/src/utils/validate.js) | JavaScript | 4 | 0 | 0 | 4 |
-| [src/views/agency/account.vue](/src/views/agency/account.vue) | Vue | 14 | 0 | 3 | 17 |
-| [src/views/agency/discount.vue](/src/views/agency/discount.vue) | Vue | 14 | 0 | 3 | 17 |
-| [src/views/agency/giftcard.vue](/src/views/agency/giftcard.vue) | Vue | 249 | 148 | 7 | 404 |
-| [src/views/agency/order.vue](/src/views/agency/order.vue) | Vue | 461 | 0 | 10 | 471 |
+| [src/views/agency/account.vue](/src/views/agency/account.vue) | Vue | 469 | 0 | 14 | 483 |
+| [src/views/agency/discount.vue](/src/views/agency/discount.vue) | Vue | 444 | 0 | 14 | 458 |
+| [src/views/agency/giftcard.vue](/src/views/agency/giftcard.vue) | Vue | 250 | 148 | 7 | 405 |
+| [src/views/agency/order.vue](/src/views/agency/order.vue) | Vue | 634 | 0 | 13 | 647 |
+| [src/views/bankcard/apply.vue](/src/views/bankcard/apply.vue) | Vue | 327 | 11 | 8 | 346 |
+| [src/views/bankcard/manage.vue](/src/views/bankcard/manage.vue) | Vue | 228 | 10 | 8 | 246 |
+| [src/views/blotter/index.vue](/src/views/blotter/index.vue) | Vue | 228 | 10 | 8 | 246 |
 | [src/views/dashboard/index.vue](/src/views/dashboard/index.vue) | Vue | 31 | 3 | 3 | 37 |
-| [src/views/home/index.vue](/src/views/home/index.vue) | Vue | 118 | 0 | 6 | 124 |
+| [src/views/home/index.vue](/src/views/home/index.vue) | Vue | 131 | 0 | 6 | 137 |
 | [src/views/login/index.vue](/src/views/login/index.vue) | Vue | 323 | 3 | 25 | 351 |
 | [src/views/post/edit.vue](/src/views/post/edit.vue) | Vue | 398 | 6 | 4 | 408 |
 | [src/views/post/index.vue](/src/views/post/index.vue) | Vue | 306 | 0 | 2 | 308 |
 | [src/views/post/tag.vue](/src/views/post/tag.vue) | Vue | 149 | 0 | 5 | 154 |
-| [src/views/transship/input.vue](/src/views/transship/input.vue) | Vue | 332 | 5 | 5 | 342 |
-| [src/views/transship/output.vue](/src/views/transship/output.vue) | Vue | 768 | 0 | 13 | 781 |
-| [src/views/transship/storage.vue](/src/views/transship/storage.vue) | Vue | 504 | 0 | 9 | 513 |
-| [src/views/transship/transmit.vue](/src/views/transship/transmit.vue) | Vue | 567 | 152 | 15 | 734 |
+| [src/views/transship/input.vue](/src/views/transship/input.vue) | Vue | 333 | 5 | 5 | 343 |
+| [src/views/transship/output.vue](/src/views/transship/output.vue) | Vue | 881 | 0 | 16 | 897 |
+| [src/views/transship/storage.vue](/src/views/transship/storage.vue) | Vue | 586 | 0 | 10 | 596 |
+| [src/views/transship/transmit.vue](/src/views/transship/transmit.vue) | Vue | 670 | 145 | 14 | 829 |
 | [src/views/user/address.vue](/src/views/user/address.vue) | Vue | 346 | 0 | 9 | 355 |
-| [src/views/user/index.vue](/src/views/user/index.vue) | Vue | 336 | 1 | 3 | 340 |
+| [src/views/user/index.vue](/src/views/user/index.vue) | Vue | 353 | 1 | 3 | 357 |
 | [vue.config.js](/vue.config.js) | JavaScript | 28 | 1 | 0 | 29 |
 
 [summary](results.md)
