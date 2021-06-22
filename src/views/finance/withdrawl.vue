@@ -1,14 +1,28 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="编号" value="discount_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="编号" value="withdraw_ID"></el-option>
+      <el-option label="银行卡号" value="bankcard"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="用户昵称" value="user_nickname"></el-option>
+      <el-option label="用户编号" value="user_id"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+    <template v-if="this.filter=='withdraw_status'">
+      <el-radio v-model="search" label="0">待审核</el-radio>
+      <el-radio v-model="search" label="1">已提现</el-radio>
+      <el-radio v-model="search" label="2">已驳回</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -19,7 +33,11 @@
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
       <el-table-column label="单号" prop="withdraw_ID"></el-table-column>
-      <el-table-column label="用户" prop="uuid"></el-table-column>
+      <el-table-column label="用户" prop="user_id">
+        <template slot-scope='scope'>
+          {{scope.row.user_id}}-{{scope.row.user_nickname}}
+        </template>
+      </el-table-column>
       <el-table-column label="银行卡" prop="bankcard"></el-table-column>
       <el-table-column label="金额" prop="amount"></el-table-column>
       <el-table-column label="申请时间" prop="apply_time"></el-table-column>
@@ -40,12 +58,12 @@
             type="primary"
             @click="handleAdd()">新增</el-button>
         </template>
-        <template slot-scope="scope">
+        <!-- <template slot-scope="scope">
           <el-button
             size="mini"
             type="danger"
             @click="handleDelete(scope.index, scope.row)">删除</el-button>
-        </template>
+        </template> -->
       </el-table-column>
     </el-table>
     
@@ -93,7 +111,8 @@
 
 <script>
   import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
-  import { getWithdrawl,addWithdrawl,changeWithdrawl } from '@/network/finance.js'
+  import { getWithdrawl,filterWithdrawl,addWithdrawl,changeWithdrawl } from '@/network/finance.js'
+  import { getUser } from '@/network/user.js'
 
   export default {
     name: "Withdrawl",
@@ -102,7 +121,7 @@
         showDialog: true,
         search: null,
         searchWord: null,
-        filter: 'discount_ID',
+        filter: 'withdraw_ID',
         filterWord: null,
         isSearch: false,
         loading: true,
@@ -130,30 +149,46 @@
         pageNum: null,
         currentPage: 1,
         interpret: {
-          'discount_ID': {name:'编号'},
-          'card_num': {name:'卡号'}
-        }
+          'withdraw_ID': {name:'编号'},
+          'bankcard': {name:'银行卡号'},
+          'withdraw_status': {name:'状态'},
+          'user_email': {name:'用户邮箱'},
+          'user_nickname': {name:'用户昵称'},
+          'user_id': {name:'用户编号'},
+        },
+
+        selectList: []
       }
     },
     methods:{
+      deWeight(items) {
+        let values = [];
+        return items.filter(item=>{
+          if(values.indexOf(item.value)==-1) {
+            values.push(item.value);
+            return item;
+          }
+        });
+      },
       test(index) {
         console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          // filterStorage(this.filter,this.search,pageIndex).then(res => {
-          //   if(res.data.status=='200') {
-          //     this.pageNum = parseInt(res.data.Withdrawls_num);
-          //     this.tableData = res.data.data;
-          //     this.loading = false;
-          //   } else {
-          //     this.$message({type: 'error',message: res.data.msg})
-          //   }
-          //   this.loading = false;
-          // });
+          filterWithdrawl(this.filter,this.search,pageIndex).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.withdrawls_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }
+            this.loading = false;
+          });
         } else {
           getWithdrawl(pageIndex).then(res => {
+            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.Withdrawls_num);
               this.tableData = res.data.data;
@@ -242,16 +277,22 @@
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='withdraw_status') {
+            if(this.search=='0')this.searchWord = '待审核'
+            if(this.search=='1')this.searchWord = '已提现'
+            if(this.search=='2')this.searchWord = '已驳回'
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;
@@ -262,9 +303,63 @@
       filterChange() {
         this.search = '';
       },
+
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+
+        if(this.filter=='withdraw_ID') {
+          let query = this.selectList.withdraw_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='bankcard') {
+          let query = this.selectList.bankcard;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {
+        this.goSearch();
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
     },
     mounted() {
-      this._getList(this.currentPage)
+      getWithdrawl(0).then(res=>{
+        let data1 = [],data2 = [];
+        let items = res.data.data;
+        
+        items.map(item=>{
+          data1.push({id: 'withdraw_ID', key: 'withdraw_ID',value: item.withdraw_ID})
+          data2.push({id: 'bankcard', key: 'bankcard',value: item.bankcard})
+        })
+        this.selectList.withdraw_ID = data1;
+        this.selectList.bankcard = this.deWeight(data2);
+        getUser().then(res=>{
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.code = codes;
+          this.loading = false;
+          this._getList(this.currentPage);
+        })
+      })
     },
   }
 </script>

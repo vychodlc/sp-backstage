@@ -29,3 +29,10 @@ export function addWithdrawl(info) {
     data: formData
   })
 }
+
+export function filterWithdrawl(filter,value,p) {
+  return request({
+    url: '/filter_withdrawl.php',
+    params: {filter,value,p}
+  })
+}

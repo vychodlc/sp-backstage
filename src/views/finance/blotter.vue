@@ -205,16 +205,20 @@
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='storage_status') {
+            this.searchWord=(this.search=='0')?'库存中':'已出库';
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;

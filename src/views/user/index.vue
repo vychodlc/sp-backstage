@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="post-container">
     <el-table
     v-loading="loading"
     ref="userTable"
     :data="tableData.filter(data => !search || data.user_nickname.toLowerCase().includes(search.toLowerCase()))"
     class="elTable"
-    style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
+    style="width: 100%;height: calc(100vh - 110px);overflow-y:scroll"
     @selection-change="handleSelectionChange">
       <el-table-column
         type="selection"
@@ -185,6 +185,7 @@
         dialogRightVisible: false,
         dialogRight: {uuid:'',nickname:'',email:'',right:''},
         oldUser: null,
+        pageNum: null,
       }
     },
     filters: {
@@ -221,14 +222,16 @@
       }
     },
     mounted() {
-      this.currentPage = 1;
-      this._getUser(this.currentPage)
+      getUser(0).then(res=>{
+        this.pageNum = parseInt(res.data.data.length);
+        this.currentPage = 1;
+        this._getUser(this.currentPage)
+      })
     },
     methods:{
       _getUser(currentPage) {
         getUser(currentPage).then(res=>{
           this.tableData = res.data.data;
-          console.log(this.tableData);
           this.loading = false;
         })
       },
@@ -347,11 +350,20 @@
       },
       handleSelectionChange(val) {
         this.multipleSelection = val;
-      }
+      },
+      handleCurrentChange() {
+        this._getList(this.currentPage)
+      },
     }
   }
 </script>
 
 <style scoped>
-  
+  .post-container {
+    position: relative;
+  }
+  .pagination {
+    position: absolute;
+    right: 20px;
+  }
 </style>
