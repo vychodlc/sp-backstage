@@ -255,7 +255,6 @@ xxxx xxxx xxxx xxx-xxx
         };
       },
       test(index) {
-        console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
@@ -272,7 +271,6 @@ xxxx xxxx xxxx xxx-xxx
           });
         } else {
           getAccount(pageIndex,this.brand).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.accounts_num);
               this.tableData = res.data.data;
@@ -350,7 +348,6 @@ xxxx xxxx xxxx xxx-xxx
       },
       _addAccount(item) {
         addAccount(item).then(res=>{
-          console.log(res);
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;
@@ -360,7 +357,6 @@ xxxx xxxx xxxx xxx-xxx
         })
       },
       handleEdit(index,row) {
-        console.log(row);
         this.editItem.account_ID= row.account_ID;
         this.editItem.card_num= row.card_num;
         this.editItem.psd = row.psd;
@@ -370,7 +366,6 @@ xxxx xxxx xxxx xxx-xxx
       },
       goEdit() {
         changeAccount(this.editItem).then(res=>{
-          console.log(this.editItem.psd);
           if(res.data.status=='403') {
             this.$message({tyep:'warning',message:'未修改'})
           } else if(res.data.status=='200') {
@@ -460,8 +455,6 @@ xxxx xxxx xxxx xxx-xxx
 
             this.loading = false;
             this._getList(this.currentPage);
-
-            console.log(this.selectList);
           })
         })
       })

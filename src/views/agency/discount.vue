@@ -249,7 +249,6 @@ xxxx xxxx xxxx xxx-xxx
         });
       },
       test(index) {
-        console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
@@ -266,7 +265,6 @@ xxxx xxxx xxxx xxx-xxx
           });
         } else {
           getDiscount(pageIndex,this.brand).then(res => {
-            console.log(res.data);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.discounts_num);
               this.tableData = res.data.data;
@@ -350,9 +348,7 @@ xxxx xxxx xxxx xxx-xxx
         }
       },
       _addDiscount(item) {
-        console.log(item);
         addDiscount(item).then(res=>{
-          console.log(res);
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;
@@ -435,8 +431,6 @@ xxxx xxxx xxxx xxx-xxx
 
             this.loading = false;
             this._getList(this.currentPage);
-
-            console.log(this.selectList);
           })
         })
       })

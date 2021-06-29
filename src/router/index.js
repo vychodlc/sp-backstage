@@ -3,6 +3,13 @@ import VueRouter from 'vue-router'
 
 Vue.use(VueRouter)
 
+var checkStorage = setInterval(()=>{
+  if(localStorage.nickname) {
+    console.log(localStorage);
+    clearInterval(checkStorage)
+  }
+},1000)
+
 const routes = [
   {
     path: '/',
@@ -28,6 +35,7 @@ const routes = [
       {path: 'output',name: 'Output',component: () => import('../views/transship/output.vue')},
 
       {path: 'user',name: 'User',component: () => import('../views/user/index.vue')},
+      {path: 'permission',name: 'Permission',component: () => import('../views/user/permission.vue')},
       {path: 'address',name: 'Address',component: () => import('../views/user/address.vue')},
 
       {path: 'order',name: 'Order',component: () => import('../views/agency/order.vue')},

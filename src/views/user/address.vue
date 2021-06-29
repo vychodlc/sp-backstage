@@ -212,7 +212,6 @@
         } else {
           getAddressList(pageIndex).then(res => {
             if(res.data.status=='200') {
-              console.log(res.data);
               this.pageNum = parseInt(res.data.address_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -262,7 +261,6 @@
           this.$message({type: 'warning',message: '请填写收获地址'});
         } else {
           editAddress(this.editAddress).then(res=>{
-            console.log(res);
             if(res.data.status=='200') {
               this.dialogEditVisible = false;
               this.currentPage = 1;

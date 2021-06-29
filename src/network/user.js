@@ -101,3 +101,9 @@ export function getUserByEmail(user_email) {
     params: {user_email}
   })
 }
+
+export function getRight(user_id) {
+  return request({
+    
+  })
+}

@@ -171,7 +171,6 @@ xxxx xxxx xxxx
     },
     methods:{
       test(index) {
-        console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
@@ -188,7 +187,6 @@ xxxx xxxx xxxx
           // });
         } else {
           getGiftcard(pageIndex,this.brand).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.giftcards_num);
               this.tableData = res.data.data;
@@ -229,7 +227,6 @@ xxxx xxxx xxxx
       },
       addItem(item) {
         if(item.brand.toUpperCase().indexOf('N')!=-1) {
-          console.log('Nike go go go');
           this.$axios({
             method: 'post',
             url: 'https://api.nike.com/payment/giftcard_balance/v1/',
@@ -255,7 +252,6 @@ xxxx xxxx xxxx
             this.newItems.push(item);
           })
         } else if(item.brand.toUpperCase().indexOf('A')!=-1) {
-          console.log('Adidas go go go');
           this.$axios({
             method: 'post',
             url: 'https://www.jdsports.co.uk/gift-cards/'+item.card_num,
@@ -278,7 +274,6 @@ xxxx xxxx xxxx
             this.newItems.push(item);
           })
         } else if(item.brand.toUpperCase().indexOf('J')!=-1) {
-          console.log('JD go go go');
         }
       },
       enterItems() {
@@ -320,7 +315,6 @@ xxxx xxxx xxxx
       },
       _addGiftcard(item) {
         addGiftcard(item).then(res=>{
-          console.log(res);
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;

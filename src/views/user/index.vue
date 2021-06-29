@@ -100,12 +100,15 @@
       </div>
     </el-dialog>
     <el-dialog title="用户信息编辑" :visible.sync="dialogFormVisible">
-      <el-form :model="dialogForm">
-        <el-form-item label="nickname">
+      <el-form :model="dialogForm" size="mini">
+        <el-form-item label="昵称">
           <el-input v-model="dialogForm.nickname"></el-input>
         </el-form-item>
-        <el-form-item label="email">
+        <el-form-item label="邮箱">
           <el-input v-model="dialogForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="权限">
+
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -156,9 +159,9 @@
           "文章创建&编辑",
           "文章删除",
           "文章审稿",
-          "Tag页面查看",
-          "Tag创建",
-          "Tag删除",
+          "标签页面查看",
+          "标签创建",
+          "标签删除",
           "仓库页面查看",
           "仓库添加记录",
           "仓库删除记录",
@@ -190,34 +193,7 @@
     },
     filters: {
       getPermission(index) {
-        let permissionList = [
-          "文章简单查看",
-          "文章高级查看",
-          "文章创建&编辑",
-          "文章删除",
-          "文章审稿",
-          "Tag页面查看",
-          "Tag创建",
-          "Tag删除",
-          "仓库页面查看",
-          "仓库添加记录",
-          "仓库删除记录",
-          "仓库编辑记录",
-          "仓库出库",
-          "仓库退税查看",
-          "仓库退税审核",
-          "银行卡页面查看",
-          "银行卡页面修改",
-          "银行卡页面审核",
-          "用户页面查看",
-          "APP用户信息查看",
-          "APP用户注册权限分配",
-          "APP用户信息修改",
-          "后台用户信息查看",
-          "后台用户信息修改",
-          "后台用户权限分配",
-          "后台用户组设置",
-        ];
+        let permissionList = this.permissionList;
         return permissionList[index-1]
       }
     },
@@ -231,6 +207,7 @@
     methods:{
       _getUser(currentPage) {
         getUser(currentPage).then(res=>{
+          console.log(res);
           this.tableData = res.data.data;
           this.loading = false;
         })
