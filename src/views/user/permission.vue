@@ -45,22 +45,11 @@
       :data="tableData"
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
-      <el-table-column label="用户组" prop="role_key"></el-table-column>
-      <el-table-column label="称呼" prop="role_key"></el-table-column>
-      <el-table-column label="状态" prop="outbound_status">
-        <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.outbound_status==0" type="success">待审核</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==1" type="info">已取消</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==2" type="info">已驳回</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==3" type="primary">待出库</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==4" type="warning">转运中</el-tag>
-          <el-tag size="mini" v-if="scope.row.outbound_status==5" type="info">已完成</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,0)"></el-link><br>
-          <el-tag size="mini" v-if="scope.row.pay_status==0" type="warning">未支付</el-tag>
-          <el-tag size="mini" v-if="scope.row.pay_status==1" type="success">已支付</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,1)"></el-link>
-        </template>
-      </el-table-column>
+      <el-table-column label="编号" prop="role_ID"></el-table-column>
+      <el-table-column label="用户组名称" prop="name"></el-table-column>
+      <el-table-column label="描述信息" prop="name"></el-table-column>
+      <el-table-column label="编辑时间" prop="edit_time"></el-table-column>
+      <el-table-column label="编辑人" prop="edit_user"></el-table-column>
       <el-table-column label="操作" align="right" width="150">
         <template slot="header">
           <el-button
@@ -71,7 +60,6 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            v-if="scope.row.outbound_status==0"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
@@ -82,7 +70,7 @@
     </el-table>
     
     <el-dialog title="新增用户组信息" :visible.sync="dialogAddVisible">
-      <el-form label-width="100px" size="mini" style="margin-top:30px">
+      <el-form label-width="100px" size="mini">
         <el-form-item label="名称">
           <el-input v-model="newItem.name"></el-input>
         </el-form-item>
@@ -91,7 +79,7 @@
         </el-form-item>
         <el-form-item label="权限">
           <el-checkbox-group v-model="newItem.permissions">
-            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:30%"></el-checkbox>
+            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:25%"></el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -121,75 +109,19 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改出库信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="修改用户组信息" :visible.sync="dialogEditVisible">
       <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
-        <el-form-item label="用户邮箱">
-          <el-input v-model="editOutput.email" disabled>
-            <!-- <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(editOutput.email)"></el-button> -->
-          </el-input>
+        <el-form-item label="名称">
+          <el-input v-model="editItem.name"></el-input>
         </el-form-item>
-        <el-form-item label="货品编号" v-if="userStorage.length>0">
-          <el-select
-            v-model="editOutput.storage_nums" 
-            multiple 
-            filterable
-            default-first-option
-            placeholder="请选择"
-            style="width:100%"
-            @change="selectChanged"
-          >
-            <el-option
-              v-for="(item,index) in userStorage"
-              :key="index"
-              :label="item.storage_ID+' | '+item.description"
-              :value="item.storage_ID">
-            </el-option>
-          </el-select>
+        <el-form-item label="描述">
+          <el-input v-model="editItem.desc"></el-input>
         </el-form-item>
-        <el-form-item label="收货地址" v-if="userAddress.length>0">
-          <el-select 
-            v-model="editOutput.address"
-            placeholder="请选择"
-            style="width:100%">
-            <el-option
-              v-for="(item,index) in userAddress"
-              :key="index"
-              :label="item.user_name+' | '+item.addr+' | '+item.phone"
-              :value="item.user_name+' | '+item.addr+' | '+item.phone">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="出库费用">
-          <span>￡{{parseFloat(editOutput.price/100)}}</span>
-        </el-form-item>
-        <el-form-item label="出库方式">
-          <el-radio v-model="editOutput.outbound_type" label="0">普通出库</el-radio>
-          <el-radio v-model="editOutput.outbound_type" label="1">退税出库</el-radio>
-          <div style="color:#aaa" v-if="editOutput.outbound_type==='0'">之后无法申请选中商品的退税操作</div>
-          <div style="color:#aaa" v-if="editOutput.outbound_type==1">请上传退税材料</div>
-          <div>
-            <template v-if="(editOutput.outbound_type=='1')&&(editOutput.material.length!=0)">
-              <div class="editImgBox" v-for="(item,index) in editOutput.material" :key="index">
-                <el-image class="material" :src="item" alt="" :preview-src-list="editOutput.material"></el-image>
-                <div class="boxDel" @click="editDelImg(index)">×</div>
-              </div>
-            </template>
-          </div>
-        </el-form-item>
-        <el-form-item v-if="editOutput.outbound_type==1" label="退税材料">
-          <el-upload
-            ref="uploadImgOutputEdit"
-            class="upload-demo"
-            action="#"
-            multiple
-            accept="image/jpeg,image/gif,image/png"
-            :on-change='handleChangeImgEdit'
-            list-type="picture"
-            :auto-upload="false">
-            <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png/gif文件，且不超过1MB</div>
-          </el-upload>
+        <el-form-item label="权限">
+          <el-checkbox-group v-model="editItem.permissions">
+            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:25%"></el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -212,12 +144,9 @@
 
 <script>
   import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage } from '@/network/transship.js'
-  import { addCoverImg } from '@/network/post.js'
-  import { payBalance } from '@/network/payment.js'
-  import { getUserByEmail,getUserInfoById,getUser } from '@/network/user.js'
-  import * as imageConversion from 'image-conversion';
-  import { validateEmail } from '@/utils/validate.js';
-  import { filterAddress } from '@/network/address.js'
+  import { getRoleList,addRole,editRole } from '@/network/permission.js'
+  import { getUserByEmail,getUserInfoById,getUser,getUserRight } from '@/network/user.js'
+
   export default {
     name: "Transmit",
     data () {
@@ -267,33 +196,69 @@
         },
         
         permissionList: [
-          "文章简单查看",
-          "文章高级查看",
-          "文章创建&编辑",
-          "文章删除",
-          "文章审稿",
-          "标签页面查看",
-          "标签创建",
-          "标签删除",
-          "仓库页面查看",
-          "仓库添加记录",
-          "仓库删除记录",
-          "仓库编辑记录",
-          "仓库出库",
-          "仓库退税查看",
-          "仓库退税审核",
-          "银行卡页面查看",
-          "银行卡页面修改",
-          "银行卡页面审核",
-          "用户页面查看",
-          "APP用户信息查看",
-          "APP用户注册权限分配",
-          "APP用户信息修改",
-          "后台用户信息查看",
-          "后台用户信息修改",
-          "后台用户权限分配",
-          "后台用户组设置",
+          'post_page',
+          'post_page_all',
+          'post_edit',
+          'post_delete',
+          'post_audit',
+          'tag_page',
+          'tag_add',
+          'tag_edit',
+          'tag_del',
+          'repo_page',
+          'repo_add',
+          'repo_edit',
+          'repo_del',
+          'repo_page',
+          'repo_out',
+          'tax_page',
+          'tax_audit',
+          'card_page',
+          'card_edit',
+          'card_audit',
+          'user_page',
+          'a_user_page',
+          'a_user_audit',
+          'a_user_edit',
+          'b_user_page',
+          'b_user_audit',
+          'b_user_edit',
+          'user_group',
+          'user_block',
+          'system_set',
         ],
+        permissionDict: {
+          'post_page':0,
+          'post_page_all':0,
+          'post_edit':0,
+          'post_delete':0,
+          'post_audit':0,
+          'tag_page':0,
+          'tag_add':0,
+          'tag_edit':0,
+          'tag_del':0,
+          'repo_page':0,
+          'repo_add':0,
+          'repo_edit':0,
+          'repo_del':0,
+          'repo_page':0,
+          'repo_out':0,
+          'tax_page':0,
+          'tax_audit':0,
+          'card_page':0,
+          'card_edit':0,
+          'card_audit':0,
+          'user_page':0,
+          'a_user_page':0,
+          'a_user_audit':0,
+          'a_user_edit':0,
+          'b_user_page':0,
+          'b_user_audit':0,
+          'b_user_edit':0,
+          'user_group':0,
+          'user_block':0,
+          'system_set':0,
+        },
 
         selectList: {},
 
@@ -318,29 +283,31 @@
       }
     },
     mounted() {
-      getOutputList(0).then(res=>{
-        let data1 = [];
-        let items = res.data.data;
+      this.currentPage = 1;
+      this._getList(this.currentPage);
+      // getRoleList(0).then(res=>{
+      //   let data1 = [];
+      //   let items = res.data.data;
         
-        items.map(item=>{
-          data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
-        })
-        this.selectList.outbound_ID = data1;
-        getUser().then(res=>{
-          let users = res.data.data;
-          let emails = [],ids = [],codes = [];
-          users.map(user=>{
-            emails.push({id: user.id, key: 'user_email',value: user.user_email})
-            ids.push({id: user.id, key: 'id',value: user.id})
-            codes.push({id: user.id, key: 'code',value: user.code})
-          })
-          this.selectList.user_email = emails;
-          this.selectList.user_id = ids;
-          this.selectList.code = codes;
-          this.loading = false;
-          this._getList(this.currentPage);
-        })
-      })
+      //   items.map(item=>{
+      //     data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
+      //   })
+      //   this.selectList.outbound_ID = data1;
+      //   getUser().then(res=>{
+      //     let users = res.data.data;
+      //     let emails = [],ids = [],codes = [];
+      //     users.map(user=>{
+      //       emails.push({id: user.id, key: 'user_email',value: user.user_email})
+      //       ids.push({id: user.id, key: 'id',value: user.id})
+      //       codes.push({id: user.id, key: 'code',value: user.code})
+      //     })
+      //     this.selectList.user_email = emails;
+      //     this.selectList.user_id = ids;
+      //     this.selectList.code = codes;
+      //     this.loading = false;
+      //     this._getList(this.currentPage);
+      //   })
+      // })
     },
     methods:{
       querySearch(queryString, cb) {
@@ -377,46 +344,13 @@
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          let filter = this.filter,search = this.search;
-          if(filter=='user_email') {
-            this.selectList.user_email.map(item=>{
-              if(item.value==search) {
-                filter = 'user_id';
-                search = item.id;
-              }
-            })
-          } else if(filter=='code') {
-            this.selectList.code.map(item=>{
-              if(item.value==search) {
-                filter = 'user_id';
-                search = item.id;
-              }
-            })
-          }
-          filterOutput(filter,search,pageIndex).then(res => {
-            if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.outbounds_num);
-              this.tableData = res.data.data;
-              this.loading = false;
-              for(let item in this.tableData) {
-                this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
-                this.tableData[item].material = this.tableData[item].material.split(',');
-              }
-            } else {
-              this.$message({type: 'error',message: res.data.msg})
-            }      
-            this.loading = false;
-          });
         } else {
-          getOutputList(pageIndex).then(res => {
+          getRoleList(pageIndex).then(res => {
+            console.log(res);
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.outbounds_num);
+              this.pageNum = parseInt(res.data.roles_num);
               this.tableData = res.data.data;
               this.loading = false;
-              for(let item in this.tableData) {
-                this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
-                this.tableData[item].material = this.tableData[item].material.split(',');
-              }
             } else {
               this.$message({type: 'error',message: res.data.msg})
             }      
@@ -434,14 +368,63 @@
         } else if(this.newItem.desc == '') {
           this.$message({type: 'warning',message: '请输入用户组描述'});
         } else if(this.newItem.permissions.length == 0) {
-          this.$message({type: 'warning',message: '选择用户权限'});
+          this.$message({type: 'warning',message: '请选择用户权限'});
         } else {
-          console.log('go go go');
+          for(let item in this.permissionDict) {
+            if(this.newItem.permissions.indexOf(item)!=-1) {
+              this.permissionDict[item] = 1
+            } else {
+              this.permissionDict[item] = 0
+            }
+          }
+          addRole(this.newItem.name,this.permissionDict).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type:'success',message:'添加成功'})
+            } else {
+              this.$message({type:'warning',message:'添加失败'})
+            }
+            this.dialogAddVisible = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          })
         }
       },
       handleEdit(index,row) {
+        this.newItem = {role_ID: row.role_ID,desc: '',permissions: []};
+        let pms = row;
+        for(let item in pms) {
+          if(item!='name'&&item!='role_ID'&&item!='edit_time'&&item!='edit_user'&&pms[item]=='1') {
+            this.newItem.permissions.push(item)
+          }
+        }
+        this.dialogEditVisible = true;
       },
       goEdit() {
+        if(this.editItem.name == '') {
+          this.$message({type: 'warning',message: '请输入用户组名称'});
+        } else if(this.editItem.desc == '') {
+          this.$message({type: 'warning',message: '请输入用户组描述'});
+        } else if(this.editItem.permissions.length == 0) {
+          this.$message({type: 'warning',message: '请选择用户权限'});
+        } else {
+          for(let item in this.permissionDict) {
+            if(this.editItem.permissions.indexOf(item)!=-1) {
+              this.permissionDict[item] = 1
+            } else {
+              this.permissionDict[item] = 0
+            }
+          }
+          editRole(this.editItem.role_ID,this.permissionDict).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type:'success',message:'修改成功'})
+            } else {
+              this.$message({type:'warning',message:'修改失败'})
+            }
+            this.dialogEditVisible = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          })
+        }
       },
       goDeploy(type) {
         if(type=='new') {

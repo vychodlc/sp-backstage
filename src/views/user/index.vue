@@ -100,15 +100,17 @@
       </div>
     </el-dialog>
     <el-dialog title="用户信息编辑" :visible.sync="dialogFormVisible">
-      <el-form :model="dialogForm" size="mini">
+      <el-form label-width="100px" :model="dialogForm" size="mini">
         <el-form-item label="昵称">
           <el-input v-model="dialogForm.nickname"></el-input>
         </el-form-item>
         <el-form-item label="邮箱">
           <el-input v-model="dialogForm.email"></el-input>
         </el-form-item>
-        <el-form-item label="权限">
-
+        <el-form-item label="权限" v-if="dialogForm.right==1">
+          <el-checkbox-group v-model="dialogForm.permissions">
+            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:20%"></el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -142,7 +144,7 @@
 </template>
 
 <script>
-  import { getUser,editUserinfo,delUser,register,setUserRight } from '@/network/user.js'
+  import { getUser,editUserinfo,delUser,register,setUserRight,getUserRight,editUserRight } from '@/network/user.js'
   import { validateEmail } from '@/utils/validate.js'
   export default {
     name: "User",
@@ -154,47 +156,77 @@
         multipleSelection: [],
         search: '',
         permissionList: [
-          "文章简单查看",
-          "文章高级查看",
-          "文章创建&编辑",
-          "文章删除",
-          "文章审稿",
-          "标签页面查看",
-          "标签创建",
-          "标签删除",
-          "仓库页面查看",
-          "仓库添加记录",
-          "仓库删除记录",
-          "仓库编辑记录",
-          "仓库出库",
-          "仓库退税查看",
-          "仓库退税审核",
-          "银行卡页面查看",
-          "银行卡页面修改",
-          "银行卡页面审核",
-          "用户页面查看",
-          "APP用户信息查看",
-          "APP用户注册权限分配",
-          "APP用户信息修改",
-          "后台用户信息查看",
-          "后台用户信息修改",
-          "后台用户权限分配",
-          "后台用户组设置",
+          'post_page',
+          'post_page_all',
+          'post_edit',
+          'post_delete',
+          'post_audit',
+          'tag_page',
+          'tag_add',
+          'tag_edit',
+          'tag_del',
+          'repo_page',
+          'repo_add',
+          'repo_edit',
+          'repo_del',
+          'repo_page',
+          'repo_out',
+          'tax_page',
+          'tax_audit',
+          'card_page',
+          'card_edit',
+          'card_audit',
+          'user_page',
+          'a_user_page',
+          'a_user_audit',
+          'a_user_edit',
+          'b_user_page',
+          'b_user_audit',
+          'b_user_edit',
+          'user_group',
+          'user_block',
+          'system_set',
         ],
+        permissionDict: {
+          'post_page':0,
+          'post_page_all':0,
+          'post_edit':0,
+          'post_delete':0,
+          'post_audit':0,
+          'tag_page':0,
+          'tag_add':0,
+          'tag_edit':0,
+          'tag_del':0,
+          'repo_page':0,
+          'repo_add':0,
+          'repo_edit':0,
+          'repo_del':0,
+          'repo_page':0,
+          'repo_out':0,
+          'tax_page':0,
+          'tax_audit':0,
+          'card_page':0,
+          'card_edit':0,
+          'card_audit':0,
+          'user_page':0,
+          'a_user_page':0,
+          'a_user_audit':0,
+          'a_user_edit':0,
+          'b_user_page':0,
+          'b_user_audit':0,
+          'b_user_edit':0,
+          'user_group':0,
+          'user_block':0,
+          'system_set':0,
+        },
         dialogAddVisible: false,
         dialogAdd: {nickname:'',email:'',password:''},
         dialogFormVisible: false,
-        dialogForm: {uuid:'',nickname:'',email:'',right:''},
+        dialogForm: {nickname:'',email:'',right:'',permissions:[]},
         dialogRightVisible: false,
         dialogRight: {uuid:'',nickname:'',email:'',right:''},
         oldUser: null,
         pageNum: null,
-      }
-    },
-    filters: {
-      getPermission(index) {
-        let permissionList = this.permissionList;
-        return permissionList[index-1]
       }
     },
     mounted() {
@@ -207,18 +239,33 @@
     methods:{
       _getUser(currentPage) {
         getUser(currentPage).then(res=>{
-          console.log(res);
           this.tableData = res.data.data;
           this.loading = false;
         })
       },
       handleEdit(index, row) {
-        this.dialogFormVisible = true;
-        this.dialogForm.uuid = this.tableData[index].uuid;
-        this.dialogForm.nickname = this.tableData[index].user_nickname;
-        this.dialogForm.email = this.tableData[index].user_email;
-        this.dialogForm.right = this.tableData[index].user_right;
-        // this.dialogForm.permissions = this.tableData[index].user_permissions;
+        if(row.user_right==1) {
+          getUserRight(row.uuid).then(res=>{
+            this.dialogForm.permissions = [];
+            let pms = res.data.data;
+            for(let item in pms) {
+              if(item!='uuid'&&item!='role_ID'&&item!='id'&&pms[item]=='1') {
+                this.dialogForm.permissions.push(item)
+              }
+            }
+            this.dialogFormVisible = true;
+            this.dialogForm.uuid = this.tableData[index].uuid;
+            this.dialogForm.nickname = this.tableData[index].user_nickname;
+            this.dialogForm.email = this.tableData[index].user_email;
+            this.dialogForm.right = this.tableData[index].user_right;
+          })
+        } else {
+          this.dialogFormVisible = true;
+          this.dialogForm.uuid = this.tableData[index].uuid;
+          this.dialogForm.nickname = this.tableData[index].user_nickname;
+          this.dialogForm.email = this.tableData[index].user_email;
+          this.dialogForm.right = this.tableData[index].user_right;
+        }
       },
       goEdit() {
         if(this.dialogForm.nickname=='') {
@@ -231,16 +278,25 @@
           this.$message({type: 'warning',message: '邮箱不符合规范'});
         }else{
           this.loading = true;
-          editUserinfo(this.dialogForm).then(res=>{
-            if(res.data.status=='200') {
-              this.$message({type: 'success',message: '修改成功!'});
-              this.dialogFormVisible = false;
-            }else{
-              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
+          editUserinfo(this.dialogForm).then(res1=>{
+            for(let item in this.permissionDict) {
+              if(this.dialogForm.permissions.indexOf(item)!=-1) {
+                this.permissionDict[item] = 1;
+              } else {
+                this.permissionDict[item] = 0;
+              }
             }
-            this.currentPage = 1;
-            this._getUser(this.currentPage)
-            this.loading = false;
+            editUserRight(this.dialogForm.uuid.toString(),this.permissionDict).then(res2=>{
+              if(res1.data.status=='403'&&res2.data.status=='403') {
+                this.$message({type:'warning',message:'未做任何改变'})
+              } else {
+                this.$message({type:'success',message:'修改成功'})
+                this.dialogFormVisible = false;
+                this.currentPage = 1;
+                this._getUser(this.currentPage)
+              }
+              this.loading = false;
+            })
           })
         }
       },

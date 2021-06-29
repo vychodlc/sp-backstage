@@ -24,7 +24,6 @@
           localStorage.uuid = res.data.data.sub;
           getUserInfo(localStorage.uuid).then(res=>{
             if(res.data&&res.data.data) {
-              localStorage.right = res.data.data.user_right;
               localStorage.nickname = res.data.data.user_nickname;
             }
           })

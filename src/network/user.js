@@ -84,7 +84,6 @@ export function delUser(id) {
 }
 
 export function setUserRight(id,newRight) {
-  console.log(id,newRight);
   let form = new FormData();
   form.append("uuid", id);
   form.append('user_right', newRight);
@@ -102,8 +101,26 @@ export function getUserByEmail(user_email) {
   })
 }
 
-export function getRight(user_id) {
+export function getUserRight(uuid) {
   return request({
-    
+    url: '/get_user_right.php',
+    params: {uuid}
+  })
+}
+
+export function editUserRight(uuid,permission_text) {
+  let formData = new FormData()
+  formData.append('uuid',uuid)
+  formData.append('permission_text',JSON.stringify(permission_text))
+  return request({
+    method: 'POST',
+    url: '/edit_user_right.php',
+    data: formData
+  })
+}
+
+export function getBackRight() {
+  return request({
+    url: '/get_back_right.php'
   })
 }

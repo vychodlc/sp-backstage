@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { login,register,auth,getUserInfo } from '@/network/user.js'
+import { login,register,auth,getUserInfo,getBackRight } from '@/network/user.js'
 import { validateEmail } from '@/utils/validate.js'
 
 const validatorEmail = (rule, value, callback) => {
@@ -199,18 +199,28 @@ export default {
         login(this.loginForm).then(res=>{
           if(res.data.status=='200') {
             this.$store.commit('setToken', res.data.token);
+            localStorage.token = res.data.token;
             this.$store.commit('setRefreshToken', res.data.refresh_token);
             auth(localStorage.token).then(res=>{
               localStorage.uuid = res.data.data.sub;
-              getUserInfo(localStorage.uuid).then(res=>{
-                console.log(res);
-                localStorage.right = res.data.data.user_right;
-                localStorage.ID = res.data.data.ID;
-                localStorage.nickname = res.data.data.user_nickname;
-                this.$store.commit('setUser',{id:res.data.data.ID,nickname:res.data.data.user_nickname,right:res.data.data.user_right});
-                this.$message({message: '登陆成功',type: 'success'});
-                this.loading = false;
-                this.$router.push({ path:'/home' });
+              getUserInfo(localStorage.uuid).then(res1=>{
+                localStorage.ID = res1.data.data.ID;
+                localStorage.nickname = res1.data.data.user_nickname;
+                getBackRight().then(res2=>{
+                  let pms = res2.data.data;
+                  console.log(pms);
+                  let permissions = [];
+                  for(let item in pms) {
+                    if(item!='uuid'&&item!='role_ID'&&item!='id'&&pms[item]=='1') {
+                      permissions.push(item)
+                    }
+                  }
+                  localStorage.right = permissions;
+                  this.$store.commit('setUser',{id:res1.data.data.ID,nickname:res1.data.data.user_nickname,right:permissions});
+                  this.$message({message: '登陆成功',type: 'success'});
+                  this.loading = false;
+                  this.$router.push({ path:'/home' });
+                })
               });
             });
           } else {
