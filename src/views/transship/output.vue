@@ -51,6 +51,11 @@
           <el-tag size="mini" style="margin:2px" v-for="(item,index) in scope.row.storage_nums" :key="index">{{ item }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="价格" prop="price">
+        <template slot-scope="scope">
+          <span>￡{{parseFloat(scope.row.price/100).toFixed(2)}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="收货地址" prop="address"></el-table-column>
       <el-table-column label="用户编号" prop="user_id"></el-table-column>
       <el-table-column label="出库申请时间" prop="outbound_apply_time"></el-table-column>
@@ -90,6 +95,10 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
+            v-if="scope.row.outbound_type==1"
+            @click="handleTax(scope.$index, scope.row)">退税</el-button>
+          <el-button
+            size="mini"
             v-if="scope.row.outbound_status==0"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
@@ -114,9 +123,20 @@
           </el-row>
         </el-form-item> -->
         <el-form-item label="用户邮箱">
-          <el-input v-model="newOutput.email" @input="userStorage=[];userAddress=[]">
+          <el-autocomplete
+            class="inline-input"
+            v-model="newOutput.email"
+            size="small"
+            :fetch-suggestions="querySearch2"
+            placeholder="请输入用户邮箱···"
+            style="width:100%"
+            @input="userStorage=[];userAddress=[]"
+            :trigger-on-focus="false"
+            @select="handleSelect2"
+          ></el-autocomplete>
+          <!-- <el-input v-model="newOutput.email" @input="userStorage=[];userAddress=[]">
             <el-button slot="append" icon="el-icon-search" @click="_getUserStorage(newOutput.email)"></el-button>
-          </el-input>
+          </el-input> -->
         </el-form-item>
         <el-form-item label="货品编号" v-if="userStorage.length>0">
           <el-select
@@ -149,8 +169,10 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="出库费用">
-          <span>￡{{parseFloat(newOutput.price/100)}}</span>
+        <el-form-item label="出库费用(￡)" v-if="newOutput.storage_nums.length>0">
+          <!-- <span>￡{{parseFloat(newOutput.price/100)}}</span> -->
+          <!-- <el-input v-model="newOutput.price"></el-input> -->
+          <el-input @input="priceFormat" :value="displayPrice"></el-input>
         </el-form-item>
         <el-form-item label="出库方式">
           <el-radio v-model="newOutput.outbound_type" label="0">普通出库</el-radio>
@@ -239,7 +261,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="出库费用">
-          <span>￡{{parseFloat(editOutput.price/100)}}</span>
+          <!-- <span>￡{{parseFloat(editOutput.price/100)}}</span> -->
+          <el-input @input="priceFormat2" :value="displayPrice2"></el-input>
         </el-form-item>
         <el-form-item label="出库方式">
           <el-radio v-model="editOutput.outbound_type" label="0">普通出库</el-radio>
@@ -296,6 +319,7 @@
   import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js';
   import { filterAddress } from '@/network/address.js'
+import tagVue from '../post/tag.vue'
   export default {
     name: "Transmit",
     data () {
@@ -352,6 +376,8 @@
         },
         userStorage: [],
         userAddress: [],
+        displayPrice: null,
+        displayPrice2: null,
       }
     },
     computed: {
@@ -408,6 +434,15 @@
       },
       handleSelect() {
         this.goSearch();
+      },
+      querySearch2(queryString, cb) {
+        queryString = queryString.toString();
+        let query = this.selectList.user_email;
+        let results = queryString ? query.filter(this.createFilter(queryString)) :query;
+        cb(results);
+      },
+      handleSelect2() {
+        this._getUserStorage(this.newOutput.email);
       },
       createFilter(queryString) {
         return (item) => {
@@ -487,7 +522,7 @@
           this.$message({type: 'warning',message: '请填写用户邮箱'});
         } else if(this.newOutput.storage_nums.length==0) {
           this.$message({type: 'warning',message: '请选择货品编号'});
-          this._getUserStorage(this.newOutput.email);
+          // this._getUserStorage(this.newOutput.email);
         } else if(this.newOutput.address=='') {
           this.$message({type: 'warning',message: '请填写收货地址'});
         } else if(this.newOutput.outbound_type=='') {
@@ -738,6 +773,7 @@
           })
         } else if(this.oldRow.pay_status!=this.dialogChange&&this.changeType==1) {
           changeOutputPay(this.oldRow.outbound_ID,this.dialogChange).then(res => {
+            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -859,6 +895,20 @@
           this.newOutput.price = this.$store.state.expressPrice[weight]*100;
           this.editOutput.price = this.$store.state.expressPrice[weight]*100;
         }
+        this.displayPrice = parseFloat(this.newOutput.price/100).toFixed(2);
+        this.displayPrice2 = parseFloat(this.editOutput.price/100).toFixed(2);
+      },
+      priceFormat(target) {
+        this.displayPrice = parseFloat(target).toFixed(2);
+        this.newOutput.price = parseInt(target*100);
+      },
+      priceFormat2(target) {
+        this.displayPrice2 = parseFloat(target).toFixed(2);
+        this.editOutput.price = parseInt(target*100);
+      },
+
+      handleTax(index,row) {
+        
       }
     }
   }

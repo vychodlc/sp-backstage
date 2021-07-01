@@ -13,75 +13,55 @@
             <el-radio v-model="inputInfo.brand" label="U">其他</el-radio>
           </template>
         </el-form-item>
-        <!-- <el-form-item label="转运码">
-          <el-row>
-            <el-col :span="8">
-              <el-radio-group v-model="inputInfo.method">
-                <el-radio label="0" border>无</el-radio>
-                <el-radio label="1" border>有</el-radio>
-              </el-radio-group>
-            </el-col>
-            <el-col :span="16">
-              <el-input v-model="inputInfo.code" v-if="inputInfo.method==1"></el-input>
-            </el-col>
-          </el-row>
-        </el-form-item> -->
         <el-form-item label="方式">
-          <!-- <el-row> -->
-            <!-- <el-col :span="8"> -->
-              <el-radio-group v-model="inputInfo.method" @change="inputInfo.code=''">
-                <el-radio style="margin-right:0" label="0" border>快递单号</el-radio>
-                <el-radio style="margin-right:0" label="1" border>转运码</el-radio>
-                <el-radio style="margin-right:0" label="2" border>邮箱</el-radio>
-              </el-radio-group>
-              <el-autocomplete
-                style="margin-left:20px;width:50%"
-                v-show="inputInfo.method!=''"
-                class="inline-input"
-                v-model="inputInfo.code"
-                @input="changeInput"
-                :fetch-suggestions="querySearch"
-                placeholder="请输入内容"
-                :trigger-on-focus="false"
-                @select="handleSelect"
-              ></el-autocomplete>
-            <!-- </el-col>
-            <el-col :span="14">
-              <el-input v-model="inputInfo.code">
-                <template slot="prepend" v-if="inputInfo.method=='1'">@</template>
-              </el-input>
-            </el-col>
-          </el-row> -->
+          <el-radio-group v-model="inputInfo.method" @change="inputInfo.code=''">
+            <el-radio style="margin-right:0" label="0" border>快递单号</el-radio>
+            <el-radio style="margin-right:0" label="1" border>转运码</el-radio>
+            <el-radio style="margin-right:0" label="2" border>邮箱</el-radio>
+          </el-radio-group>
+          <el-autocomplete
+            style="margin-left:20px;width:50%"
+            v-show="inputInfo.method!=''"
+            class="inline-input"
+            v-model="inputInfo.code"
+            @input="changeInput"
+            :fetch-suggestions="querySearch"
+            placeholder="请输入内容"
+            :trigger-on-focus="false"
+            @select="handleSelect"
+          ></el-autocomplete>
         </el-form-item>
-        <el-form-item label="货品尺寸" style="height:28px">
+        <el-form-item label="货品尺寸(cm)" style="height:28px">
           <el-row>
-            <el-col :span="8">
-              <el-form-item label="长(cm)" label-width="80px">
-                <el-input type="number" v-model="inputInfo.size[0]"></el-input>
+            <el-col :span="4">
+              <el-form-item label="长" label-width="30px">
+                <el-input v-model="inputInfo.size[0]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="8">
-              <el-form-item label="宽(cm)" label-width="80px">
-                <el-input type="number" v-model="inputInfo.size[1]"></el-input>
+            <el-col :span="4">
+              <el-form-item label="宽" label-width="30px">
+                <el-input v-model="inputInfo.size[1]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="8">
-              <el-form-item label="高(cm)" label-width="80px">
-                <el-input type="number" v-model="inputInfo.size[2]"></el-input>
+            <el-col :span="4">
+              <el-form-item label="高" label-width="30px">
+                <el-input v-model="inputInfo.size[2]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item label="货品重量">
+        <el-form-item label="货品重量(kg)">
           <el-row>
             <el-col>
-          <el-input v-model="inputInfo.weight"></el-input></el-col>
+              <el-input v-model="inputInfo.weight" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+            </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="货品描述">
           <el-row>
             <el-col>
-          <el-input v-model="inputInfo.description"></el-input></el-col>
+              <el-input v-model="inputInfo.description"></el-input>
+            </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="货品图片">
@@ -220,11 +200,14 @@
               }).then(resAdd=>{
                 if(resAdd.data.status='200') {
                   this.$message({type: 'success',message: '入库成功!'});
+                  let _brand = this.inputInfo.brand;
                   let _method = this.inputInfo.method;
+                  let _code = this.inputInfo.code;
                   this.inputInfo = {
                     apply_id: '',
                     expressid: '',
-                    code: '',
+                    brand: _brand,
+                    code: _code,
                     method: _method,
                     size: ['','',''],
                     weight: '',
