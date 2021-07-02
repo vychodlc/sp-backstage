@@ -256,3 +256,14 @@ export function getCrawlerOrder(info) {
     }
   })
 }
+
+export function addDrawback(info) {
+  let formData = new FormData()
+  formData.append('outbound_id',info.outbound_id)
+  formData.append('amount',info.amount)
+  return request({
+    method: 'POST',
+    url: '/add_drawback.php',
+    data: formData
+  })
+}

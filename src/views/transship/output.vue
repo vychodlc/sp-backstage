@@ -85,7 +85,7 @@
           <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,1)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="150">
+      <el-table-column label="操作" align="right" width="250">
         <template slot="header">
           <el-button
             size="mini"
@@ -95,6 +95,7 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
+            type="success"
             v-if="scope.row.outbound_type==1"
             @click="handleTax(scope.$index, scope.row)">退税</el-button>
           <el-button
@@ -298,6 +299,17 @@
         <el-button type="primary" @click="goEdit()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title='退税通过' :visible.sync="dialogTaxVisible">
+      <el-form size="mini">
+        <el-form-item label="退税金额" v-if="taxItem">
+          <el-input v-model="taxItem.amount"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogTaxVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goTax()">确 定</el-button>
+      </div>
+    </el-dialog>
 
     <div class="pagination">
       <el-pagination
@@ -312,14 +324,14 @@
 </template>
 
 <script>
-  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage } from '@/network/transship.js'
+  import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage,addDrawback } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { payBalance } from '@/network/payment.js'
   import { getUserByEmail,getUserInfoById,getUser } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js';
   import { filterAddress } from '@/network/address.js'
-import tagVue from '../post/tag.vue'
+
   export default {
     name: "Transmit",
     data () {
@@ -378,6 +390,9 @@ import tagVue from '../post/tag.vue'
         userAddress: [],
         displayPrice: null,
         displayPrice2: null,
+
+        dialogTaxVisible: false,
+        taxItem: null,
       }
     },
     computed: {
@@ -489,6 +504,7 @@ import tagVue from '../post/tag.vue'
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
+              console.log(this.tableData);
               this.loading = false;
               for(let item in this.tableData) {
                 this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
@@ -908,7 +924,17 @@ import tagVue from '../post/tag.vue'
       },
 
       handleTax(index,row) {
-        
+        this.taxItem = row;
+        console.log(row);
+        this.dialogTaxVisible = true;
+      },
+      goTax() {
+        console.log(this.taxItem)
+        console.log(this.taxItem.amount)
+        // addDrawback(this.taxItem.drawback_ID).then(res=>{
+        //   console.log(res.data.data)
+        //   this.dialogTaxVisible = false;
+        // })
       }
     }
   }

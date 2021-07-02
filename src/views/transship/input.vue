@@ -33,24 +33,24 @@
         </el-form-item>
         <el-form-item label="货品尺寸(cm)" style="height:28px">
           <el-row>
-            <el-col :span="4">
+            <el-col :span="8">
               <el-form-item label="长" label-width="30px">
                 <el-input v-model="inputInfo.size[0]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="8">
               <el-form-item label="宽" label-width="30px">
                 <el-input v-model="inputInfo.size[1]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="8">
               <el-form-item label="高" label-width="30px">
                 <el-input v-model="inputInfo.size[2]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item label="货品重量(kg)">
+        <el-form-item label="货品重量">
           <el-row>
             <el-col>
               <el-input v-model="inputInfo.weight" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
