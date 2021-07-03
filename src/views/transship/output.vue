@@ -96,7 +96,7 @@
           <el-button
             size="mini"
             type="success"
-            v-if="scope.row.outbound_type==1"
+            v-if="scope.row.amount==null&&scope.row.outbound_type==1"
             @click="handleTax(scope.$index, scope.row)">退税</el-button>
           <el-button
             size="mini"
@@ -302,7 +302,8 @@
     <el-dialog title='退税通过' :visible.sync="dialogTaxVisible">
       <el-form size="mini">
         <el-form-item label="退税金额" v-if="taxItem">
-          <el-input v-model="taxItem.amount"></el-input>
+          <!-- <el-input v-model="taxItem.amount" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input> -->
+          <el-input @input="taxFormat" :value="displayTax"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -327,7 +328,7 @@
   import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage,addDrawback } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { payBalance } from '@/network/payment.js'
-  import { getUserByEmail,getUserInfoById,getUser } from '@/network/user.js'
+  import { getUserByEmail,getUserInfoById,getUser,getDrawbackFactor } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
   import { validateEmail } from '@/utils/validate.js';
   import { filterAddress } from '@/network/address.js'
@@ -393,6 +394,7 @@
 
         dialogTaxVisible: false,
         taxItem: null,
+        displayTax: null,
       }
     },
     computed: {
@@ -504,7 +506,6 @@
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.outbounds_num);
               this.tableData = res.data.data;
-              console.log(this.tableData);
               this.loading = false;
               for(let item in this.tableData) {
                 this.tableData[item].storage_nums = this.tableData[item].storage_nums.split(',').map(item=>item.replace(/\"/g, "").replace(/\'/g, ""));
@@ -789,7 +790,6 @@
           })
         } else if(this.oldRow.pay_status!=this.dialogChange&&this.changeType==1) {
           changeOutputPay(this.oldRow.outbound_ID,this.dialogChange).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
@@ -922,19 +922,30 @@
         this.displayPrice2 = parseFloat(target).toFixed(2);
         this.editOutput.price = parseInt(target*100);
       },
+      taxFormat(target) {
+        this.displayTax = parseFloat(target).toFixed(2);
+        this.taxItem.amount = parseInt(target*100);
+      },
 
       handleTax(index,row) {
         this.taxItem = row;
-        console.log(row);
-        this.dialogTaxVisible = true;
+        getDrawbackFactor(row.user_id).then(res=>{
+          this.taxItem.drawback_factor = res.data.drawback_factor;
+          this.displayTax = parseFloat(parseInt(this.taxItem.price) * parseInt(this.taxItem.drawback_factor) / 120).toFixed(2);
+          this.taxItem.amount = this.displayTax * 100;
+          this.dialogTaxVisible = true;
+        })
       },
       goTax() {
-        console.log(this.taxItem)
-        console.log(this.taxItem.amount)
-        // addDrawback(this.taxItem.drawback_ID).then(res=>{
-        //   console.log(res.data.data)
-        //   this.dialogTaxVisible = false;
-        // })
+        addDrawback({
+          outbound_id: this.taxItem.outbound_ID,
+          amount: this.taxItem.amount
+        }).then(res=>{
+          this.dialogTaxVisible = false;
+          this.$message({type: 'success',message:'退税成功'})
+          this.currentPage = 1;
+          this._getList(this.currentPage);
+        })
       }
     }
   }

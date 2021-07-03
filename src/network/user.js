@@ -124,3 +124,10 @@ export function getBackRight() {
     url: '/get_back_right.php'
   })
 }
+
+export function getDrawbackFactor(user_id) {
+  return request({
+    url: '/get_drawback_factor.php',
+    params: {user_id}
+  })
+}

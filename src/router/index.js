@@ -5,7 +5,6 @@ Vue.use(VueRouter)
 
 const asyncRoutes = {
   'post_page': {path: 'post',name: 'Post',component: () => import('../views/post/index.vue')},
-  'post_page_all': {path: 'post',name: 'Post',component: () => import('../views/post/index.vue')},
   'post_edit': {path: 'tag',name: 'Tag',component: () => import('../views/post/tag.vue')},
   // {path: 'transmit',name: 'Transmit',component: () => import('../views/transship/transmit.vue')},
   // {path: 'input',name: 'Input',component: () => import('../views/transship/input.vue')},
@@ -35,14 +34,24 @@ const asyncRoutes = {
 
 //     localStorage.right.split(',').map(right=>{
 //       if(asyncRoutes[right]) {
+//         // console.log(asyncRoutes[right])
 //         router.options.routes[2].children.push(asyncRoutes[right])
-//         router.addRoutes(router.options.routes)
 //       }
+//       // console.log(router.options)
+//       // router.matcher = new router().matcher()
+//       resetRouter()
+//       // router.addRoute(router.options.routes)
+//       router.addRoutes(router.options.routes)
 //       console.log(router.options.routes)
 //     })
 //     clearInterval(checkStorage)
 //   }
 // },1000)
+
+export function resetRouter() {
+  const newRouter = new VueRouter()
+  router.matcher = newRouter.matcher
+}
 
 const routes = [
   {
@@ -56,7 +65,6 @@ const routes = [
   },
   {
     path: '/home',
-    name: 'Home',
     component: () => import('../views/home/index.vue'),
     children: [
       {path: '/',name: 'Dashboard',component: () => import('../views/dashboard/index.vue')},
