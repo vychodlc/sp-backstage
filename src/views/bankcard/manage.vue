@@ -1,14 +1,28 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="编号" value="discount_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="编号" value="bankcard_ID"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="用户编号" value="user_id"></el-option>
+      <el-option label="用户昵称" value="user_nickname"></el-option>
+      <el-option label="卡号" value="cardnum"></el-option>
+      <el-option label="状态" value="bankcard_status"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+    <template v-if="this.filter=='bankcard_status'">
+      <el-radio v-model="search" @input="goSearch()" label="0">使用中</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">冻结中</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -18,19 +32,23 @@
       :data="tableData"
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
-      <el-table-column label="流水单号" prop="discount_ID"></el-table-column>
-      <el-table-column label="用户" prop="code"></el-table-column>
-      <el-table-column label="方式" prop="type"></el-table-column>
-      <el-table-column label="金额" prop="brand"></el-table-column>
-      <el-table-column label="时间" prop="add_time"></el-table-column>
+      <el-table-column label="编号" prop="bankcard_ID"></el-table-column>
+      <el-table-column label="卡号" prop="cardnum"></el-table-column>
+      <el-table-column label="地址" prop="addr"></el-table-column>
+      <el-table-column label="用户" prop="user_nickname"></el-table-column>
+      <el-table-column label="开卡时间" prop="add_time"></el-table-column>
+      <el-table-column label="状态" prop="bankcard_status">
+        <template slot-scope="scope">
+          <el-tag size="mini" v-if="scope.row.bankcard_status==0" type="success">使用中</el-tag>
+          <el-tag size="mini" v-if="scope.row.bankcard_status==1" type="info">冻结中</el-tag>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="right" width="200">
-        <template slot="header">
+        <template slot-scope="scope">
           <el-button
             size="mini"
-            type="primary"
-            @click="handleAdd()">新增</el-button>
-        </template>
-        <template slot-scope="scope">
+            @click="handleEdit(scope.index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
             type="danger"
@@ -38,27 +56,34 @@
         </template>
       </el-table-column>
     </el-table>
-    
-    <el-dialog title="新增流水记录" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
+      
+    <el-dialog title="修改银行卡信息" :visible.sync="dialogEditVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
         <el-form-item label="用户" label-width="80px">
-          <el-input v-model="newItem.code"></el-input>
+          <el-input v-model="editItem.user_id" disabled></el-input>
         </el-form-item>
-        <el-form-item label="方式" label-width="80px">
-          <el-radio v-model="newItem.method" label="0">转运</el-radio>
-          <el-radio v-model="newItem.method" label="1">普通出库</el-radio>
-          <el-radio v-model="newItem.method" label="2">退税出库</el-radio>
+        <el-form-item label="地址" label-width="80px">
+          <el-input v-model="editItem.addr"></el-input>
         </el-form-item>
-        <el-form-item label="金额" label-width="80px">
-          <el-input v-model="newItem.price"></el-input>
-        </el-form-item>
-        <el-form-item label="时间" label-width="80px">
-          <el-input v-model="newItem.date"></el-input>
+        <el-form-item label="卡号" label-width="80px">
+          <el-input v-model="editItem.cardnum"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogAddVisible = false" size="medium">取 消</el-button>
-        <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
+        <el-button @click="dialogEditVisible=false;currentPage=1;_getList(currentPage)" size="medium">取 消</el-button>
+        <el-button type="primary" @click="goEdit()" size="medium">确 定</el-button>
+      </div>
+    </el-dialog>   
+    <el-dialog title='申请状态修改' :visible.sync="dialogChangeVisible">
+      <el-form>
+        <el-form-item>
+          <el-radio v-model="dialogChange" label="0">使用中</el-radio>
+          <el-radio v-model="dialogChange" label="1">冻结中</el-radio>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogChangeVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
     <div class="pagination">
@@ -74,16 +99,19 @@
 </template>
 
 <script>
-  import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
+  import { addBankcardApply,changeBankcardApply,changeBankcard,editBankcardApply,editBankcard,delBankcardApply,delBankcard,filterBankcardApply,filterBankcard,getBankcardApply,getBankcard } from '@/network/bankcard.js'
+  import { getUser } from '@/network/user.js'
+  import { addCoverImg } from '@/network/post.js'
+  import * as imageConversion from 'image-conversion';
   export default {
-    name: "BankcardManage",
+    name: "discount",
     data () {
       return {
         showDialog: true,
         brand: 'N',
         search: null,
         searchWord: null,
-        filter: 'discount_ID',
+        filter: 'bankcard_ID',
         filterWord: null,
         isSearch: false,
         loading: true,
@@ -91,57 +119,57 @@
 
         dialogAddVisible: false,
         newItem: {
-          code: '',type: '',brand: '',valid_date: '',
-          card_num: '',
-          pin: '',
-          balance: '',
-          right: false
+          user_ID: '',addr: '',pic: []
         },
         newItemText: '',
         newItems: [],
         handleNum: 0,
 
         dialogEditVisible: false,
-        editStorageID: '',
-        editStorageSize: '',
-        editStorageNumber: '',
-        editStorageWeight: '',
-        editStoragePic: '',
+        editItem: {
+          bankcard_ID: '',addr: '',cardnum: [],user_id: ''
+        },
         
         dialogChangeVisible: false,
         dialogChange: '',
-        oldStorage: null,
+        oldApply: null,
+        newCardnum: '',
 
         pageNum: null,
         currentPage: 1,
         interpret: {
-          'discount_ID': {name:'编号'},
-          'card_num': {name:'卡号'}
-        }
+          'bankcard_ID': {name:'编号'},
+          'user_nickname': {name:'用户昵称'},
+          'user_email': {name:'用户邮箱'},
+          'user_id': {name:'用户编号'},
+          'cardnum': {name:'卡号'},
+          'bankcard_status': {name:'状态'},
+        },
+        selectList: {},
       }
     },
     methods:{
-      test(index) {
-        console.log(index);
-      },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          // filterStorage(this.filter,this.search,pageIndex).then(res => {
-          //   if(res.data.status=='200') {
-          //     this.pageNum = parseInt(res.data.storages_num);
-          //     this.tableData = res.data.data;
-          //     this.loading = false;
-          //   } else {
-          //     this.$message({type: 'error',message: res.data.msg})
-          //   }
-          //   this.loading = false;
-          // });
+          if(this.search==''||this.search==null) {
+            this.$message({type: 'error',message: '请输入搜索词'})
+          } else {
+            filterBankcard(pageIndex,this.filter,this.search).then(res => {
+              if(res.data.status=='200') {
+                this.pageNum = parseInt(res.data.bankcards_num);
+                this.tableData = res.data.data;
+                this.loading = false;
+              } else {
+                this.$message({type: 'error',message: res.data.msg})
+              }
+              this.loading = false;
+            });
+          }
         } else {
-          getDiscount(pageIndex,this.brand).then(res => {
-            console.log(res);
+          getBankcard(pageIndex).then(res => {
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.discounts_num);
+              this.pageNum = parseInt(res.data.bankcards_num);
               this.tableData = res.data.data;
               this.loading = false;
             } else {
@@ -151,44 +179,63 @@
           });
         }
       },
-      handleAdd() {
-        this.newItem = {
-          user_id: '',method: '',price: '',date: ''
-        };
-        this.dialogAddVisible = true;
+      handleChange(row) {
+        this.newCardnum = '';
+        this.dialogChange = row.bankcard_status;
+        this.oldApply = row;
+        this.dialogChangeVisible = true;
       },
-      goAdd() {
-        if(this.newItem.user_id=='') {
-          this.$message({type: 'warning',message: '请选择用户'});
-        } else if(this.newItem.method=='') {
-          this.$message({type: 'warning',message: '请选择方式'});
-        } else if(this.newItem.price=='') {
-          this.$message({type: 'warning',message: '请填写金额'});
-        } else if(this.newItem.date=='') {
-          this.$message({type: 'warning',message: '请填写日期'});
-        } else {
-          addDiscount(this.newItem).then(res=>{
+      goChange() {
+        if(this.oldApply.bankcard_status!=this.dialogChange) {
+          changeBankcard({
+            bankcard_ID: this.oldApply.bankcard_ID,
+            bankcard_status: this.dialogChange,
+          }).then(res => {
             if(res.data.status=='200') {
-              this.$message({type:'success',message:'添加成功'});
-              this.newItem = {
-                user_id: '',method: '',price: '',date: ''
-              };
+              this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;
               this._getList(this.currentPage);
+              this.dialogChangeVisible = false;
             } else {
-              this.$message({type:'warning',message:'添加失败'})
+              this.$message({type: 'warning',message: '状态修改失败'});
             }
+          })
+        } else {
+          this.$message({type: 'warning',message: '状态未修改'});
+        }
+      },
+      handleEdit(index,row) {
+        this.editItem.bankcard_ID = row.bankcard_ID;
+        this.editItem.addr = row.addr;
+        this.editItem.user_id = row.user_id;
+        this.editItem.cardnum = row.cardnum;
+        this.dialogEditVisible = true;
+      },
+      goEdit() {
+        if(this.editItem.addr=='') {
+          this.$message({type: 'warning', message: '请输入地址'})
+        } else if(this.editItem.cardnum=='') {
+          this.$message({type: 'warning', message: '请输入卡号'})
+        } else {
+          editBankcard(this.editItem).then(res=>{
+            this.$message({type: 'success',message: '修改成功'});
+            this.editItem = {
+              bankcard_ID: '',addr: '',cardnum: '',user_id: ''
+            };
+            this.dialogEditVisible = false;
+            this.currentPage = 1;
+            this._getList(this.currentPage);
           })
         }
       },
       handleDelete(index,row) {
-        this.$confirm('此操作将永久删除这条单号为：'+ row.discount_ID +'的礼品卡, 是否继续?', '提示', {
+        this.$confirm('此操作将永久删除这条单号为：'+ row.bankcard_ID +'的银行卡, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
           this.loading = true;
-          delDiscount(row.discount_ID).then(res=>{
+          delBankcard(row.bankcard_ID).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
               this.currentPage = 1;
@@ -196,6 +243,7 @@
             }else {
               this.$message({type: 'warning',message: '删除失败'});
             }
+            this.loading = false;
           })
         }).catch(() => {
           this.$message({type: 'info',message: '已取消删除'});          
@@ -205,16 +253,21 @@
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='bankcard_status') {
+            if(this.search=='0')this.searchWord='使用中'
+            if(this.search=='1')this.searchWord='冻结中'
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;
@@ -225,9 +278,84 @@
       filterChange() {
         this.search = '';
       },
+      deWeight(items) {
+        let values = [];
+        return items.filter(item=>{
+          if(values.indexOf(item.value)==-1) {
+            values.push(item.value);
+            return item;
+          }
+        });
+      },
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+
+        if(this.filter=='bankcard_ID') {
+          let query = this.selectList.bankcard_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_nickname') {
+          let query = this.selectList.user_nickname;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='cardnum') {
+          let query = this.selectList.cardnum;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } 
+      },
+      querySearch2(queryString, cb) {
+        queryString = queryString.toString();
+
+        let query = this.selectList.user_id;
+        let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+        cb(results);
+      },
+      handleSelect() {
+        this.goSearch()
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
     },
     mounted() {
-      this._getList(this.currentPage)
+      getBankcard(0).then(res => {
+        let data1 = [],data2 = [];
+        let items = res.data.data;
+        
+        items.map(item=>{
+          data1.push({id: 'bankcard_ID', key: 'bankcard_ID',value: item.bankcard_ID})
+          data2.push({id: 'cardnum', key: 'cardnum',value: item.cardnum})
+        })
+        this.selectList.bankcard_ID = data1;
+        this.selectList.cardnum = data2;
+        getUser().then(res=>{
+          let users = res.data.data;
+          let emails = [],ids = [],codes = [],names = [];
+          users.map(user=>{
+            emails.push({id: user.id, key: 'user_email',value: user.user_email})
+            ids.push({id: user.id, key: 'id',value: user.id})
+            codes.push({id: user.id, key: 'code',value: user.code})
+            names.push({id: user.id, key: 'name',value: user.user_nickname})
+          })
+          this.selectList.user_email = emails;
+          this.selectList.user_id = ids;
+          this.selectList.user_nickname = names;
+          this.selectList.code = codes;
+          this.loading = false;
+          this._getList(this.currentPage);
+        })
+      })
     },
   }
 </script>
@@ -242,5 +370,25 @@
   }
   .storage_pic {
     width: 100px;
+  }
+  .editImgBox {
+    position: relative;
+  }
+  .editImgBox .pic {
+    width: 30%;
+  }
+  .boxDel {
+    position: absolute;
+    top: 0px;
+    right: 50%;
+    transform: translateX(150%);
+    font-size: 30px;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    background-color: #777777;
+    border-radius: 50%;
   }
 </style>
