@@ -107,6 +107,9 @@
         <el-form-item label="邮箱">
           <el-input v-model="dialogForm.email"></el-input>
         </el-form-item>
+        <el-form-item label="退税系数">
+          <el-input @input="factorFormat" :value="displayFactor"></el-input>
+        </el-form-item>
         <el-form-item label="权限" v-if="dialogForm.right==1">
           <el-checkbox-group v-model="dialogForm.permissions">
             <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:20%"></el-checkbox>
@@ -144,7 +147,7 @@
 </template>
 
 <script>
-  import { getUser,editUserinfo,delUser,register,setUserRight,getUserRight,editUserRight } from '@/network/user.js'
+  import { getUser,editUserinfo,delUser,register,setUserRight,getUserRight,editUserRight,getDrawbackFactor } from '@/network/user.js'
   import { validateEmail } from '@/utils/validate.js'
   export default {
     name: "User",
@@ -222,11 +225,12 @@
         dialogAddVisible: false,
         dialogAdd: {nickname:'',email:'',password:''},
         dialogFormVisible: false,
-        dialogForm: {nickname:'',email:'',right:'',permissions:[]},
+        dialogForm: {nickname:'',email:'',right:'',permissions:[],factor:''},
         dialogRightVisible: false,
         dialogRight: {uuid:'',nickname:'',email:'',right:''},
         oldUser: null,
         pageNum: null,
+        displayFactor: null,
       }
     },
     mounted() {
@@ -243,6 +247,10 @@
           this.loading = false;
         })
       },
+      factorFormat(target) {
+        this.displayFactor = parseFloat(target).toFixed(2);
+        this.dialogForm.factor = parseFloat(target).toFixed(2);
+      },
       handleEdit(index, row) {
         if(row.user_right==1) {
           getUserRight(row.uuid).then(res=>{
@@ -253,18 +261,27 @@
                 this.dialogForm.permissions.push(item)
               }
             }
-            this.dialogFormVisible = true;
+            getDrawbackFactor(row.id).then(res=>{
+              this.dialogForm.uuid = this.tableData[index].uuid;
+              this.dialogForm.nickname = this.tableData[index].user_nickname;
+              this.dialogForm.email = this.tableData[index].user_email;
+              this.dialogForm.right = this.tableData[index].user_right;
+              this.displayFactor = parseFloat(res.data.drawback_factor).toFixed(2);
+              this.dialogForm.factor = parseFloat(res.data.drawback_factor).toFixed(2);
+              this.dialogFormVisible = true;
+            })
+          })
+        } else {          
+          getDrawbackFactor(row.id).then(res=>{
             this.dialogForm.uuid = this.tableData[index].uuid;
             this.dialogForm.nickname = this.tableData[index].user_nickname;
             this.dialogForm.email = this.tableData[index].user_email;
             this.dialogForm.right = this.tableData[index].user_right;
+            this.displayFactor = parseFloat(res.data.drawback_factor).toFixed(2);
+            this.dialogForm.factor = parseFloat(res.data.drawback_factor).toFixed(2);
+            this.dialogFormVisible = true;
+            console.log(this.dialogForm)
           })
-        } else {
-          this.dialogFormVisible = true;
-          this.dialogForm.uuid = this.tableData[index].uuid;
-          this.dialogForm.nickname = this.tableData[index].user_nickname;
-          this.dialogForm.email = this.tableData[index].user_email;
-          this.dialogForm.right = this.tableData[index].user_right;
         }
       },
       goEdit() {

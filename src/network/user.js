@@ -66,6 +66,7 @@ export function editUserinfo(userinfo) {
   form.append("user_email", userinfo.email);
   form.append("user_nickname", userinfo.nickname);
   form.append("user_right", userinfo.right);
+  form.append("drawback_factor", userinfo.factor);
   return request({
     method: 'POST',
     url: '/edit_user_info.php',

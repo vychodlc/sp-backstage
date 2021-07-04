@@ -145,7 +145,15 @@
     <el-dialog title="新增代购信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini" style="max-height:50vh;overflow-y:scroll;padding-right:5px">
         <el-form-item label="用户邮箱" label-width="80px">
-          <el-input v-model="newItem.user_email"></el-input>
+          <!-- <el-input v-model="newItem.user_email"></el-input> -->
+          <el-autocomplete
+            class="inline-input"
+            v-model="newItem.user_email"
+            size="mini"
+            style="width:100%"
+            :fetch-suggestions="querySearch2"
+            :trigger-on-focus="false"
+          ></el-autocomplete>
         </el-form-item>
         <el-form-item label="商品链接" label-width="80px">
           <el-input v-model="newItem.storage_link"></el-input>
@@ -583,6 +591,12 @@ xxxx xxxx xxxx
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } 
+      },
+      querySearch2(queryString, cb) {
+        queryString = queryString.toString();
+        let query = this.selectList.user_email;
+        let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+        cb(results)
       },
       handleSelect() {
         this.goSearch();
