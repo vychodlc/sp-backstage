@@ -647,7 +647,7 @@
         })
       },
       goEdit() {
-        let imgList = [];
+        let imgList = this.editOutput.material;
         let imgNum = ((this.$refs.uploadImgOutputEdit)?this.$refs.uploadImgOutputEdit.uploadFiles.length:0)+this.editOutput.material.length;
         if(this.editOutput.email=='') {
           this.$message({type: 'warning',message: '请填写邮箱地址'});

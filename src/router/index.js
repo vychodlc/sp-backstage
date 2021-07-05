@@ -90,6 +90,7 @@ const routes = [
       
       {path: 'blotter',name: 'Blotter',component: () => import('../views/finance/blotter.vue')},
       {path: 'withdrawl',name: 'Withdrawl',component: () => import('../views/finance/withdrawl.vue')},
+      {path: 'option',name: 'Option',component: () => import('../views/finance/option.vue')},
     ]
   }
 ]

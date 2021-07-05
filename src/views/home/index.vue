@@ -56,6 +56,7 @@
             <el-menu-item-group>
               <el-menu-item index="/home/blotter"><i class="el-icon-menu"></i>流水记录</el-menu-item>
               <el-menu-item index="/home/withdrawl"><i class="el-icon-menu"></i>提现管理</el-menu-item>
+              <el-menu-item index="/home/option"><i class="el-icon-menu"></i>代购参数管理</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
         </el-menu>

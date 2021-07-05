@@ -269,6 +269,7 @@ xxxx xxxx xxxx
 <script>
   import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency,filterAgency } from '@/network/agency.js'
   import { getUserByEmail,getUser } from '@/network/user.js'
+  import { getOption } from '@/network/option.js'
   export default {
     name: "giftcard",
     data () {
@@ -325,6 +326,7 @@ xxxx xxxx xxxx
 
         pageNum: null,
         currentPage: 1,
+        options: {},
         interpret: {
           'agency_ID': {name:'编号'},
           'storage_link': {name:'商品链接'},
@@ -374,6 +376,7 @@ xxxx xxxx xxxx
         } else {
           getAgency(pageIndex).then(res => {
             if(res.data.status=='200') {
+              console.log(res.data.data);
               this.pageNum = parseInt(res.data.agencys_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -640,7 +643,15 @@ xxxx xxxx xxxx
           this.selectList.user_id = ids;
           this.selectList.code = codes;
           this.loading = false;
-          this._getList(this.currentPage);
+          getOption(0).then(res=>{
+            let data = res.data.data;
+            res.data.data.map(opt=>{
+              this.options[opt.option] = opt.value
+            })
+            console.log(this.options);
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+          })
         })
       })
     },

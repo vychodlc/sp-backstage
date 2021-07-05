@@ -36,3 +36,10 @@ export function filterWithdrawl(filter,value,p) {
     params: {filter,value,p}
   })
 }
+
+export function getPayment(p) {
+  return request({
+    url: '/get_payment.php',
+    params: {p}
+  })
+}

@@ -1,7 +1,7 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="编号" value="discount_ID"></el-option>
+      <el-option label="编号" value="payment_ID"></el-option>
       <el-option label="卡号" value="card_num"></el-option>
     </el-select>
     <template v-if="this.filter=='storage_status'">
@@ -18,11 +18,11 @@
       :data="tableData"
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
-      <el-table-column label="流水单号" prop="discount_ID"></el-table-column>
-      <el-table-column label="用户" prop="code"></el-table-column>
+      <el-table-column label="流水单号" prop="payment_ID"></el-table-column>
+      <el-table-column label="用户" prop="uuid"></el-table-column>
       <el-table-column label="方式" prop="type"></el-table-column>
       <el-table-column label="金额" prop="brand"></el-table-column>
-      <el-table-column label="时间" prop="add_time"></el-table-column>
+      <el-table-column label="时间" prop="generate_time"></el-table-column>
       <el-table-column label="操作" align="right" width="200">
         <template slot="header">
           <el-button
@@ -75,6 +75,7 @@
 
 <script>
   import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
+  import { getPayment } from '@/network/finance.js'
   export default {
     name: "Blotter",
     data () {
@@ -83,7 +84,7 @@
         brand: 'N',
         search: null,
         searchWord: null,
-        filter: 'discount_ID',
+        filter: 'payment_ID',
         filterWord: null,
         isSearch: false,
         loading: true,
@@ -115,15 +116,12 @@
         pageNum: null,
         currentPage: 1,
         interpret: {
-          'discount_ID': {name:'编号'},
+          'payment_ID': {name:'编号'},
           'card_num': {name:'卡号'}
         }
       }
     },
     methods:{
-      test(index) {
-        console.log(index);
-      },
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
@@ -138,11 +136,11 @@
           //   this.loading = false;
           // });
         } else {
-          getDiscount(pageIndex,this.brand).then(res => {
-            console.log(res);
+          getPayment(pageIndex).then(res => {
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.discounts_num);
+              this.pageNum = parseInt(res.data.payments_num);
               this.tableData = res.data.data;
+              console.log(this.tableData)
               this.loading = false;
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -150,56 +148,6 @@
             this.loading = false;
           });
         }
-      },
-      handleAdd() {
-        this.newItem = {
-          user_id: '',method: '',price: '',date: ''
-        };
-        this.dialogAddVisible = true;
-      },
-      goAdd() {
-        if(this.newItem.user_id=='') {
-          this.$message({type: 'warning',message: '请选择用户'});
-        } else if(this.newItem.method=='') {
-          this.$message({type: 'warning',message: '请选择方式'});
-        } else if(this.newItem.price=='') {
-          this.$message({type: 'warning',message: '请填写金额'});
-        } else if(this.newItem.date=='') {
-          this.$message({type: 'warning',message: '请填写日期'});
-        } else {
-          addDiscount(this.newItem).then(res=>{
-            if(res.data.status=='200') {
-              this.$message({type:'success',message:'添加成功'});
-              this.newItem = {
-                user_id: '',method: '',price: '',date: ''
-              };
-              this.currentPage = 1;
-              this._getList(this.currentPage);
-            } else {
-              this.$message({type:'warning',message:'添加失败'})
-            }
-          })
-        }
-      },
-      handleDelete(index,row) {
-        this.$confirm('此操作将永久删除这条单号为：'+ row.discount_ID +'的礼品卡, 是否继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.loading = true;
-          delDiscount(row.discount_ID).then(res=>{
-            if(res.data.status=='200') {
-              this.$message({type: 'success',message: '删除成功!'});
-              this.currentPage = 1;
-              this._getList(this.currentPage);
-            }else {
-              this.$message({type: 'warning',message: '删除失败'});
-            }
-          })
-        }).catch(() => {
-          this.$message({type: 'info',message: '已取消删除'});          
-        });
       },
       handleCurrentChange() {
         this._getList(this.currentPage)
@@ -243,8 +191,5 @@
   .pagination {
     position: absolute;
     right: 20px;
-  }
-  .storage_pic {
-    width: 100px;
   }
 </style>
