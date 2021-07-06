@@ -47,7 +47,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增参数信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增参数信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="参数名称">
           <el-input v-model="newItem.option"></el-input>
@@ -64,7 +64,7 @@
         <el-button type="primary" @click="goAdd()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改地址信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="修改地址信息" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="参数名称">
           <el-input v-model="editItem.option" disabled></el-input>

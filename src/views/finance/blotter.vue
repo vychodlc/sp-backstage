@@ -20,23 +20,21 @@
       class="elTable">
       <el-table-column label="流水单号" prop="payment_ID"></el-table-column>
       <el-table-column label="用户" prop="uuid"></el-table-column>
-      <el-table-column label="方式" prop="type"></el-table-column>
-      <el-table-column label="金额" prop="brand"></el-table-column>
-      <el-table-column label="时间" prop="generate_time"></el-table-column>
-      <el-table-column label="操作" align="right" width="200">
-        <template slot="header">
-          <el-button
-            size="mini"
-            type="primary"
-            @click="handleAdd()">新增</el-button>
-        </template>
+      <el-table-column label="方式" prop="order_type">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="danger"
-            @click="handleDelete(scope.index, scope.row)">删除</el-button>
+          <el-tag size="mini" v-if="scope.row.order_type=='o'&&scope.row.order_status==0" type="success">出库-付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='o'&&scope.row.order_status==1" type="primary">出库-退款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='a'&&scope.row.order_status==0" type="success">代购-付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='a'&&scope.row.order_status==1" type="primary">代购-退款</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="金额" prop="price">
+        <template slot-scope="scope">
+          <span>{{parseFloat(scope.row.price/100).toFixed(2)}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="时间" prop="generate_time"></el-table-column>
+      <el-table-column label="经办人" prop="operator"></el-table-column>
     </el-table>
     
     <el-dialog title="新增流水记录" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">

@@ -92,7 +92,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog title="文章状态修改" :visible.sync="dialogStatusVisible">
+    <el-dialog title="文章状态修改" :visible.sync="dialogStatusVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item>
           <el-radio v-model="dialogStatus" label="0">未发布</el-radio>

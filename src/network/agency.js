@@ -16,7 +16,7 @@ export function addAgency(info) {
   let giftcards = info.giftcards;
   // let giftcards = info.giftcards.filter(item=>{return item.right==true||item.right=='true'})
   formData.append('giftcards',JSON.stringify(giftcards));
-  formData.append('price',info.price);
+  formData.append('price',info.price*100);
   return request({
     method: 'POST',
     url: '/add_agency.php',
@@ -139,6 +139,16 @@ export function changeAgency(info) {
   return request({
     method: 'POST',
     url: '/change_agency.php',
+    data: formData
+  })
+}
+export function changeAgencyPay(info) {
+  let formData = new FormData()
+  formData.append('agency_ID',info.agency_ID);
+  formData.append('pay_status',info.pay_status);
+  return request({
+    method: 'POST',
+    url: '/change_agency_pay_status.php',
     data: formData
   })
 }

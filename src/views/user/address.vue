@@ -54,7 +54,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增地址信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增地址信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="用户编号">
           <el-input v-model="newAddress.user_id"></el-input>
@@ -74,7 +74,7 @@
         <el-button type="primary" @click="handleAdd()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改地址信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="修改地址信息" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item label="地址编号">
           <el-input v-model="editAddress.address_ID" disabled></el-input>
@@ -94,7 +94,7 @@
         <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='地址种类修改' :visible.sync="dialogChangeVisible">
+    <el-dialog title='地址种类修改' :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <span>确认将此条地址设置为用户的默认地址</span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogChangeVisible = false">取 消</el-button>

@@ -36,7 +36,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增标签" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增标签" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item label="标签名称">
           <el-input v-model="newTag" autocomplete="off"></el-input>
@@ -48,7 +48,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="编辑标签" :visible.sync="dialogEditVisible">
+    <el-dialog title="编辑标签" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item label="标签原名称">
           <el-input v-model="changedTag.oldname" disabled></el-input>

@@ -110,7 +110,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增出库信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增出库信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
         <!-- <el-form-item label="用户编号">
@@ -201,7 +201,7 @@
         <el-button type="primary" @click="goAdd()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible">
+    <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <el-form v-if="changeType==0">
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">待审核</el-radio>
@@ -222,7 +222,7 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改出库信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="修改出库信息" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
         <el-form-item label="用户邮箱">
@@ -299,7 +299,7 @@
         <el-button type="primary" @click="goEdit()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='退税通过' :visible.sync="dialogTaxVisible">
+    <el-dialog title='退税通过' :visible.sync="dialogTaxVisible" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="退税金额" v-if="taxItem">
           <!-- <el-input v-model="taxItem.amount" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input> -->

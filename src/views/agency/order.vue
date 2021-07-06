@@ -29,12 +29,10 @@
       <el-radio v-model="search" @input="goSearch()" label="2">自行提供</el-radio>
     </template>
     <template v-else-if="this.filter=='agency_status'">
-      <el-radio v-model="search" @input="goSearch()" label="0">待支付</el-radio>
-      <el-radio v-model="search" @input="goSearch()" label="1">待受理</el-radio>
-      <el-radio v-model="search" @input="goSearch()" label="2">支付取消</el-radio>
-      <el-radio v-model="search" @input="goSearch()" label="3">已驳回</el-radio>
-      <el-radio v-model="search" @input="goSearch()" label="4">进行中</el-radio>
-      <el-radio v-model="search" @input="goSearch()" label="5">已完成</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="0">待受理</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">已驳回</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="2">进行中</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="3">已完成</el-radio>
     </template>
     <template v-else-if="this.filter=='brand'">
       <el-radio v-model="search" @input="goSearch()" label="N">Nike</el-radio>
@@ -67,7 +65,11 @@
       <el-table-column label="用户" prop="code">
         <template slot-scope="scope">{{scope.row.user_id}}-{{scope.row.code}}</template>
       </el-table-column>
-      <el-table-column label="价格" prop="price"></el-table-column>
+      <el-table-column label="价格" prop="price">
+        <template slot-scope="scope">
+          <span>{{parseFloat(scope.row.price/100).toFixed(2)}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="数量" prop="order_num"></el-table-column>
       <el-table-column label="尺寸" prop="size"></el-table-column>
       <el-table-column label="品牌" prop="brand">
@@ -117,13 +119,14 @@
       <el-table-column label="采购时间" prop="interval"></el-table-column>
       <el-table-column label="状态" prop="agency_status">
         <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.agency_status==0" type="warning">待支付</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==1" type="primary">待受理</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==2" type="info">支付取消</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==3" type="info">已驳回</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==4" type="success">进行中</el-tag>
-          <el-tag size="mini" v-if="scope.row.agency_status==5" type="info">已完成</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
+          <el-tag size="mini" v-if="scope.row.agency_status==0" type="warning">待受理</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==1" type="info">已驳回</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==2" type="success">进行中</el-tag>
+          <el-tag size="mini" v-if="scope.row.agency_status==3" type="info">已完成</el-tag>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row,0)"></el-link><br>
+          <el-tag size="mini" v-if="scope.row.pay_status==0" type="warning">未支付</el-tag>
+          <el-tag size="mini" v-if="scope.row.pay_status==1" type="success">已支付</el-tag>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row,1)"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="right" width="80">
@@ -153,26 +156,27 @@
             style="width:100%"
             :fetch-suggestions="querySearch2"
             :trigger-on-focus="false"
+            @input="priceOk=false"
           ></el-autocomplete>
         </el-form-item>
         <el-form-item label="商品链接" label-width="80px">
-          <el-input v-model="newItem.storage_link"></el-input>
+          <el-input v-model="newItem.storage_link" @input="priceOk=false"></el-input>
         </el-form-item>
         <el-form-item label="品牌" label-width="80px">
-          <el-radio v-model="newItem.brand" style="margin-right:20px" label="N">Nike</el-radio>
-          <el-radio v-model="newItem.brand" style="margin-right:20px" label="A">Adidas</el-radio>
-          <el-radio v-model="newItem.brand" style="margin-right:20px" label="JD">JD</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="N">Nike</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="A">Adidas</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="JD">JD</el-radio>
         </el-form-item>
         <el-form-item label="尺码" label-width="80px">
-          <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
-          <el-checkbox-group v-model="newItem.size">
+          <el-checkbox @input="priceOk=false" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
+          <el-checkbox-group @input="priceOk=false" v-model="newItem.size">
             <el-checkbox v-for="(item,index) in sizeList" :key="index" :label="item"></el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="礼品卡" label-width="80px">
-          <el-radio v-model="newItem.giftcard_type" style="margin-right:20px" label="0">不用</el-radio>
-          <el-radio v-model="newItem.giftcard_type" style="margin-right:20px" label="1">平台提供</el-radio>
-          <el-radio v-model="newItem.giftcard_type" style="margin-right:20px" label="2">自行提供</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.giftcard_type" style="margin-right:20px" label="0">不用</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.giftcard_type" style="margin-right:20px" label="1">平台提供</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.giftcard_type" style="margin-right:20px" label="2">自行提供</el-radio>
           <el-table
             id="giftCardTable"
             v-if="newItem.giftcard_type=='2'"
@@ -197,32 +201,33 @@
           </el-table>
         </el-form-item>
         <el-form-item label="折扣码" label-width="80px">
-          <el-radio v-model="newItem.discount_type" style="margin-right:20px" label="0">不用</el-radio>
-          <el-radio v-model="newItem.discount_type" style="margin-right:20px" label="1">平台提供</el-radio>
-          <el-radio v-model="newItem.discount_type" style="margin-right:20px" label="2">自行提供-单次码</el-radio>
-          <el-radio v-model="newItem.discount_type" style="margin-right:20px" label="3">自行提供-复用码</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.discount_type" style="margin-right:20px" label="0">不用</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.discount_type" style="margin-right:20px" label="1">平台提供</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.discount_type" style="margin-right:20px" label="2">自行提供-单次码</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.discount_type" style="margin-right:20px" label="3">自行提供-复用码</el-radio>
           <el-input v-model="newItem.discount_code" v-if="newItem.discount_type=='2'" placeholder="输入单次码，用逗号隔开"></el-input>
           <el-input v-model="newItem.discount_code" v-if="newItem.discount_type=='3'" placeholder="输入复用码"></el-input>
         </el-form-item>
         <el-form-item label="购物账号" label-width="80px">
-          <el-radio v-model="newItem.account_type" style="margin-right:20px" label="0">不用</el-radio>
-          <el-radio v-model="newItem.account_type" style="margin-right:20px" label="1">普通账号</el-radio>
-          <el-radio v-model="newItem.account_type" style="margin-right:20px" label="2">生日账号</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.account_type" style="margin-right:20px" label="0">不用</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.account_type" style="margin-right:20px" label="1">普通账号</el-radio>
+          <el-radio @input="priceOk=false" v-model="newItem.account_type" style="margin-right:20px" label="2">生日账号</el-radio>
         </el-form-item>
         <el-form-item label="单数" label-width="80px">
-          <el-input v-model="newItem.order_num"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.order_num"></el-input>
         </el-form-item>
         <el-form-item label="时限" label-width="80px">
-          <el-input v-model="newItem.interval" placeholder="20~300小时"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.interval" placeholder="20~300小时"></el-input>
         </el-form-item>
         <!-- <el-form-item label="费用" label-width="80px">
           <el-input v-model="newItem.price" disabled></el-input>
         </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer">
+        <el-button type="success" style="float:left;font-weight:bold;margin-right:10px" size="small" @click="generatePrice">生成价格</el-button>
         <el-tag style="float:left;font-size:18px;font-weight:bold">价格：￡{{newItem.price}}</el-tag>
         <el-button @click="dialogAddVisible = false">取 消</el-button>
-        <el-button type="primary" @click="goAdd()">确 定</el-button>
+        <el-button type="primary" @click="goAdd()" :disabled="!priceOk">确 定</el-button>
       </div>
     </el-dialog>
     <el-dialog title="批量导入礼品卡" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
@@ -238,15 +243,19 @@ xxxx xxxx xxxx
         <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="订单状态修改" :visible.sync="dialogStatusVisible">
-      <el-form>
+    <el-dialog title="订单状态修改" :visible.sync="dialogStatusVisible" :close-on-click-modal="false">
+      <el-form v-if="changeType==0">
         <el-form-item>
-          <el-radio v-model="dialogStatus" label="0">待支付</el-radio>
-          <el-radio v-model="dialogStatus" label="1">待受理</el-radio>
-          <el-radio v-model="dialogStatus" label="2">支付取消</el-radio>
-          <el-radio v-model="dialogStatus" label="3">已驳回</el-radio>
-          <el-radio v-model="dialogStatus" label="4">进行中</el-radio>
-          <el-radio v-model="dialogStatus" label="5">已完成</el-radio>
+          <el-radio v-model="dialogStatus" label="0">待受理</el-radio>
+          <el-radio v-model="dialogStatus" label="1">已驳回</el-radio>
+          <el-radio v-model="dialogStatus" label="2">进行中</el-radio>
+          <el-radio v-model="dialogStatus" label="3">已完成</el-radio>
+        </el-form-item>
+      </el-form>
+      <el-form v-else>
+        <el-form-item>
+          <el-radio v-model="dialogStatus" label="0">未支付</el-radio>
+          <el-radio v-model="dialogStatus" label="1">已支付</el-radio>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -267,7 +276,7 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency,filterAgency } from '@/network/agency.js'
+  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency,changeAgencyPay,filterAgency } from '@/network/agency.js'
   import { getUserByEmail,getUser } from '@/network/user.js'
   import { getOption } from '@/network/option.js'
   export default {
@@ -292,7 +301,7 @@ xxxx xxxx xxxx
           user_id: '',
           brand: '',
           storage_link: 'www.baidu.com',
-          price: '123',
+          price: '0',
           size: [],
           account_type: '',
           discount_type: '',
@@ -321,6 +330,7 @@ xxxx xxxx xxxx
         dialogChangeVisible: false,
         dialogChange: '',
         oldStorage: null,
+        changeType: null,
 
         selectList: [],
 
@@ -338,7 +348,8 @@ xxxx xxxx xxxx
           'user_id': {name:'用户编号'},
           'user_email': {name:'邮箱'},
           'code': {name:'转运码'},
-        }
+        },
+        priceOk: false
       }
     },
     methods:{
@@ -393,7 +404,7 @@ xxxx xxxx xxxx
           user_id: '',
           brand: '',
           storage_link: '',
-          price: '123',
+          price: '0',
           size: [],
           account_type: '',
           discount_type: '',
@@ -476,12 +487,13 @@ xxxx xxxx xxxx
         } else {
           this.isSearch = true;
           if(this.filter=='agency_status') {
-            if(this.search=='0')this.searchWord='待支付'
-            if(this.search=='1')this.searchWord='待受理'
-            if(this.search=='2')this.searchWord='支付取消'
-            if(this.search=='3')this.searchWord='已驳回'
-            if(this.search=='4')this.searchWord='进行中'
-            if(this.search=='5')this.searchWord='已完成'
+            if(this.search=='0')this.searchWord='待受理'
+            if(this.search=='1')this.searchWord='已驳回'
+            if(this.search=='2')this.searchWord='进行中'
+            if(this.search=='3')this.searchWord='已完成'
+          } else if(this.filter=='pay_status') {
+            if(this.search=='0')this.searchWord='未支付'
+            if(this.search=='1')this.searchWord='已支付'
           } else if(this.filter=='account_type') {
             if(this.search=='0')this.searchWord='无'
             if(this.search=='1')this.searchWord='普通账号'
@@ -550,16 +562,28 @@ xxxx xxxx xxxx
       _addGiftcard(item) {
         this.newItem.giftcards.push(item);
       },
-      changeStatus(row) {
+      changeStatus(row,type) {
         this.dialogStatusVisible = true;
-        this.dialogStatus = row.agency_status;
+        this.dialogStatus = (type==0)?row.agency_status:row.pay_status;
+        this.changeType = type;
         this.oldAgency = row;
       },
       goStatusChange() {
-        if(this.oldAgency.agency_status!=this.dialogStatus) {
+        if(this.oldAgency.agency_status!=this.dialogStatus&&this.changeType==0) {
           changeAgency({
             'agency_ID': this.oldAgency.agency_ID,
             'agency_status': this.dialogStatus,
+          }).then(res => {
+            console.log(res);
+            this.$message({type: 'success',message: '状态修改成功'});
+            this.currentPage = 1;
+            this._getList(this.currentPage);
+            this.dialogStatusVisible = false;
+          })
+        } else if(this.oldAgency.pay_status!=this.dialogStatus&&this.changeType==1) {
+          changeAgencyPay({
+            'agency_ID': this.oldAgency.agency_ID,
+            'pay_status': this.dialogStatus,
           }).then(res => {
             this.$message({type: 'success',message: '状态修改成功'});
             this.currentPage = 1;
@@ -617,6 +641,53 @@ xxxx xxxx xxxx
             return item;
           }
         });
+      },
+      generatePrice() {
+        if(this.newItem.user_email=='') {
+          this.$message({type: 'warning',message: '请填写用户邮箱'});
+        } else if(this.newItem.storage_link=='') {
+          this.$message({type: 'warning',message: '请填写商品链接'});
+        } else if(this.newItem.storage_link.indexOf('www.nike.com/gb')==-1) {
+          this.$message({type: 'warning',message: '请填写www.nike.com/gb中的商品链接'});
+        } else if(this.newItem.brand=='') {
+          this.$message({type: 'warning',message: '请选择品牌'});
+        } else if(this.newItem.size.length==0) {
+          this.$message({type: 'warning',message: '请选择尺寸'});
+        } else if(this.newItem.giftcard_type=='') {
+          this.$message({type: 'warning',message: '请选择礼品卡类别'});
+        } else if(this.newItem.giftcard_type=='2'&&this.newItem.giftcards.length==0) {
+          this.$message({type: 'warning',message: '请添加礼品卡信息'});
+        } else if(this.newItem.discount_type=='') {
+          this.$message({type: 'warning',message: '请选择折扣码类别'});
+        } else if(this.newItem.discount_type=='2'&&this.newItem.discount_code=='') {
+          this.$message({type: 'warning',message: '请填写单次礼品卡'});
+        } else if(this.newItem.discount_type=='3'&&this.newItem.discount_code=='') {
+          this.$message({type: 'warning',message: '请填写复用礼品卡'});
+        } else if(this.newItem.account_type=='') {
+          this.$message({type: 'warning',message: '请选择购物账号类别'});
+        } else if(this.newItem.order_num=='') {
+          this.$message({type: 'warning',message: '请选择单数'});
+        } else if(this.newItem.interval=='') {
+          this.$message({type: 'warning',message: '请选择代购时限'});
+        } else {
+          this.$axios({
+            method: 'get',
+            url: this.newItem.storage_link,
+          }).then(res=>{
+            let index = res.data.indexOf('currentPrice')
+            let price = res.data.slice(index,index+20).split(':')[1].split(',')[0]
+            price = parseFloat(price)
+            let totalPrice = parseFloat((this.newItem.account_type==2?this.options.account_birthday:0)
+            + (this.newItem.account_type==1?this.options.account_common:0)
+            + (this.newItem.discount_type==1?this.options.discount:0)
+            + (price * this.options.k)
+            + (this.newItem.giftcard_type==1?price*this.options.giftcard:0))
+            this.newItem.price = parseFloat(totalPrice*parseInt(this.newItem.order_num)).toFixed(2)
+            this.priceOk = true;
+          }).catch(e=>{
+            this.$message({type: 'warning',message: '获取商品价格失败'})
+          })
+        }
       }
     },
     mounted() {

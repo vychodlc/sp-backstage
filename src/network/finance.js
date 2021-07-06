@@ -21,7 +21,7 @@ export function changeWithdrawl(info) {
 export function addWithdrawl(info) {
   let formData = new FormData()
   formData.append('user_id',info.user_id)
-  formData.append('amount',info.amount)
+  formData.append('amount',parseInt(info.amount)*100)
   formData.append('bankcard',info.bankcard)
   return request({
     method: 'POST',

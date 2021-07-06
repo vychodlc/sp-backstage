@@ -76,7 +76,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增库存信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增库存信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="用户编号">
           <el-input type="number" v-model="newStorage.user_id"></el-input>
@@ -124,7 +124,7 @@
         <el-button type="primary" @click="goAdd()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog :title="'修改库存信息——库存编号:'+editStorageID" :visible.sync="dialogEditVisible">
+    <el-dialog :title="'修改库存信息——库存编号:'+editStorageID" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="库存编号">
           <el-input v-model="editStorageID" disabled autocomplete="off"></el-input>
@@ -175,7 +175,7 @@
         <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='库存状态修改' :visible.sync="dialogChangeVisible">
+    <el-dialog title='库存状态修改' :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">库存中</el-radio>

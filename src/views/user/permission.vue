@@ -69,7 +69,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增用户组信息" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增用户组信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="名称">
           <el-input v-model="newItem.name"></el-input>
@@ -88,7 +88,7 @@
         <el-button type="primary" @click="goAdd()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible">
+    <el-dialog title='出库状态修改' :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <el-form v-if="changeType==0">
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">待审核</el-radio>
@@ -109,7 +109,7 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="修改用户组信息" :visible.sync="dialogEditVisible">
+    <el-dialog title="修改用户组信息" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <span>首先输入用户邮箱，在获取用户的库存信息之后，再选择出库的方式(普通/退税)</span>
       <el-form label-width="100px" size="mini" style="margin-top:30px">
         <el-form-item label="名称">

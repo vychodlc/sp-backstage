@@ -39,7 +39,11 @@
         </template>
       </el-table-column>
       <el-table-column label="银行卡" prop="bankcard"></el-table-column>
-      <el-table-column label="金额" prop="amount"></el-table-column>
+      <el-table-column label="金额" prop="amount">
+        <template slot-scope="scope">
+          <span>{{parseFloat(scope.row.amount/100).toFixed(2)}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="申请时间" prop="apply_time"></el-table-column>
       <el-table-column label="操作人员" prop="auditor"></el-table-column>
       <el-table-column label="编辑时间" prop="audit_time"></el-table-column>
@@ -84,7 +88,7 @@
         <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="提现状态修改" :visible.sync="dialogChangeVisible">
+    <el-dialog title="提现状态修改" :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">待审核</el-radio>

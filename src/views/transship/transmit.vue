@@ -83,7 +83,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增申报信息" :visible.sync="dialogAddVisible" :modal-append-to-body="false" :append-to-body="true" >
+    <el-dialog title="新增申报信息" :visible.sync="dialogAddVisible" :modal-append-to-body="false" :append-to-body="true" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="用户邮箱">
           <el-input v-model="newApplyUserEmail" autocomplete="off" :disabled='loading'></el-input>
@@ -106,7 +106,7 @@
         <el-button type="primary" @click="handleAdd()" :disabled='loading'>确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog :title="'修改申报信息——申报单号:'+editApplyID" :visible.sync="dialogEditVisible">
+    <el-dialog :title="'修改申报信息——申报单号:'+editApplyID" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item label="订单号">
           <el-input v-model="editApplyExpressid" autocomplete="off"></el-input>
@@ -120,7 +120,7 @@
         <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title='申报状态修改' :visible.sync="dialogChangeVisible">
+    <el-dialog title='申报状态修改' :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">未入库</el-radio>
@@ -133,7 +133,7 @@
         <el-button type="primary" @click="goChange()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="新增库存信息(入库)" :visible.sync="dialogStorageVisible">
+    <el-dialog title="新增库存信息(入库)" :visible.sync="dialogStorageVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="申报单号">
           <el-input v-model="newStorage.expressid" disabled></el-input>

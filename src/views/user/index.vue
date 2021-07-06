@@ -82,7 +82,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog title="新增用户" :visible.sync="dialogAddVisible">
+    <el-dialog title="新增用户" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
       <el-form :model="dialogAdd">
         <el-form-item label="昵称">
           <el-input v-model="dialogAdd.nickname"></el-input>
@@ -99,7 +99,7 @@
         <el-button type="primary" @click="goAdd()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="用户信息编辑" :visible.sync="dialogFormVisible">
+    <el-dialog title="用户信息编辑" :visible.sync="dialogFormVisible" :close-on-click-modal="false">
       <el-form label-width="100px" :model="dialogForm" size="mini">
         <el-form-item label="昵称">
           <el-input v-model="dialogForm.nickname"></el-input>
@@ -121,7 +121,7 @@
         <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="用户权限编辑" :visible.sync="dialogRightVisible">
+    <el-dialog title="用户权限编辑" :visible.sync="dialogRightVisible" :close-on-click-modal="false">
       <el-form>
         <el-form-item>
           <el-radio v-model="dialogRight.right" label="-1">冻结</el-radio>
