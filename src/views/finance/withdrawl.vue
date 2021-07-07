@@ -73,8 +73,12 @@
     
     <el-dialog title="新增提现记录" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="用户" label-width="80px">
-          <el-input v-model="newItem.user_id"></el-input>
+        <!-- <el-form-item label="匹配方式" label-width="80px">
+          <el-radio v-model="newItem.method" @change="changeMethod()" label="0">用户编号</el-radio>
+          <el-radio v-model="newItem.method" @change="changeMethod()" label="1">用户邮箱</el-radio>
+        </el-form-item> -->
+        <el-form-item label="用户编号" label-width="80px">
+          <el-input v-model="newItem.user_id" :placeholder="placeholder"></el-input>
         </el-form-item>
         <el-form-item label="金额" label-width="80px">
           <el-input v-model="newItem.amount"></el-input>
@@ -133,7 +137,7 @@
 
         dialogAddVisible: false,
         newItem: {
-          amount: '',bankcard: '',user_id: ''
+          amount: '',bankcard: '',user_id: '',method: '0'
         },
         newItemText: '',
         newItems: [],
@@ -161,7 +165,8 @@
           'user_id': {name:'用户编号'},
         },
 
-        selectList: []
+        selectList: [],
+        placeholder: '请输入用户编号···',
       }
     },
     methods:{
@@ -206,8 +211,9 @@
       },
       handleAdd() {
         this.newItem = {
-          amount: '',bankcard: '',user_id: ''
+          amount: '',bankcard: '',user_id: '',method: '0'
         };
+        this.placeholder = '请输入用户编号···';
         this.dialogAddVisible = true;
       },
       goAdd() {
@@ -222,7 +228,7 @@
             if(res.data.status=='200') {
               this.$message({type:'success',message:'添加成功'});
               this.newItem = {
-                amount: '',bankcard: '',user_id: ''
+                amount: '',bankcard: '',user_id: '',method: '0'
               };
               this.currentPage = 1;
               this._getList(this.currentPage);
@@ -323,6 +329,10 @@
           let query = this.selectList.user_id;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
+        } else if(this.filter=='user_nickname') {
+          let query = this.selectList.user_nickname;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
         } else if(this.filter=='bankcard') {
           let query = this.selectList.bankcard;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
@@ -337,6 +347,9 @@
           return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
         };
       },
+      changeMethod() {
+        this.placeholder = this.newItem.method=='0'?'请输入用户编号···':'请输入用户邮箱···'
+      }
     },
     mounted() {
       getWithdrawl(0).then(res=>{
@@ -350,16 +363,19 @@
         this.selectList.withdraw_ID = data1;
         this.selectList.bankcard = this.deWeight(data2);
         getUser().then(res=>{
+          console.log(res);
           let users = res.data.data;
-          let emails = [],ids = [],codes = [];
+          let emails = [],ids = [],codes = [],names = [];
           users.map(user=>{
             emails.push({id: user.id, key: 'user_email',value: user.user_email})
             ids.push({id: user.id, key: 'id',value: user.id})
             codes.push({id: user.id, key: 'code',value: user.code})
+            names.push({id: user.id, key: 'user_nickname',value: user.user_nickname})
           })
           this.selectList.user_email = emails;
           this.selectList.user_id = ids;
           this.selectList.code = codes;
+          this.selectList.user_nickname = names;
           this.loading = false;
           this._getList(this.currentPage);
         })
