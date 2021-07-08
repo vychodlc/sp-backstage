@@ -39,7 +39,13 @@
       <el-table-column label="申报单号" prop="apply_ID"></el-table-column>
       <el-table-column label="订单号" prop="expressid"></el-table-column>
       <el-table-column label="邮箱地址" prop="email"></el-table-column>
-      <el-table-column label="品牌" prop="brand"></el-table-column>
+      <el-table-column label="品牌" prop="brand">
+        <template slot-scope="scope">
+          <span v-if="scope.row.brand=='N'">Nike</span>
+          <span v-if="scope.row.brand=='A'">Adidas</span>
+          <span v-if="scope.row.brand=='JD'">JD·Sports</span>
+        </template>
+      </el-table-column>
       <el-table-column label="用户编号" prop="user_id">
         <template slot-scope="scope">
           <span>{{scope.row.user_id}}-{{scope.row.code}}</span>
@@ -86,16 +92,24 @@
     <el-dialog title="新增申报信息" :visible.sync="dialogAddVisible" :modal-append-to-body="false" :append-to-body="true" :close-on-click-modal="false">
       <el-form size="mini">
         <el-form-item label="用户邮箱">
-          <el-input v-model="newApplyUserEmail" autocomplete="off" :disabled='loading'></el-input>
-        </el-form-item>
-        <el-form-item label="订单号">
-          <el-input v-model="newApplyExpressid" autocomplete="off" :disabled='loading'></el-input>
+          <el-autocomplete
+            :disabled='loading'
+            class="inline-input"
+            v-model="newApplyUserEmail"
+            size="mini"
+            style="width:100%"
+            :fetch-suggestions="querySearch2"
+            :trigger-on-focus="false"
+          ></el-autocomplete>
         </el-form-item>
         <el-form-item label="品牌">
           <el-radio v-model="newApplyBrand" :disabled='loading' label="N">Nike</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="A">Adidas</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="JD">JDSports</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="U">通用</el-radio>
+        </el-form-item>
+        <el-form-item label="订单号">
+          <el-input v-model="newApplyExpressid" autocomplete="off" :disabled='loading'></el-input>
         </el-form-item>
         <el-form-item label="邮箱地址">
           <el-input v-model="newApplyEmail" autocomplete="off" :disabled='loading'></el-input>
@@ -145,23 +159,23 @@
           <el-row>
             <el-col>
               <el-form-item label="长(cm)">
-                <el-input type="number" v-model="newStorage.size[0]"></el-input>
+                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[0]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="宽(cm)">
-                <el-input type="number" v-model="newStorage.size[1]"></el-input>
+                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[1]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="高(cm)">
-                <el-input type="number" v-model="newStorage.size[2]"></el-input>
+                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[2]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="货品重量">
-          <el-input v-model="newStorage.weight" autocomplete="off"></el-input>
+          <el-input type="number" v-model="newStorage.weight" min="0" max="999999999" oninput="if(value>999999999)value=999999999;if(value<0)value=0" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="货品描述">
           <el-input v-model="newStorage.description" autocomplete="off"></el-input>
@@ -228,6 +242,8 @@
         editApplyID: '',
         editApplyExpressid: '',
         editApplyEmail: '',
+        editApplyBrand: '',
+        editApplyUser: '',
         
         dialogChangeVisible: false,
         dialogChange: '',
@@ -320,6 +336,13 @@
           cb(results);
         }
       },
+      querySearch2(queryString, cb) {
+        queryString = queryString.toString();
+        let results = [];
+        let query = this.selectList.user_email;
+        results = queryString ? query.filter(this.createFilter(queryString)) : query;
+        cb(results);
+      },
       handleSelect() {
         this.goSearch();
       },
@@ -373,24 +396,26 @@
       handleAdd() {
         if(this.newApplyUserEmail=='') {
           this.$message({type: 'warning',message: '请填写用户邮箱'});
-        // } else if(validateEmail(this.newApplyUserEmail)==false) {
-        //   this.$message({type: 'warning',message: '用户邮箱格式不符合规范'});
+        } else if(validateEmail(this.newApplyUserEmail)==false) {
+          this.$message({type: 'warning',message: '用户邮箱格式不符合规范'});
         } else if(this.newApplyExpressid=='') {
           this.$message({type: 'warning',message: '请填写订单号'});
         } else if(this.newApplyBrand==null) {
           this.$message({type: 'warning',message: '请选择品牌'});
         } else if(this.newApplyEmail=='') {
           this.$message({type: 'warning',message: '请填写邮箱地址'});
-        // } else if(validateEmail(this.newApplyEmail)==false) {
-        //   this.$message({type: 'warning',message: '邮箱格式不符合规范'});
+        } else if(validateEmail(this.newApplyEmail)==false) {
+          this.$message({type: 'warning',message: '邮箱地址格式不符合规范'});
         } else {
-          this.checkOrder(this.newApplyExpressid,this.newApplyEmail)
+          this.checkOrder('add',this.newApplyBrand,this.newApplyExpressid,this.newApplyEmail,this.newApplyUserEmail)
         }
       },
       handleEdit(index,row) {
         this.editApplyID = row.apply_ID;
         this.editApplyExpressid = row.expressid;
         this.editApplyEmail = row.email;
+        this.editApplyBrand = row.brand;
+        this.editApplyUser = row.user_id;
         this.dialogEditVisible = true;
       },
       goEdit() {
@@ -401,16 +426,7 @@
         } else if(validateEmail(this.editApplyEmail)==false) {
           this.$message({type: 'warning',message: '邮箱格式不符合规范'});
         } else {
-          editApply(this.editApplyID,this.editApplyExpressid,this.editApplyEmail).then(res=>{
-            if(res.data.status=='200') {
-              this.dialogEditVisible = false;
-              this.currentPage = 1;
-              this._getApplyList(this.currentPage);
-              this.$message({type: 'success',message: '修改成功'});
-            } else {
-              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
-            }
-          })
+          this.checkOrder('edit',this.editApplyBrand,this.editApplyExpressid,this.editApplyEmail,this.editApplyUser)
         }       
       },
       handleDelete(index,row) {
@@ -574,7 +590,7 @@
         this.search = '';
       },
 
-      checkOrder(id,email) {
+      checkOrder(type,orderBrand,orderId,orderEmail,user) {
         let returnItem = {
           order_time: [],
           price: [],
@@ -595,7 +611,7 @@
           tracker:[],
         }
         
-        if(this.newApplyBrand=='N') {
+        if(orderBrand=='N') {
           let headers = {
             "Content-Type": "application/x-www-form-urlencoded;",
             "accept":"application/json",
@@ -604,8 +620,8 @@
             "x-nike-visitid":"1",
             "x-nike-visitorid":this.guid(),
           }
-          let url1 = "https://api.nike.com/order_mgmt/user_order_details/v2/" + id + "?filter=email(" + email + ")";
-          let url2 = "https://api.nike.com/ship/user_shipments/v1?locale=en_us&filter=orderNumber(" + id +")&filter=email("+email+")";
+          let url1 = "https://api.nike.com/order_mgmt/user_order_details/v2/" + orderId + "?filter=email(" + orderEmail + ")";
+          let url2 = "https://api.nike.com/ship/user_shipments/v1?locale=en_us&filter=orderNumber(" + orderId +")&filter=email("+orderEmail+")";
 
           this.$axios.all([
             this.$axios.get(url1, {
@@ -661,30 +677,13 @@
               returnItem[item] = returnItem[item].join(',')
             }
             
-            returnItem.id = this.newApplyExpressid;
-            returnItem.email = this.newApplyEmail;
+            returnItem.id = orderId;
+            returnItem.email = orderEmail;
 
-            getUserByEmail(this.newApplyUserEmail).then(res=>{
-              if(res.data.status=='200') {
-                addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  if(res.data.status=='200') {
-                    this.dialogAddVisible = false;
-                    this.currentPage = 1;
-                    this._getApplyList(this.currentPage);
-                    this.$message({type: 'success',message: '添加成功'});
-                    this.newApplyExpressid = '';
-                    this.newApplyEmail = '';
-                  } else {
-                    this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
-                  }
-                })
-              } else {
-                this.$message({type: 'warning',message: '查无用户'});
-              }
-            })
+            this._handleApply(type,user,orderBrand,returnItem)
           }))
-        } else if(this.newApplyBrand=='JD') {
-          let url = "https://data.smartagent.io/v1/jdsports/track-my-order?orderNumber=" + id + "&facia=jdsportsuk&emailAddress=" + email;
+        } else if(orderBrand=='JD') {
+          let url = "https://data.smartagent.io/v1/jdsports/track-my-order?orderNumber=" + orderId + "&facia=jdsportsuk&emailAddress=" + orderEmail;
           let header = {
             'accept': '*/*',
             'accept-encoding': 'gzip, deflate, br',
@@ -734,32 +733,15 @@
               returnItem[item] = returnItem[item].join(',')
             }
             
-            returnItem.id = this.newApplyExpressid;
-            returnItem.email = this.newApplyEmail;
+            returnItem.id = orderId;
+            returnItem.email = orderEmail;
             
-            getUserByEmail(this.newApplyUserEmail).then(res=>{
-              if(res.data.status=='200') {
-                addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  if(res.data.status=='200') {
-                    this.dialogAddVisible = false;
-                    this.currentPage = 1;
-                    this._getApplyList(this.currentPage);
-                    this.$message({type: 'success',message: '添加成功'});
-                    this.newApplyExpressid = '';
-                    this.newApplyEmail = '';
-                  } else {
-                    this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
-                  }
-                })
-              } else {
-                this.$message({type: 'warning',message: '查无用户'});
-              }
-            })
+            this._handleApply(type,user,orderBrand,returnItem)
           })
-        } else if(this.newApplyBrand=='A') {
+        } else if(orderBrand=='A') {
           getCrawlerOrder({
-            id:id,
-            email:email,
+            id:orderId,
+            email:orderEmail,
             brand:'A'
           }).then(res=>{
             let data = res.data;
@@ -781,32 +763,48 @@
             returnItem.gift = data[16];
             returnItem.tracker = data[17];
 
-            returnItem.id = this.newApplyExpressid;
-            returnItem.email = this.newApplyEmail;
+            returnItem.id = orderId;
+            returnItem.email = orderEmail;
             
-            getUserByEmail(this.newApplyUserEmail).then(res=>{
-              if(res.data.status=='200') {
-                addApply(res.data.user_ID,[returnItem],this.newApplyBrand).then(res=>{
-                  if(res.data.status=='200') {
-                    this.dialogAddVisible = false;
-                    this.currentPage = 1;
-                    this._getApplyList(this.currentPage);
-                    this.$message({type: 'success',message: '添加成功'});
-                    this.newApplyExpressid = '';
-                    this.newApplyEmail = '';
-                  } else {
-                    this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
-                  }
-                })
-              } else {
-                this.$message({type: 'warning',message: '查无用户'});
-              }
-            })
+            this._handleApply(type,user,orderBrand,returnItem)
           }).catch(res=>{
             this.$message({type: 'warning',message: '订单不存在'});
           })
         } else {
           this.$message({type: 'warning',message: '当前只支持 Nike Adidas 和 JD'});
+        }
+      },
+      _handleApply(type,user,brand,returnItem) {
+        if(type=='add') {
+          getUserByEmail(user).then(res=>{
+            if(res.data.status=='200') {
+              addApply(res.data.user_ID,[returnItem],brand).then(res=>{
+                if(res.data.status=='200') {
+                  this.dialogAddVisible = false;
+                  this.currentPage = 1;
+                  this._getApplyList(this.currentPage);
+                  this.$message({type: 'success',message: '添加成功'});
+                  this.newApplyExpressid = '';
+                  this.newApplyEmail = '';
+                } else {
+                  this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
+                }
+              })
+            } else {
+              this.$message({type: 'warning',message: '查无用户'});
+            }
+          })
+        } else if(type=='edit') {
+          editApply(this.editApplyID,this.editApplyExpressid,this.editApplyEmail).then(res=>{
+            if(res.data.status=='200') {
+              this.dialogEditVisible = false;
+              this.currentPage = 1;
+              this._getApplyList(this.currentPage);
+              this.$message({type: 'success',message: '修改成功'});
+            } else {
+              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
+            }
+          })
         }
       },
       guid() {

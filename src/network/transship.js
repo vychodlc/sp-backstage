@@ -111,10 +111,11 @@ export function editStorage(info) {
     data: formData
   })
 }
-export function changeStorage(storage_ID,storage_status) {
+export function changeStorage(storage_ID,storage_status,outbound_id) {
   let formData = new FormData();
   formData.append('storage_ID',storage_ID);
   formData.append('storage_status',storage_status);
+  formData.append('outbound_id',outbound_id==''?0:parseInt(outbound_id));
   return request({
     method: 'POST',
     url: '/change_transship_storage.php',

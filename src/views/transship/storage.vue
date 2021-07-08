@@ -133,23 +133,23 @@
           <el-row>
             <el-col>
               <el-form-item label="长(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[0]"></el-input>
+                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[0]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="宽(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[1]"></el-input>
+                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[1]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="高(cm)" label-width="80px">
-                <el-input type="number" v-model="editStorageSize[2]"></el-input>
+                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[2]"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="重量">
-          <el-input v-model="editStorageWeight"></el-input>
+          <el-input v-model="editStorageWeight" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
         </el-form-item>
         <el-form-item label="图片">
           <template>
@@ -180,6 +180,8 @@
         <el-form-item>
           <el-radio v-model="dialogChange" label="0">库存中</el-radio>
           <el-radio v-model="dialogChange" label="1">已出库</el-radio>
+          <span style="font-size:14px;margin-right:10px" v-if="dialogChange==1&&oldStorage.outbound_id=='0'">出库ID</span>
+          <el-input size="mini" style="width:100px;" v-model="newOutbound_id" v-if="dialogChange==1&&oldStorage.outbound_id=='0'" placeholder="不填默认为0" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -243,6 +245,7 @@
         dialogChangeVisible: false,
         dialogChange: '',
         oldStorage: null,
+        newOutbound_id: '',
         selectList: {},
 
         pageNum: null,
@@ -532,11 +535,12 @@
       handleChange(row) {
         this.dialogChange = row.storage_status;
         this.oldStorage = row;
+        this.newOutbound_id = row.outbound_id=='0'?'':row.outbound_id;
         this.dialogChangeVisible = true;
       },
       goChange() {
         if(this.oldStorage.storage_status!=this.dialogChange) {
-          changeStorage(this.oldStorage.storage_ID,this.dialogChange).then(res => {
+          changeStorage(this.oldStorage.storage_ID,this.dialogChange,this.newOutbound_id).then(res => {
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '状态修改成功'});
               this.currentPage = 1;

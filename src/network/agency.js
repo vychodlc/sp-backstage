@@ -16,6 +16,7 @@ export function addAgency(info) {
   let giftcards = info.giftcards;
   // let giftcards = info.giftcards.filter(item=>{return item.right==true||item.right=='true'})
   formData.append('giftcards',JSON.stringify(giftcards));
+  info.price = parseFloat(info.price).toFixed(2)
   formData.append('price',info.price*100);
   return request({
     method: 'POST',

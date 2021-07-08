@@ -96,7 +96,7 @@
           <el-button
             size="mini"
             type="success"
-            v-if="scope.row.amount==null&&scope.row.outbound_type==1"
+            v-if="scope.row.drawback_id=='0'&&scope.row.outbound_type==1"
             @click="handleTax(scope.$index, scope.row)">退税</el-button>
           <el-button
             size="mini"
@@ -127,7 +127,7 @@
           <el-autocomplete
             class="inline-input"
             v-model="newOutput.email"
-            size="small"
+            size="mini"
             :fetch-suggestions="querySearch2"
             placeholder="请输入用户邮箱···"
             style="width:100%"
@@ -537,37 +537,48 @@
         let imgNum = (this.$refs.uploadImgOutputAdd)?this.$refs.uploadImgOutputAdd.uploadFiles.length:0;
         if(this.newOutput.email=='') {
           this.$message({type: 'warning',message: '请填写用户邮箱'});
-        } else if(this.newOutput.storage_nums.length==0) {
-          this.$message({type: 'warning',message: '请选择货品编号'});
-          // this._getUserStorage(this.newOutput.email);
-        } else if(this.newOutput.address=='') {
-          this.$message({type: 'warning',message: '请填写收货地址'});
-        } else if(this.newOutput.outbound_type=='') {
-          this.$message({type: 'warning',message: '请选择出库方式'});
-        } else if(this.newOutput.outbound_type==1&&imgNum==0) {
-          this.$message({type: 'warning',message: '请上传退税材料'});
         } else {
-          if(this.newOutput.outbound_type==1) {
-            while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
-              let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
-              let fileName = new Date().getTime() + '-' +file.name;
-              imageConversion.compress(file,0.6).then(res=>{
-                let uploadFile = new File([res], fileName, {type: res.type});
-                addCoverImg(uploadFile).then(res=>{
-                  if(res.data.status=='201') {
-                    imgList.push(res.data.cover_img_url);
-                    if(imgList.length==imgNum) {
-                      this.newOutput.material = imgList;
-                      this.goDeploy('new')
-                    }
-                  } else {
-                    this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
-                  }
-                })
-              })
+          let canAdd = false;
+          this.selectList.user_email.map(user=>{
+            if(user.value==this.newOutput.email) {
+              canAdd = true
             }
+          })
+          if(canAdd==false) {
+            this.$message({type: 'warning',message: '请输入正确的用户邮箱'});
           } else {
-            this.goDeploy('new');
+            if(this.newOutput.storage_nums.length==0) {
+              this.$message({type: 'warning',message: '请选择货品编号'});
+            } else if(this.newOutput.address=='') {
+              this.$message({type: 'warning',message: '请填写收货地址'});
+            } else if(this.newOutput.outbound_type=='') {
+              this.$message({type: 'warning',message: '请选择出库方式'});
+            } else if(this.newOutput.outbound_type==1&&imgNum==0) {
+              this.$message({type: 'warning',message: '请上传退税材料'});
+            } else {
+              if(this.newOutput.outbound_type==1) {
+                while(this.$refs.uploadImgOutputAdd.uploadFiles.length!=0) {
+                  let file = this.$refs.uploadImgOutputAdd.uploadFiles.pop().raw;
+                  let fileName = new Date().getTime() + '-' +file.name;
+                  imageConversion.compress(file,0.6).then(res=>{
+                    let uploadFile = new File([res], fileName, {type: res.type});
+                    addCoverImg(uploadFile).then(res=>{
+                      if(res.data.status=='201') {
+                        imgList.push(res.data.cover_img_url);
+                        if(imgList.length==imgNum) {
+                          this.newOutput.material = imgList;
+                          this.goDeploy('new')
+                        }
+                      } else {
+                        this.$message({type: 'warning',message: '图片上传失败\n'+res.data.msg});
+                      }
+                    })
+                  })
+                }
+              } else {
+                this.goDeploy('new');
+              }
+            }
           }
         }
       },

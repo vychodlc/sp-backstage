@@ -15,7 +15,7 @@
         </el-form-item>
         <el-form-item label="方式">
           <el-radio-group v-model="inputInfo.method" @change="inputInfo.code=''">
-            <el-radio style="margin-right:0" label="0" border>快递单号</el-radio>
+            <el-radio style="margin-right:0" label="0" border>快递单号/订单号</el-radio>
             <el-radio style="margin-right:0" label="1" border>转运码</el-radio>
             <el-radio style="margin-right:0" label="2" border>邮箱</el-radio>
           </el-radio-group>
@@ -35,17 +35,17 @@
           <el-row>
             <el-col :span="8">
               <el-form-item label="长" label-width="30px">
-                <el-input v-model="inputInfo.size[0]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+                <el-input v-model="inputInfo.size[0]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="宽" label-width="30px">
-                <el-input v-model="inputInfo.size[1]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+                <el-input v-model="inputInfo.size[1]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="高" label-width="30px">
-                <el-input v-model="inputInfo.size[2]" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+                <el-input v-model="inputInfo.size[2]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -53,7 +53,7 @@
         <el-form-item label="货品重量">
           <el-row>
             <el-col>
-              <el-input v-model="inputInfo.weight" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+              <el-input v-model="inputInfo.weight" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
             </el-col>
           </el-row>
         </el-form-item>
@@ -113,6 +113,7 @@
           description: '',
         },
         selectList: {
+          expressid: [],
           id: [],
           code: [],
           email: [],
@@ -249,8 +250,9 @@
         }
         
         if(this.inputInfo.method=='0') {
-          let query = this.selectList.id;
+          let query = this.selectList.expressid;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          console.log(this.selectList.expressid);
           cb(results);
         } else if(this.inputInfo.method=='1') {
           let query = this.selectList.code;
@@ -266,9 +268,9 @@
       createFilter(queryString) {
         return (item) => {
           if(this.inputInfo.method!='0') {
-            return (item.value.indexOf(queryString) === 0);
+            return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1)
           } else if(this.inputInfo.method=='0') {
-            return (item.value.indexOf(queryString) === 0)&&(item.apply_status=='0');
+            return ((item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1)&&(item.apply_status=='0'));
           }
         };
       },
@@ -284,6 +286,10 @@
     mounted() {
       getApplyList(0).then(res=>{
         let data = res.data.data;
+        this.selectList.expressid = []
+        data.map(item=>{
+          this.selectList.expressid.push({expressid:item.expressid,value:item.expressid,user_id:item.user_id,apply_status:item.apply_status})
+        })
         for(let i=0;i<data.length;i++) {
           data[i].value = data[i].expressid;
         }
@@ -300,12 +306,11 @@
               data[i].value = data[i].user_email;
             }
             this.selectList.email = data;
+            console.log(this.selectList);
             this.loading = false;
           })
         })
       })
-      
-      
     }
   }
 </script>

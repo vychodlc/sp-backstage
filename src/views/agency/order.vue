@@ -145,7 +145,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增代购信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false">
+    <el-dialog title="新增代购信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-loading='addLoading'>
       <el-form label-width="100px" size="mini" style="max-height:50vh;overflow-y:scroll;padding-right:5px">
         <el-form-item label="用户邮箱" label-width="80px">
           <!-- <el-input v-model="newItem.user_email"></el-input> -->
@@ -159,13 +159,13 @@
             @input="priceOk=false"
           ></el-autocomplete>
         </el-form-item>
-        <el-form-item label="商品链接" label-width="80px">
-          <el-input v-model="newItem.storage_link" @input="priceOk=false"></el-input>
-        </el-form-item>
         <el-form-item label="品牌" label-width="80px">
           <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="N">Nike</el-radio>
           <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="A">Adidas</el-radio>
           <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="JD">JD</el-radio>
+        </el-form-item>
+        <el-form-item label="商品链接" label-width="80px">
+          <el-input v-model="newItem.storage_link" @input="priceOk=false"></el-input>
         </el-form-item>
         <el-form-item label="尺码" label-width="80px">
           <el-checkbox @input="priceOk=false" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
@@ -214,18 +214,21 @@
           <el-radio @input="priceOk=false" v-model="newItem.account_type" style="margin-right:20px" label="2">生日账号</el-radio>
         </el-form-item>
         <el-form-item label="单数" label-width="80px">
-          <el-input @input="priceOk=false" v-model="newItem.order_num"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.order_num" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>9999)value=9999;if(value<0)value=0"></el-input>
         </el-form-item>
         <el-form-item label="时限" label-width="80px">
-          <el-input @input="priceOk=false" v-model="newItem.interval" placeholder="20~300小时"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.interval" placeholder="20~300小时" onkeyup="value=value.replace(/[^\d]/g,'')" onblur="if(value>300)value=300;if(value<20)value=20"></el-input>
         </el-form-item>
         <!-- <el-form-item label="费用" label-width="80px">
           <el-input v-model="newItem.price" disabled></el-input>
         </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="success" style="float:left;font-weight:bold;margin-right:10px" size="small" @click="generatePrice">生成价格</el-button>
-        <el-tag style="float:left;font-size:18px;font-weight:bold">价格：￡{{newItem.price}}</el-tag>
+        <el-button type="success" style="font-weight:bold;margin-right:10px" size="small" @click="generatePrice">生成价格</el-button>
+        <!-- <el-tag style="float:left;font-size:18px;font-weight:bold">价格：￡{{newItem.price}}</el-tag> -->
+        <br>
+        <el-input size="mini" style="margin:10px 0;width:100px" v-model="newItem.price"></el-input>
+        <br>
         <el-button @click="dialogAddVisible = false">取 消</el-button>
         <el-button type="primary" @click="goAdd()" :disabled="!priceOk">确 定</el-button>
       </div>
@@ -349,7 +352,8 @@ xxxx xxxx xxxx
           'user_email': {name:'邮箱'},
           'code': {name:'转运码'},
         },
-        priceOk: false
+        priceOk: false,
+        addLoading: false,
       }
     },
     methods:{
@@ -417,6 +421,7 @@ xxxx xxxx xxxx
         this.dialogAddVisible = true;
       },
       goAdd() {
+        let regExp = /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g
         if(this.newItem.user_email=='') {
           this.$message({type: 'warning',message: '请填写用户邮箱'});
         } else if(this.newItem.storage_link=='') {
@@ -441,6 +446,8 @@ xxxx xxxx xxxx
           this.$message({type: 'warning',message: '请选择单数'});
         } else if(this.newItem.interval=='') {
           this.$message({type: 'warning',message: '请选择代购时限'});
+        } else if(parseFloat(this.newItem.price)!=this.newItem.price&&regExp.test(this.newItem.price)==false) {
+          this.$message({type: 'warning',message: '请输入正确的价格'});
         } else {
           getUserByEmail(this.newItem.user_email).then(res=>{
             if(res.data.status=='200') {
@@ -643,14 +650,19 @@ xxxx xxxx xxxx
         });
       },
       generatePrice() {
+        let linkMsg = {
+          'N': {link:'www.nike.com/gb',msg:'请填写https://www.nike.com/gb中的商品链接'},
+          'A': {link:'www.adidas.co.uk',msg:'请填写https://www.adidas.co.uk/中的商品链接'},
+          'JD': {link:'www.jdsports.co.uk',msg:'请填写https://www.jdsports.co.uk/中的商品链接'},
+        }
         if(this.newItem.user_email=='') {
           this.$message({type: 'warning',message: '请填写用户邮箱'});
         } else if(this.newItem.storage_link=='') {
           this.$message({type: 'warning',message: '请填写商品链接'});
-        } else if(this.newItem.storage_link.indexOf('www.nike.com/gb')==-1) {
-          this.$message({type: 'warning',message: '请填写www.nike.com/gb中的商品链接'});
         } else if(this.newItem.brand=='') {
           this.$message({type: 'warning',message: '请选择品牌'});
+        } else if(this.newItem.storage_link.indexOf(linkMsg[this.newItem.brand].link)==-1) {
+          this.$message({type: 'warning',message: linkMsg[this.newItem.brand].msg});
         } else if(this.newItem.size.length==0) {
           this.$message({type: 'warning',message: '请选择尺寸'});
         } else if(this.newItem.giftcard_type=='') {
@@ -670,23 +682,50 @@ xxxx xxxx xxxx
         } else if(this.newItem.interval=='') {
           this.$message({type: 'warning',message: '请选择代购时限'});
         } else {
-          this.$axios({
-            method: 'get',
-            url: this.newItem.storage_link,
-          }).then(res=>{
-            let index = res.data.indexOf('currentPrice')
-            let price = res.data.slice(index,index+20).split(':')[1].split(',')[0]
-            price = parseFloat(price)
-            let totalPrice = parseFloat((this.newItem.account_type==2?this.options.account_birthday:0)
+          this.addLoading = true
+          if(this.newItem.brand=='N') {
+            this.$axios({
+              method: 'get',
+              url: this.newItem.storage_link,
+            }).then(res=>{
+              let price,totalPrice;
+              if(this.newItem.brand=='N') {
+                let index = res.data.indexOf('currentPrice')
+                price = res.data.slice(index,index+20).split(':')[1].split(',')[0]
+              } else if(this.newItem.brand=='A') {
+                let index1 = res.data.indexOf('"priceCurrency":"GBP","price":')
+                let index2 = res.data.indexOf(',"availability":"')
+                price = res.data.slice(index1+30,index2)
+              } else if(this.newItem.brand=='JD') {
+                let index = res.data.indexOf('<meta name="twitter:data1" content="')
+                price = res.data.slice(index+30,index+50)
+                console.log(price)
+              }
+              price = parseFloat(price)
+              totalPrice = parseFloat((this.newItem.account_type==2?this.options.account_birthday:0)
+              + (this.newItem.account_type==1?this.options.account_common:0)
+              + (this.newItem.discount_type==1?this.options.discount:0)
+              + (price * this.options.k)
+              + (this.newItem.giftcard_type==1?price*this.options.giftcard:0))
+              this.newItem.price = parseFloat(totalPrice*parseInt(this.newItem.order_num)).toFixed(2)
+              this.priceOk = true;
+              this.addLoading = false;
+            }).catch(e=>{
+              this.$message({type: 'warning',message: '获取商品价格失败'})
+              this.addLoading = false;
+            })
+          } else {
+            let price,totalPrice;
+            price = parseFloat(120)
+            totalPrice = parseFloat((this.newItem.account_type==2?this.options.account_birthday:0)
             + (this.newItem.account_type==1?this.options.account_common:0)
             + (this.newItem.discount_type==1?this.options.discount:0)
             + (price * this.options.k)
             + (this.newItem.giftcard_type==1?price*this.options.giftcard:0))
             this.newItem.price = parseFloat(totalPrice*parseInt(this.newItem.order_num)).toFixed(2)
             this.priceOk = true;
-          }).catch(e=>{
-            this.$message({type: 'warning',message: '获取商品价格失败'})
-          })
+            this.addLoading = false;
+          }
         }
       }
     },
@@ -717,7 +756,7 @@ xxxx xxxx xxxx
           getOption(0).then(res=>{
             let data = res.data.data;
             res.data.data.map(opt=>{
-              this.options[opt.option] = opt.value
+              this.options[opt.option] = parseFloat(opt.value)
             })
             console.log(this.options);
             this.currentPage = 1;
