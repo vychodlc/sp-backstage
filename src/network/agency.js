@@ -165,3 +165,33 @@ export function changeAccount(info) {
     data: formData
   })
 }
+export function getCrawlerGiftcard(info) {
+  return request({
+    url: '/get_crawler_giftcard.php',
+    params: {
+      'brand':info.brand,
+      'card_num':info.card_num,
+      'pin':info.pin
+    }
+  })
+}
+
+export function editAgency(info) {
+  let formData = new FormData()
+  formData.append('agency_ID',info.agency_ID)
+  formData.append('price',parseInt(parseFloat(info.price)*100))
+  return request({
+    method: 'POST',
+    url: '/edit_agency.php',
+    data: formData
+  })
+}
+export function delAgency(agency_ID) {
+  let formData = new FormData()
+  formData.append('agency_ID',agency_ID)
+  return request({
+    method: 'POST',
+    url: '/del_agency.php',
+    data: formData
+  })
+}

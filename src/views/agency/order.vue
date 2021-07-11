@@ -102,7 +102,7 @@
       </el-table-column>
       <el-table-column label="折扣码" prop="discount_type">
         <template slot-scope="scope">
-          <el-popover trigger="hover" placement="top" v-if="scope.row.discount_type==3">
+          <el-popover trigger="hover" placement="top" v-if="scope.row.discount_type==3||scope.row.discount_type==2">
             <p>{{scope.row.discount_code}}</p>
             <div slot="reference" class="name-wrapper">
               <el-tag size="mini" v-if="scope.row.discount_type==2" type="primary">单次码</el-tag>
@@ -129,19 +129,23 @@
           <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row,1)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="80">
+      <el-table-column label="操作" align="right" width="150">
         <template slot="header">
           <el-button
             size="mini"
             type="primary"
             @click="handleAdd()">新增</el-button>
         </template>
-        <!-- <template slot-scope="scope">
+        <template slot-scope="scope">
           <el-button
+            size="mini"
+            @click="handleEdit(scope.index, scope.row)">编辑</el-button>
+          <el-button
+            v-if="scope.row.agency_status==0&&scope.row.pay_status==0"
             size="mini"
             type="danger"
             @click="handleDelete(scope.index, scope.row)">删除</el-button>
-        </template> -->
+        </template>
       </el-table-column>
     </el-table>
     
@@ -185,17 +189,16 @@
             :data="newItem.giftcards">
             <el-table-column min-width="40%" label="卡号" prop="card_num"></el-table-column>
             <el-table-column min-width="20%" label="PIN" prop="pin"></el-table-column>
-            <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
             <el-table-column min-width="20%" label="" prop="right">
               <template slot-scope="scope">
                 <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItem.giftcards.splice(scope.$index,1)"></el-button>
-                <el-tag v-else type="success" size="mini">OK</el-tag>
+                <el-tag v-else type="success" size="mini">{{parseFloat(scope.row.balance/100).toFixed(2)}}</el-tag>
               </template>
               <template slot="header">
                 <el-button
                   size="mini"
                   type="primary"
-                  @click="dialogEditVisible=true">新增</el-button>
+                  @click="goAddGiftcard()">新增</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -236,9 +239,9 @@
     <el-dialog title="批量导入礼品卡" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="文本信息">
-          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx
-xxxx xxxx xxxx
-卡号 PIN 品牌"></el-input>
+          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx
+xxxx xxxx
+卡号 PIN"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -266,6 +269,17 @@ xxxx xxxx xxxx
         <el-button type="primary" @click="goStatusChange()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="订单价格修改" :visible.sync="dialogPriceEdit" :close-on-click-modal="false">
+      <el-form>
+        <el-form-item>
+          <el-input v-model="editItemPrice"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogPriceEdit = false">取 消</el-button>
+        <el-button type="primary" @click="goPriceEdit()">确 定</el-button>
+      </div>
+    </el-dialog>
     <div class="pagination">
       <el-pagination
         small
@@ -279,7 +293,7 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard,addAgency,getAgency,changeAgency,changeAgencyPay,filterAgency } from '@/network/agency.js'
+  import { getGiftcard,addGiftcard,delGiftcard,addAgency,delAgency,getAgency,editAgency,changeAgency,changeAgencyPay,filterAgency,getCrawlerGiftcard } from '@/network/agency.js'
   import { getUserByEmail,getUser } from '@/network/user.js'
   import { getOption } from '@/network/option.js'
   export default {
@@ -354,6 +368,10 @@ xxxx xxxx xxxx
         },
         priceOk: false,
         addLoading: false,
+
+        dialogPriceEdit: false,
+        editItem: null,
+        editItemPrice: null,
       }
     },
     methods:{
@@ -465,14 +483,47 @@ xxxx xxxx xxxx
           })
         }
       },
+      goAddGiftcard() {
+        if(this.newItem.brand == '') {
+          this.$message({type:'warning',message:'请选择代购品牌'})
+        } else {
+          this.dialogEditVisible = true
+        }
+      },
+      handleEdit(index, row) {
+        this.editItem = row;
+        this.editItemPrice = parseFloat(row.price/100).toFixed(2);
+        this.dialogPriceEdit = true;
+      },
+      goPriceEdit() {
+        let regExp = /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g
+        if((this.editItemPrice=='')||(parseFloat(this.newItem.price)!=this.newItem.price&&regExp.test(this.newItem.price)==false)) {
+          this.$message({type:'warning',message:'请输入正确的价格'})
+        } else {
+          editAgency({
+            agency_ID: this.editItem.agency_ID,
+            price: this.editItemPrice
+          }).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type:'success',message:'修改价格成功'})
+            } else {
+              this.$message({type:'warning',message:'修改价格失败'+res.data.msg})
+            }
+            this.currentPage = 1;
+            this._getList(this.currentPage)
+            this.dialogPriceEdit = false
+          })
+        }
+      },
       handleDelete(index,row) {
-        this.$confirm('此操作将永久删除这条单号为：'+ row.agency_ID +'的礼品卡, 是否继续?', '提示', {
+        this.$confirm('此操作将永久删除这条单号为：'+ row.agency_ID +'的代购订单, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
           this.loading = true;
-          delGiftcard(row.agency_ID).then(res=>{
+          delAgency(row.agency_ID).then(res=>{
+            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
               this.currentPage = 1;
@@ -541,7 +592,6 @@ xxxx xxxx xxxx
         this.pageIndex = 1;
         this._getList(this.pageIndex);
       },
-
       handleCheckAllChange(val) {
         this.newItem.size = val ? this.sizeList : [];
         this.isIndeterminate = false;
@@ -556,11 +606,27 @@ xxxx xxxx xxxx
           this.$message({type: 'warning',message: '请输入内容'});
         } else {
           let rows = this.newItemText.split('\n');
+          let cardAmount = rows.length;
+          this.dialogEditVisible = false;
+          this.addLoading = true;
           rows.map(row=>{
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
-              this._addGiftcard({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
-              this.dialogEditVisible = false;
+              let flag = false;
+              let balance = null;
+              getCrawlerGiftcard({card_num:rowData[0],pin:rowData[1],brand:this.newItem.brand}).then(res=>{
+                console.log(res);
+                flag = false
+                if(res.data.status=='200') {
+                  balance = res.data.balance;
+                  flag = true
+                }
+                this.newItem.giftcards.push({card_num:rowData[0],pin:rowData[1],brand:this.newItem.brand,right:flag,balance:balance});
+                cardAmount-=1;
+                if(cardAmount==0) {
+                  this.addLoading = false;
+                }
+              });
             }
           })
           this.newItemText = '';
