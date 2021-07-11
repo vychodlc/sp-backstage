@@ -89,7 +89,7 @@
           <el-radio v-model="newItem.brand" label="JD">JD</el-radio>
         </el-form-item>
         <el-form-item style="float:right;">
-          <el-button type="success" @click="dialogEditVisible=true">批量添加</el-button>
+          <el-button type="success" @click="dialogEnter=true;newItemText=''">批量添加</el-button>
           <el-button type="primary" @click="handleAddAdd()">添加</el-button>
         </el-form-item>
         <el-table
@@ -103,6 +103,7 @@
             <template slot-scope="scope">
               <el-tag size="mini" v-if="scope.row.card_type==1" type="primary">普通账号</el-tag>
               <el-tag size="mini" v-if="scope.row.card_type==2" type="success">生日账号</el-tag>
+              <span v-if="scope.row.card_type==3">格式错误</span>
             </template>
           </el-table-column>
           <el-table-column min-width="20%" label="品牌" prop="brand">
@@ -110,6 +111,7 @@
               <span v-if="scope.row.brand=='N'">Nike</span>
               <span v-if="scope.row.brand=='A'">Adidas</span>
               <span v-if="scope.row.brand=='JD'">JDSports</span>
+              <span v-if="scope.row.brand=='NULL'">品牌错误</span>
             </template>
           </el-table-column>
           <el-table-column
@@ -127,7 +129,7 @@
         <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="批量导入购物账号" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
+    <el-dialog title="批量导入购物账号" :visible.sync="dialogEnter" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="文本信息">
           <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxx-xxx
@@ -136,7 +138,7 @@ xxxx xxxx xxxx xxx-xxx
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogEditVisible = false" size="mini">取 消</el-button>
+        <el-button @click="dialogEnter = false" size="mini">取 消</el-button>
         <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
       </div>
     </el-dialog>
@@ -199,9 +201,11 @@ xxxx xxxx xxxx xxx-xxx
           balance: '',
           right: false
         },
+        okItems: null,
         newItemText: '',
         newItems: [],
         handleNum: 0,
+        dialogEnter: false,
 
         dialogEditVisible: false,
         editItem: {
@@ -284,8 +288,9 @@ xxxx xxxx xxxx xxx-xxx
       },
       handleAdd() {
         this.newItem = {
-          card_num: '',psd: '',brand: '',card_type: '',
+          card_num: '',psd: '',brand: '',card_type: '',right: false
         };
+        this.newItems = [];
         this.dialogAddVisible = true;
       },
       handleAddAdd() {
@@ -298,9 +303,10 @@ xxxx xxxx xxxx xxx-xxx
         } else if(this.newItem.card_type=='') {
           this.$message({type: 'warning',message: '请选择账号种类'});
         } else {
+          this.newItem.right = true;
           this.newItems.push(this.newItem);
           this.newItem = {
-            card_num: '',psd: '',brand: '',card_type: '',
+            card_num: '',psd: '',brand: '',card_type: '',right: false
           };
         }
       },
@@ -313,15 +319,43 @@ xxxx xxxx xxxx xxx-xxx
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
               let brand = '';
-              if(rowData[3].indexOf('N')!=-1) {
-                brand = 'N'
-              } else if(rowData[3].indexOf('A')!=-1) {
-                brand = 'A'
-              } else if(rowData[3].indexOf('J')!=-1) {
-                brand = 'JD'
+              let right = false;
+              if(rowData[3]) {
+                if(rowData[3].toUpperCase().indexOf('N')!=-1) {
+                  brand = 'N';
+                  right = true
+                } else if(rowData[3].toUpperCase().indexOf('A')!=-1) {
+                  brand = 'A';
+                  right = true;
+                } else if(rowData[3].toUpperCase().indexOf('J')!=-1) {
+                  brand = 'JD';
+                  right = true;
+                } else {
+                  brand = 'NULL'
+                  right = false;
+                }
+              } else {
+                brand = 'NULL'
+                right = false;
               }
-              this.newItems.push({card_num:rowData[0],psd:rowData[1],card_type:rowData[2].indexOf('生')==-1?'1':'2',brand:brand});
-              this.dialogEditVisible = false;
+              let type = '';
+              if(rowData[2]) {
+                if(rowData[2].indexOf('生')!=-1) {
+                  type = '1';
+                  right = true;
+                } else if(rowData[2].indexOf('普')!=-1) {
+                  type = '2';
+                  right = true;
+                } else {
+                  type = '3';
+                  right = false;
+                }
+              } else {
+                type = '3';
+                right = false;
+              }
+              this.newItems.push({card_num:rowData[0],psd:rowData[1]?rowData[1]:'格式错误',card_type:type,brand:brand,right:right});
+              this.dialogEnter = false;
             }
           })
           this.newItemText = '';
@@ -331,18 +365,22 @@ xxxx xxxx xxxx xxx-xxx
         if(this.newItems.length==0) {
           this.$message({type: 'warning',message: '请添加购物账号信息'});
         } else {
-          this.handleNum = this.newItems.length;
+          let newobj = {};
+          this.okItems = this.newItems.filter(item=>{return item.right==true}).reduce((preVal, curVal) => {
+            newobj[curVal.card_num] ? '' : newobj[curVal.card_num] = preVal.push(curVal); 
+            return preVal 
+          }, [])
+          this.handleNum = this.okItems.length;
           if(this.handleNum==0) {
             this.loading = false;
+            this.dialogAddVisible = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           } else {
             this.loading = true;
-          }
-          this.dialogAddVisible = false;
-          while(this.newItems.length!=0) {
-            let data = this.newItems.pop();
-            this._addAccount(data);
+            this.okItems.map(item=>{
+              this._addAccount(item);
+            })
           }
         }
       },
@@ -351,6 +389,7 @@ xxxx xxxx xxxx xxx-xxx
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;
+            this.dialogAddVisible = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           }

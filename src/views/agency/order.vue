@@ -164,9 +164,9 @@
           ></el-autocomplete>
         </el-form-item>
         <el-form-item label="品牌" label-width="80px">
-          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="N">Nike</el-radio>
-          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="A">Adidas</el-radio>
-          <el-radio @input="priceOk=false" v-model="newItem.brand" style="margin-right:20px" label="JD">JD</el-radio>
+          <el-radio @input="priceOk=false;newItem.giftcards=[]" v-model="newItem.brand" style="margin-right:20px" label="N">Nike</el-radio>
+          <el-radio @input="priceOk=false;newItem.giftcards=[]" v-model="newItem.brand" style="margin-right:20px" label="A">Adidas</el-radio>
+          <el-radio @input="priceOk=false;newItem.giftcards=[]" v-model="newItem.brand" style="margin-right:20px" label="JD">JD</el-radio>
         </el-form-item>
         <el-form-item label="商品链接" label-width="80px">
           <el-input v-model="newItem.storage_link" @input="priceOk=false"></el-input>
@@ -189,10 +189,15 @@
             :data="newItem.giftcards">
             <el-table-column min-width="40%" label="卡号" prop="card_num"></el-table-column>
             <el-table-column min-width="20%" label="PIN" prop="pin"></el-table-column>
+            <el-table-column min-width="20%" label="有效性" prop="right">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.right==false" type="warning" size="mini">无效</el-tag>
+                <el-tag v-else type="success" size="mini">{{parseFloat(scope.row.balance/100).toFixed(2)}}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column min-width="20%" label="" prop="right">
               <template slot-scope="scope">
-                <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItem.giftcards.splice(scope.$index,1)"></el-button>
-                <el-tag v-else type="success" size="mini">{{parseFloat(scope.row.balance/100).toFixed(2)}}</el-tag>
+                <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItem.giftcards.splice(scope.$index,1)"></el-button>
               </template>
               <template slot="header">
                 <el-button
@@ -409,7 +414,6 @@ xxxx xxxx
         } else {
           getAgency(pageIndex).then(res => {
             if(res.data.status=='200') {
-              console.log(res.data.data);
               this.pageNum = parseInt(res.data.agencys_num);
               this.tableData = res.data.data;
               this.loading = false;
@@ -486,6 +490,8 @@ xxxx xxxx
       goAddGiftcard() {
         if(this.newItem.brand == '') {
           this.$message({type:'warning',message:'请选择代购品牌'})
+        } else if(this.newItem.brand=='A') {
+          this.$message({type:'warning',message:'暂不支持Adidas的礼品卡'})
         } else {
           this.dialogEditVisible = true
         }
@@ -497,7 +503,7 @@ xxxx xxxx
       },
       goPriceEdit() {
         let regExp = /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g
-        if((this.editItemPrice=='')||(parseFloat(this.newItem.price)!=this.newItem.price&&regExp.test(this.newItem.price)==false)) {
+        if((this.editItemPrice=='')||(parseFloat(this.editItemPrice)!=this.editItemPrice&&regExp.test(this.editItemPrice)==false)) {
           this.$message({type:'warning',message:'请输入正确的价格'})
         } else {
           editAgency({
@@ -523,7 +529,6 @@ xxxx xxxx
         }).then(() => {
           this.loading = true;
           delAgency(row.agency_ID).then(res=>{
-            console.log(res);
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
               this.currentPage = 1;
@@ -615,7 +620,6 @@ xxxx xxxx
               let flag = false;
               let balance = null;
               getCrawlerGiftcard({card_num:rowData[0],pin:rowData[1],brand:this.newItem.brand}).then(res=>{
-                console.log(res);
                 flag = false
                 if(res.data.status=='200') {
                   balance = res.data.balance;
@@ -647,7 +651,6 @@ xxxx xxxx
             'agency_ID': this.oldAgency.agency_ID,
             'agency_status': this.dialogStatus,
           }).then(res => {
-            console.log(res);
             this.$message({type: 'success',message: '状态修改成功'});
             this.currentPage = 1;
             this._getList(this.currentPage);
@@ -765,7 +768,6 @@ xxxx xxxx
               } else if(this.newItem.brand=='JD') {
                 let index = res.data.indexOf('<meta name="twitter:data1" content="')
                 price = res.data.slice(index+30,index+50)
-                console.log(price)
               }
               price = parseFloat(price)
               totalPrice = parseFloat((this.newItem.account_type==2?this.options.account_birthday:0)
@@ -824,7 +826,6 @@ xxxx xxxx
             res.data.data.map(opt=>{
               this.options[opt.option] = parseFloat(opt.value)
             })
-            console.log(this.options);
             this.currentPage = 1;
             this._getList(this.currentPage);
           })

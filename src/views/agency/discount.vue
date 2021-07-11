@@ -86,7 +86,6 @@
           <el-radio v-model="newItem.brand" label="JD">JD</el-radio>
         </el-form-item>
         <el-form-item label="有效期" label-width="80px">
-          <span>{{newItem.daterange}}</span>
           <el-date-picker
             v-model="newItem.daterange"
             type="daterange"
@@ -97,7 +96,7 @@
           </el-date-picker>
         </el-form-item>
         <el-form-item style="float:right;">
-          <el-button type="success" @click="dialogEditVisible=true">批量添加</el-button>
+          <el-button type="success" @click="dialogEditVisible=true;newItemText=''">批量添加</el-button>
           <el-button type="primary" @click="handleAddAdd()">添加</el-button>
         </el-form-item>
         <el-table
@@ -105,21 +104,21 @@
         style="width: 100%;overflow:hidden;"
         :row-style="{height: '30px'}"
         :data="newItems">
-          <el-table-column min-width="30%" label="折扣码" prop="code"></el-table-column>
-          <el-table-column min-width="10%" label="种类" prop="type">
+          <el-table-column min-width="20%" label="折扣码" prop="code"></el-table-column>
+          <el-table-column min-width="20%" label="种类" prop="type">
             <template slot-scope="scope">
               <span v-if="scope.row.type==2">单次码</span>
               <span v-if="scope.row.type==3">复用码</span>
             </template>
           </el-table-column>
-          <el-table-column min-width="10%" label="品牌" prop="brand">
+          <el-table-column min-width="20%" label="品牌" prop="brand">
             <template slot-scope="scope">
               <span v-if="scope.row.brand=='N'">Nike</span>
               <span v-if="scope.row.brand=='A'">Adidas</span>
               <span v-if="scope.row.brand=='JD'">JDSports</span>
             </template>
           </el-table-column>
-          <el-table-column min-width="50%" label="有效期限">
+          <el-table-column min-width="40%" label="有效期限">
             <template slot-scope="scope">{{scope.row.start_date}}  ~  {{scope.row.valid_date}}</template>
           </el-table-column>
           <el-table-column
@@ -137,7 +136,7 @@
         <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="批量导入礼品卡" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
+    <el-dialog title="批量导入折扣码" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="文本信息">
           <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxx-xxx
@@ -290,6 +289,7 @@ xxxx xxxx xxxx xxx-xxx
         this.newItem = {
           code: '',type: '',brand: '',valid_date: '',
         };
+        this.newItems = []
         this.dialogAddVisible = true;
       },
       handleAddAdd() {

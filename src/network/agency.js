@@ -13,8 +13,9 @@ export function addAgency(info) {
   formData.append('order_num',info.order_num);
   formData.append('interval',info.interval);
   formData.append('giftcard_type',info.giftcard_type);
-  let giftcards = info.giftcards;
-  // let giftcards = info.giftcards.filter(item=>{return item.right==true||item.right=='true'})
+  // let giftcards = info.giftcards;
+  let giftcards = info.giftcards.filter(item=>{return item.right==true||item.right=='true'})
+  console.log(giftcards);
   formData.append('giftcards',JSON.stringify(giftcards));
   info.price = parseFloat(info.price).toFixed(2)
   formData.append('price',info.price*100);

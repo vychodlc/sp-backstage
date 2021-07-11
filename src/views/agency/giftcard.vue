@@ -45,7 +45,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
+    <el-dialog title="新增礼品卡信息" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog" v-loading='addLoading'>
       <el-form label-width="100px" size="mini">
         <el-row>
           <el-col :span="8">
@@ -62,7 +62,7 @@
             <el-form-item label="品牌" label-width="80px">
               <el-select v-model="newItem.brand" placeholder="请选择品牌">
                 <el-option label="Nike" value="N"></el-option>
-                <el-option label="Adidas" value="A"></el-option>
+                <!-- <el-option label="Adidas" value="A"></el-option> -->
                 <el-option label="JD·Sports" value="JD"></el-option>
               </el-select>
             </el-form-item>
@@ -87,8 +87,7 @@
           label=""
           width="100">
           <template slot-scope="scope">
-            <el-button v-if="scope.row.right==false" type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
-            <el-tag v-else type="success" size="mini">OK</el-tag>
+            <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -123,7 +122,7 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard } from '@/network/agency.js'
+  import { getGiftcard,addGiftcard,delGiftcard,getCrawlerGiftcard } from '@/network/agency.js'
   export default {
     name: "giftcard",
     data () {
@@ -136,6 +135,7 @@ xxxx xxxx xxxx
         filterWord: null,
         isSearch: false,
         loading: true,
+        addLoading: false,
         tableData: [],
 
         dialogAddVisible: false,
@@ -148,6 +148,7 @@ xxxx xxxx xxxx
         },
         newItemText: '',
         newItems: [],
+        okItems: null,
         handleNum: 0,
 
         dialogEditVisible: false,
@@ -206,6 +207,7 @@ xxxx xxxx xxxx
           brand: '',
           right: false,
         };
+        this.newItems = [];
         this.dialogAddVisible = true;
       },
       handleAddAdd() {
@@ -216,6 +218,8 @@ xxxx xxxx xxxx
         } else if(this.newItem.brand=='') {
           this.$message({type: 'warning',message: '请填写礼品卡品牌'});
         } else {
+          this.addLoading = true;
+          this.enterNum = 1;
           this.addItem(this.newItem);
           this.newItem = {
             card_num: '',
@@ -227,6 +231,7 @@ xxxx xxxx xxxx
       },
       addItem(item) {
         if(item.brand.toUpperCase().indexOf('N')!=-1) {
+          item.brand = 'Nike'
           this.$axios({
             method: 'post',
             url: 'https://api.nike.com/payment/giftcard_balance/v1/',
@@ -245,35 +250,42 @@ xxxx xxxx xxxx
             item.balance = res.data.balance;
             item.right = true;
             this.newItems.push(item);
-          }).catch(e=>{
-            this.$message({type: 'warning',message: '卡号或PIN码错误'});
-            item.balance = 0;
-            item.right = false;
-            this.newItems.push(item);
-          })
-        } else if(item.brand.toUpperCase().indexOf('A')!=-1) {
-          this.$axios({
-            method: 'post',
-            url: 'https://www.jdsports.co.uk/gift-cards/'+item.card_num,
-            data: JSON.stringify({
-              'cardPin': item.pin.toString(),
-            }),
-            headers: {
-              "Content-Type": "application/json",
-		          "accept": "*/*",
-		          "x-requested-with": "XMLHttpRequest",
+            this.enterNum--;
+            if(this.enterNum==0) {
+              this.addLoading = false
             }
-          }).then(res=>{
-            item.balance = res.data.balance;
-            item.right = true;
-            this.newItems.push(item);
           }).catch(e=>{
             this.$message({type: 'warning',message: '卡号或PIN码错误'});
-            item.balance = 0;
+            item.balance = '无效';
             item.right = false;
             this.newItems.push(item);
+            this.enterNum--;
+            if(this.enterNum==0) {
+              this.addLoading = false
+            }
           })
         } else if(item.brand.toUpperCase().indexOf('J')!=-1) {
+          let flag,balance;
+          balance = '无效'
+          getCrawlerGiftcard({card_num:item.card_num,pin:item.pin.toUpperCase(),brand:'JD'}).then(res=>{
+            flag = false
+            if(res.data.status=='200') {
+              balance = parseFloat(parseInt(res.data.balance)/100).toFixed(2);
+              flag = true
+            }
+            this.newItems.push({card_num:item.card_num,pin:item.pin.toUpperCase(),brand:'JD',right:flag,balance:balance});
+            this.enterNum--;
+            if(this.enterNum==0) {
+              this.addLoading = false
+            }
+          });
+        // } else if(item.brand.toUpperCase().indexOf('A')!=-1) {
+        } else {
+          this.newItems.push({card_num:item.card_num,pin:item.pin.toUpperCase(),balance:'无效',brand:'品牌错误',right:false})
+          this.enterNum--;
+          if(this.enterNum==0) {
+            this.addLoading = false
+          }
         }
       },
       enterItems() {
@@ -282,10 +294,20 @@ xxxx xxxx xxxx
         } else {
           let items = [];
           let rows = this.newItemText.split('\n');
+          this.addLoading = true;
+          this.enterNum = rows.length;
           rows.map(row=>{
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
-              this.addItem({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
+              if(rowData.length>2) {
+                this.addItem({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
+              } else {
+                this.enterNum--;
+                this.newItems.push({card_num:rowData[0],pin:rowData[1]?rowData[1]:'格式错误',balance:'无效',brand:rowData[2]?rowData[2]:'格式错误',right:false})
+                if(this.enterNum==0) {
+                  this.addLoading = false
+                }
+              }
               this.dialogEditVisible = false;
             }
           })
@@ -296,28 +318,31 @@ xxxx xxxx xxxx
         if(this.newItems.length==0) {
           this.$message({type: 'warning',message: '请添加礼品卡信息'});
         } else {
-          this.handleNum = this.newItems.filter(item=>{return item.right==true}).length;
+          let newobj = {};
+          this.okItems = this.newItems.filter(item=>{return item.right==true}).reduce((preVal, curVal) => {
+            newobj[curVal.card_num] ? '' : newobj[curVal.card_num] = preVal.push(curVal); 
+            return preVal 
+          }, [])
+          this.handleNum = this.okItems.length;
+          this.addLoading = true;
           if(this.handleNum==0) {
-            this.loading = false;
+            this.addLoading = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           } else {
-            this.loading = true;
+            this.addLoading = true;
           }
           this.dialogAddVisible = false;
-          while(this.newItems.length!=0) {
-            let data = this.newItems.pop();
-            if(data.right==true) {
-              this._addGiftcard(data);
-            }
-          }
+          this.okItems.map(item=>{
+            this._addGiftcard(item)
+          })
         }
       },
       _addGiftcard(item) {
         addGiftcard(item).then(res=>{
-          this.handleNum--
+          this.handleNum--;
           if(this.handleNum==0) {
-            this.loading = false;
+            this.addLoading = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           }
