@@ -52,7 +52,7 @@
           <el-tag size="mini" v-if="scope.row.withdraw_status==0" type="warning">待审核</el-tag>
           <el-tag size="mini" v-if="scope.row.withdraw_status==1" type="success">已提现</el-tag>
           <el-tag size="mini" v-if="scope.row.withdraw_status==2" type="info">已驳回</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
+          <el-link v-if="scope.row.withdraw_status==0" style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="right" width="100">
@@ -78,12 +78,23 @@
           <el-radio v-model="newItem.method" @change="changeMethod()" label="1">用户邮箱</el-radio>
         </el-form-item> -->
         <el-form-item label="用户编号" label-width="80px">
-          <el-input v-model="newItem.user_id" :placeholder="placeholder"></el-input>
+          <!-- <el-input v-model="newItem.user_id" :placeholder="placeholder"></el-input> -->
+          <el-autocomplete
+            class="inline-input"
+            v-model="newItem.user_email"
+            size="small"
+            style="width:100%"
+            :fetch-suggestions="querySearch2"
+            placeholder="请输入用户邮箱·"
+            :trigger-on-focus="false"
+            @select="handleSelect2"
+            @input="dialogAddMore=false"
+          ></el-autocomplete>
         </el-form-item>
-        <el-form-item label="金额" label-width="80px">
+        <el-form-item v-if="dialogAddMore==true" label="金额" label-width="80px">
           <el-input v-model="newItem.amount"></el-input>
         </el-form-item>
-        <el-form-item label="银行卡号" label-width="80px">
+        <el-form-item v-if="dialogAddMore==true" label="银行卡号" label-width="80px">
           <el-input v-model="newItem.bankcard"></el-input>
         </el-form-item>
       </el-form>
@@ -137,7 +148,7 @@
 
         dialogAddVisible: false,
         newItem: {
-          amount: '',bankcard: '',user_id: '',method: '0'
+          amount: '',bankcard: '',user_id: '',method: '0',user_email:''
         },
         newItemText: '',
         newItems: [],
@@ -167,6 +178,7 @@
 
         selectList: [],
         placeholder: '请输入用户编号···',
+        dialogAddMore: false
       }
     },
     methods:{
@@ -197,7 +209,6 @@
           });
         } else {
           getWithdrawl(pageIndex).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.Withdrawls_num);
               this.tableData = res.data.data;
@@ -211,19 +222,24 @@
       },
       handleAdd() {
         this.newItem = {
-          amount: '',bankcard: '',user_id: '',method: '0'
+          amount: '',bankcard: '',user_id: '',method: '0',user_email:''
         };
         this.placeholder = '请输入用户编号···';
         this.dialogAddVisible = true;
       },
       goAdd() {
-        if(this.newItem.user_id=='') {
+        if(this.newItem.user_email=='') {
           this.$message({type: 'warning',message: '请选择用户'});
         } else if(this.newItem.amount=='') {
           this.$message({type: 'warning',message: '请填写提现金额'});
         } else if(this.newItem.bankcard=='') {
           this.$message({type: 'warning',message: '请填写银行卡号'});
         } else {
+          this.selectList.user_email.map(email=>{
+            if(email.value==this.newItem.user_email) {
+              this.newItem.user_id = email.id
+            }
+          })
           addWithdrawl(this.newItem).then(res=>{
             if(res.data.status=='200') {
               this.$message({type:'success',message:'添加成功'});
@@ -316,7 +332,6 @@
 
       querySearch(queryString, cb) {
         queryString = queryString.toString();
-
         if(this.filter=='withdraw_ID') {
           let query = this.selectList.withdraw_ID;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
@@ -339,8 +354,17 @@
           cb(results);
         }
       },
+      querySearch2(queryString, cb) {
+        queryString = queryString.toString();
+        let query = this.selectList.user_email;
+        let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+        cb(results);
+      },
       handleSelect() {
         this.goSearch();
+      },
+      handleSelect2() {
+        this.dialogAddMore = true;
       },
       createFilter(queryString) {
         return (item) => {
@@ -363,7 +387,6 @@
         this.selectList.withdraw_ID = data1;
         this.selectList.bankcard = this.deWeight(data2);
         getUser().then(res=>{
-          console.log(res);
           let users = res.data.data;
           let emails = [],ids = [],codes = [],names = [];
           users.map(user=>{

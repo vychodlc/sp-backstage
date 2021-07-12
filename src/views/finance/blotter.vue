@@ -1,14 +1,37 @@
 <template>
   <div class="post-container">
+
+    <!-- ,uuid,,, -->
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="编号" value="payment_ID"></el-option>
-      <el-option label="卡号" value="card_num"></el-option>
+      <el-option label="经办人" value="operator"></el-option>
+      <el-option label="状态" value="order_status"></el-option>
+      <el-option label="种类" value="order_type"></el-option>
+      <el-option label="用户编号" value="uuid"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
+    <template v-if="this.filter=='order_status'">
+      <el-radio v-model="search" @input="goSearch()" label="0">付款</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="1">退款</el-radio>
     </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <template v-else-if="this.filter=='order_type'">
+      <el-radio v-model="search" @input="goSearch()" label="o">出库</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="a">代购</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="d">退税</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="w">提现</el-radio>
+      <el-radio v-model="search" @input="goSearch()" label="c">充值</el-radio>
+    </template>
+    <el-autocomplete
+      v-else
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -26,6 +49,12 @@
           <el-tag size="mini" v-if="scope.row.order_type=='o'&&scope.row.order_status==1" type="primary">出库-退款</el-tag>
           <el-tag size="mini" v-if="scope.row.order_type=='a'&&scope.row.order_status==0" type="success">代购-付款</el-tag>
           <el-tag size="mini" v-if="scope.row.order_type=='a'&&scope.row.order_status==1" type="primary">代购-退款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='w'&&scope.row.order_status==0" type="success">提现-付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='w'&&scope.row.order_status==1" type="primary">提现-退款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='d'&&scope.row.order_status==0" type="success">退税-付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='d'&&scope.row.order_status==1" type="primary">退税-退款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='c'&&scope.row.order_status==0" type="success">充值-付款</el-tag>
+          <el-tag size="mini" v-if="scope.row.order_type=='c'&&scope.row.order_status==1" type="primary">充值-退款</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="金额" prop="price">
@@ -72,8 +101,7 @@
 </template>
 
 <script>
-  import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
-  import { getPayment } from '@/network/finance.js'
+  import { getPayment,filterPayment } from '@/network/finance.js'
   export default {
     name: "Blotter",
     data () {
@@ -115,30 +143,34 @@
         currentPage: 1,
         interpret: {
           'payment_ID': {name:'编号'},
-          'card_num': {name:'卡号'}
-        }
+          'card_num': {name:'卡号'},
+          'order_status': {name:'状态'},
+          'operator': {name:'经办人'},
+          'order_type': {name:'种类'},
+          'uuid': {name:'用户编号'},
+        },
+        selectList: [],
       }
     },
     methods:{
       _getList(pageIndex) {
         this.loading = true;
         if(this.isSearch==true) {
-          // filterStorage(this.filter,this.search,pageIndex).then(res => {
-          //   if(res.data.status=='200') {
-          //     this.pageNum = parseInt(res.data.storages_num);
-          //     this.tableData = res.data.data;
-          //     this.loading = false;
-          //   } else {
-          //     this.$message({type: 'error',message: res.data.msg})
-          //   }
-          //   this.loading = false;
-          // });
+          filterPayment(pageIndex,this.filter,this.search).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.payments_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }
+            this.loading = false;
+          });
         } else {
           getPayment(pageIndex).then(res => {
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.payments_num);
               this.tableData = res.data.data;
-              console.log(this.tableData)
               this.loading = false;
             } else {
               this.$message({type: 'error',message: res.data.msg})
@@ -155,8 +187,15 @@
           this.$message({type:'warning',message:'请输入搜索词'})
         } else {
           this.isSearch = true;
-          if(this.filter=='storage_status') {
-            this.searchWord=(this.search=='0')?'库存中':'已出库';
+          if(this.filter=='order_status') {
+            if(this.search=='0')this.searchWord='付款'
+            if(this.search=='1')this.searchWord='退款'
+          } else if(this.filter=='order_type') {
+            if(this.search=='o')this.searchWord='出库'
+            if(this.search=='a')this.searchWord='代购'
+            if(this.search=='d')this.searchWord='退税'
+            if(this.search=='w')this.searchWord='提现'
+            if(this.search=='c')this.searchWord='充值'
           } else {
             this.searchWord = this.search;
           }
@@ -175,9 +214,57 @@
       filterChange() {
         this.search = '';
       },
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+
+        if(this.filter=='payment_ID') {
+          let query = this.selectList.payment_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='uuid') {
+          let query = this.selectList.uuid;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='operator') {
+          let query = this.selectList.operator;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {
+        this.goSearch()
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
+      deWeight(items) {
+        let values = [];
+        return items.filter(item=>{
+          if(values.indexOf(item.value)==-1) {
+            values.push(item.value);
+            return item;
+          }
+        });
+      },
     },
     mounted() {
-      this._getList(this.currentPage)
+      getPayment(0).then(res => {
+        let data1 = [],data2 = [],data3 = [];
+        let items = res.data.data;
+        
+        items.map(item=>{
+          data1.push({id: 'uuid', key: 'uuid',value: item.uuid})
+          data2.push({id: 'payment_ID', key: 'payment_ID',value: item.payment_ID})
+          data3.push({id: 'operator', key: 'operator',value: item.operator})
+        })
+        this.selectList.uuid = this.deWeight(data1);
+        this.selectList.payment_ID = this.deWeight(data2)
+        this.selectList.operator = this.deWeight(data3)
+        this.loading = false;
+        this._getList(this.currentPage);
+      })
     },
   }
 </script>

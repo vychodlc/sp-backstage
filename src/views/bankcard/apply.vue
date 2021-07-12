@@ -72,7 +72,7 @@
     
     <el-dialog title="新增银行卡申请" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="用户" label-width="80px">
+        <el-form-item label="用户编号" label-width="80px">
           <el-autocomplete
             class="inline-input"
             v-model="newItem.user_ID"
@@ -147,7 +147,9 @@
           <el-radio v-model="dialogChange" label="0">未审批</el-radio>
           <el-radio v-model="dialogChange" label="1">已通过</el-radio>
           <el-radio v-model="dialogChange" label="2">已驳回</el-radio>
-          <el-input v-if="dialogChange=='1'" v-model="newCardnum" size="mini"></el-input>
+        </el-form-item>
+        <el-form-item v-if="dialogChange=='1'" label="银行卡号" size="mini">
+          <el-input v-model="newCardnum" size="mini"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">

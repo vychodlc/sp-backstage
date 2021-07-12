@@ -1,7 +1,6 @@
 import { request } from "./request.js"
 
 export function addBankcardApply(info) {
-  console.log(info)
   let formData = new FormData()
   formData.append('pic',info.pic.join(','))
   formData.append('addr',info.addr)

@@ -24,7 +24,7 @@ module.exports = {
         }
       }
     },
-    public: '10.28.148.88:8080',
+    // public: '10.28.148.88:8080',
   },
   publicPath: './'
 }

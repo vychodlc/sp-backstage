@@ -2,7 +2,6 @@ import { request } from "./request";
 
 /* 申报api */ 
 export function addApply(user_id,order,brand) {
-  console.log(user_id,order,brand);
   let formData = new FormData();
   formData.append('user_id',user_id);
   formData.append('brand',brand);
@@ -247,7 +246,6 @@ export function getUserByTransshipCode(code) {
 // }
 
 export function getCrawlerOrder(info) {
-  console.log(info);
   return request({
     url: '/get_crawler_order_demo.php',
     params: {

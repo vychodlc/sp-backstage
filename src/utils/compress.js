@@ -28,7 +28,6 @@ export function compress(fileObj) {
     }
     // quality值越小，所绘制出的图像越模糊
     const data = canvas.toDataURL('image/jpeg', quality)
-    console.log(data);
     // dataUrl 转 image
     let img = new Image()
     img.src = data

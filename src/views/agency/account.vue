@@ -117,9 +117,10 @@
           <el-table-column
             prop="right"
             label=""
-            width="100">
+            width="150">
             <template slot-scope="scope">
               <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+              <el-tag v-if="scope.row.repeat==true" type="danger" size="mini" style="margin-left:10px">账号已存在</el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -195,7 +196,7 @@ xxxx xxxx xxxx xxx-xxx
 
         dialogAddVisible: false,
         newItem: {
-          code: '',type: '',brand: '',valid_date: '',
+          code: '',type: '',brand: '',valid_date: '',repeat:false,
           card_num: '',pwd: '',card_type: '',brand: '',
           pin: '',
           balance: '',
@@ -288,7 +289,7 @@ xxxx xxxx xxxx xxx-xxx
       },
       handleAdd() {
         this.newItem = {
-          card_num: '',psd: '',brand: '',card_type: '',right: false
+          card_num: '',psd: '',brand: '',card_type: '',right: false,repeat:false
         };
         this.newItems = [];
         this.dialogAddVisible = true;
@@ -304,9 +305,31 @@ xxxx xxxx xxxx xxx-xxx
           this.$message({type: 'warning',message: '请选择账号种类'});
         } else {
           this.newItem.right = true;
+          if(this.newItem.brand=='N') {
+            this.selectList[0].card_num.map(card=>{
+              if(card.value==this.newItem.card_num) {
+                this.newItem.repeat=true;
+                this.newItem.right=false;
+              }
+            })
+          } else if(this.newItem.brand=='A') {
+            this.selectList[1].card_num.map(card=>{
+              if(card.value==this.newItem.card_num) {
+                this.newItem.repeat=true;
+                this.newItem.right=false;
+              }
+            })
+          } else if(this.newItem.brand=='JD') {
+            this.selectList[2].card_num.map(card=>{
+              if(card.value==this.newItem.card_num) {
+                this.newItem.repeat=true;
+                this.newItem.right=false;
+              }
+            })
+          }
           this.newItems.push(this.newItem);
           this.newItem = {
-            card_num: '',psd: '',brand: '',card_type: '',right: false
+            card_num: '',psd: '',brand: '',card_type: '',right: false,repeat:false
           };
         }
       },
@@ -320,16 +343,26 @@ xxxx xxxx xxxx xxx-xxx
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
               let brand = '';
               let right = false;
+              let repeat = false;
               if(rowData[3]) {
                 if(rowData[3].toUpperCase().indexOf('N')!=-1) {
                   brand = 'N';
-                  right = true
+                  right = true;
+                  this.selectList[0].card_num.map(card=>{
+                    if(rowData[0]==card.value){repeat=true;right=false}
+                  });
                 } else if(rowData[3].toUpperCase().indexOf('A')!=-1) {
                   brand = 'A';
                   right = true;
+                  this.selectList[1].card_num.map(card=>{
+                    if(rowData[0]==card.value){repeat=true;right=false}
+                  });
                 } else if(rowData[3].toUpperCase().indexOf('J')!=-1) {
                   brand = 'JD';
                   right = true;
+                  this.selectList[2].card_num.map(card=>{
+                    if(rowData[0]==card.value){repeat=true;right=false}
+                  });
                 } else {
                   brand = 'NULL'
                   right = false;
@@ -341,10 +374,10 @@ xxxx xxxx xxxx xxx-xxx
               let type = '';
               if(rowData[2]) {
                 if(rowData[2].indexOf('生')!=-1) {
-                  type = '1';
+                  type = '2';
                   right = true;
                 } else if(rowData[2].indexOf('普')!=-1) {
-                  type = '2';
+                  type = '1';
                   right = true;
                 } else {
                   type = '3';
@@ -354,7 +387,7 @@ xxxx xxxx xxxx xxx-xxx
                 type = '3';
                 right = false;
               }
-              this.newItems.push({card_num:rowData[0],psd:rowData[1]?rowData[1]:'格式错误',card_type:type,brand:brand,right:right});
+              this.newItems.push({card_num:rowData[0],psd:rowData[1]?rowData[1]:'格式错误',card_type:type,brand:brand,right:right,repeat:repeat});
               this.dialogEnter = false;
             }
           })
@@ -366,16 +399,13 @@ xxxx xxxx xxxx xxx-xxx
           this.$message({type: 'warning',message: '请添加购物账号信息'});
         } else {
           let newobj = {};
-          this.okItems = this.newItems.filter(item=>{return item.right==true}).reduce((preVal, curVal) => {
+          this.okItems = this.newItems.filter(item=>{return item.right==true&&item.repeat==false}).reduce((preVal, curVal) => {
             newobj[curVal.card_num] ? '' : newobj[curVal.card_num] = preVal.push(curVal); 
             return preVal 
           }, [])
           this.handleNum = this.okItems.length;
           if(this.handleNum==0) {
-            this.loading = false;
-            this.dialogAddVisible = false;
-            this.currentPage = 1;
-            this._getList(this.currentPage);
+            this.$message({type: 'warning',message: '请确认已填入正确的信息'});
           } else {
             this.loading = true;
             this.okItems.map(item=>{
@@ -386,6 +416,9 @@ xxxx xxxx xxxx xxx-xxx
       },
       _addAccount(item) {
         addAccount(item).then(res=>{
+          if(res.data.status=='403') {
+            this.$message({type:'warning',message:''+item.card_num+'---已存在'})
+          }
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;

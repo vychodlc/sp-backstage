@@ -43,3 +43,10 @@ export function getPayment(p) {
     params: {p}
   })
 }
+
+export function filterPayment(p,filter,value) {
+  return request({
+    url: '/filter_payment.php',
+    params: {p,filter,value}
+  })
+}

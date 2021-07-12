@@ -46,6 +46,11 @@
           <span v-if="scope.row.brand=='JD'">JD·Sports</span>
         </template>
       </el-table-column>
+      <el-table-column label="物流">
+        <template slot-scope='scope'>
+          <el-link icon="el-icon-more-outline" @click="handleDetail(scope.row)">详情</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="用户编号" prop="user_id">
         <template slot-scope="scope">
           <span>{{scope.row.user_id}}-{{scope.row.code}}</span>
@@ -382,6 +387,7 @@
           });
         } else {
           getApplyList(pageIndex).then(res => {
+            console.log(res.data.data);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
@@ -392,6 +398,12 @@
             this.loading = false;
           });
         }
+      },
+      handleDetail(row) {
+        let text = row.country+'<br>'+row.city+'<br>'+row.postal
+        this.$alert(text, '物流详情', {
+          dangerouslyUseHTMLString: true
+        });
       },
       handleAdd() {
         if(this.newApplyUserEmail=='') {

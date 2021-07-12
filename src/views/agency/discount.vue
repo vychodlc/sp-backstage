@@ -51,7 +51,7 @@
         </template></el-table-column>
       <el-table-column label="有效期限" prop="valid_date">
         <template slot-scope="scope">
-          {{scope.row.start_date}} ~ {{scope.row.valid_date}}
+          {{scope.row.start_date=="undefined"?'':scope.row.start_date}} ~ {{scope.row.valid_date=="undefined"?'':scope.row.valid_date}}
         </template>
       </el-table-column>
       <el-table-column label="添加时间" prop="add_time"></el-table-column>
@@ -108,7 +108,8 @@
           <el-table-column min-width="20%" label="种类" prop="type">
             <template slot-scope="scope">
               <span v-if="scope.row.type==2">单次码</span>
-              <span v-if="scope.row.type==3">复用码</span>
+              <span v-else-if="scope.row.type==3">复用码</span>
+              <span v-else>格式错误</span>
             </template>
           </el-table-column>
           <el-table-column min-width="20%" label="品牌" prop="brand">
@@ -116,6 +117,7 @@
               <span v-if="scope.row.brand=='N'">Nike</span>
               <span v-if="scope.row.brand=='A'">Adidas</span>
               <span v-if="scope.row.brand=='JD'">JDSports</span>
+              <span v-if="scope.row.brand=='NULL'">品牌错误</span>
             </template>
           </el-table-column>
           <el-table-column min-width="40%" label="有效期限">
@@ -124,9 +126,10 @@
           <el-table-column
             prop="right"
             label=""
-            width="100">
+            width="150">
             <template slot-scope="scope">
               <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+              <el-tag v-if="scope.row.repeat==true" type="danger" size="mini" style="margin-left:10px">折扣码已存在</el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -139,9 +142,9 @@
     <el-dialog title="批量导入折扣码" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="文本信息">
-          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxx-xxx
-xxxx xxxx xxxx xxx-xxx
-折扣码 种类 品牌 有效期"></el-input>
+          <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxxx xxxx
+xxxx xxxx xxxx xxxx xxxx
+折扣码 种类 品牌 开始日期 结束日期"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -181,7 +184,7 @@ xxxx xxxx xxxx xxx-xxx
 
         dialogAddVisible: false,
         newItem: {
-          code: '',type: '',brand: '',valid_date: '',daterange: [],
+          code: '',type: '',brand: '',start_date:'',valid_date: '',daterange: [],
           card_num: '',
           pin: '',
           balance: '',
@@ -249,7 +252,8 @@ xxxx xxxx xxxx xxx-xxx
       },
       test(index) {
       },
-      _getList(pageIndex) {
+      _getList(pageIndex) {      
+        this.defaultData();
         this.loading = true;
         if(this.isSearch==true) {
           filterDiscount(this.filter,this.search,pageIndex).then(res => {
@@ -287,7 +291,7 @@ xxxx xxxx xxxx xxx-xxx
       },
       handleAdd() {
         this.newItem = {
-          code: '',type: '',brand: '',valid_date: '',
+          code: '',type: '',brand: '',start_date:'',valid_date: '',daterange: [],right:false,repeat:false,
         };
         this.newItems = []
         this.dialogAddVisible = true;
@@ -308,7 +312,7 @@ xxxx xxxx xxxx xxx-xxx
           this.newItem.valid_date = end_time;
           this.newItems.push(this.newItem);
           this.newItem = {
-            code: '',type: '',brand: '',valid_date: '',daterange: [],
+            code: '',type: '',brand: '',start_date:'',valid_date: '',daterange: [],right:false,repeat:false,
           };
         }
       },
@@ -321,7 +325,42 @@ xxxx xxxx xxxx xxx-xxx
           rows.map(row=>{
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
-              this.newItems.push({code:rowData[0],type:rowData[1].indexOf('单')==-1?'3':'2',brand:rowData[2],valid_date:rowData[3]});
+              let type = '';
+              let brand = '';
+              let right = true;
+              let repeat = false;
+              if(rowData[1]) {
+                if(rowData[1].indexOf('单')!=-1){type='2'}
+                else if(rowData[1].indexOf('复')!=-1){type='3'}
+                else {type='格式错误';right=false}
+              } else {
+                type = '格式错误';right=false
+              }
+              if(rowData[2]) {
+                if(rowData[2].toUpperCase().indexOf('N')!=-1) {
+                  brand = 'N';
+                  this.selectList[0].code.map(code=>{
+                    if(rowData[0]==code.value){repeat=true;right=false}
+                  });
+                } else if(rowData[2].toUpperCase().indexOf('A')!=-1) {
+                  brand = 'A';
+                  this.selectList[1].code.map(code=>{
+                    if(rowData[0]==code.value){repeat=true;right=false}
+                  });
+                } else if(rowData[2].toUpperCase().indexOf('J')!=-1) {
+                  brand = 'JD';
+                  this.selectList[2].code.map(code=>{
+                    if(rowData[0]==code.value){repeat=true;right=false}
+                  });
+                } else {
+                  brand = 'NULL'
+                  right = false;
+                }
+              } else {
+                brand = 'NULL'
+                right = false;
+              }
+              this.newItems.push({code:rowData[0],type:type,brand:brand,start_date:rowData[3]?rowData[3]:'格式错误',valid_date:rowData[4]?rowData[4]:'格式错误',repeat:repeat,right:right});
               this.dialogEditVisible = false;
             }
           })
@@ -332,26 +371,31 @@ xxxx xxxx xxxx xxx-xxx
         if(this.newItems.length==0) {
           this.$message({type: 'warning',message: '请添加折扣码信息'});
         } else {
-          this.handleNum = this.newItems.length;
+          let newobj = {};
+          this.okItems = this.newItems.filter(item=>{return item.right==true&&item.repeat==false}).reduce((preVal, curVal) => {
+            newobj[curVal.code] ? '' : newobj[curVal.code] = preVal.push(curVal); 
+            return preVal 
+          }, [])
+          this.handleNum = this.okItems.length;
           if(this.handleNum==0) {
-            this.loading = false;
-            this.currentPage = 1;
-            this._getList(this.currentPage);
+            this.$message({type: 'warning',message: '请确认已填入正确的信息'});
           } else {
             this.loading = true;
-          }
-          this.dialogAddVisible = false;
-          while(this.newItems.length!=0) {
-            let data = this.newItems.pop();
-            this._addDiscount(data);
+            this.okItems.map(item=>{
+              this._addDiscount(item);
+            })
           }
         }
       },
       _addDiscount(item) {
         addDiscount(item).then(res=>{
+          if(res.data.status=='403') {
+            this.$message({type:'warning',message:''+item.card_num+'---已存在'})
+          }
           this.handleNum--
           if(this.handleNum==0) {
             this.loading = false;
+            this.dialogAddVisible = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           }
@@ -406,34 +450,34 @@ xxxx xxxx xxxx xxx-xxx
         this.pageIndex = 1;
         this._getList(this.pageIndex);
       },
-    },
-    mounted() {      
-      getDiscount(0,'N').then(res=>{
-        let data1 = [];
-        res.data.data.map(item=>{data1.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
-        this.selectList[0].discount_ID = data1;data1 = [];
-        res.data.data.map(item=>{data1.push({id: 'code', key: 'code',value: item.code})})
-        this.selectList[0].code = data1;
-        
+      defaultData() {
         getDiscount(0,'N').then(res=>{
-          let data2 = [];
-          res.data.data.map(item=>{data2.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
-          this.selectList[1].discount_ID = data2;data2 = [];
-          res.data.data.map(item=>{data2.push({id: 'code', key: 'code',value: item.code})})
-          this.selectList[1].code = data2;
-            
-          getDiscount(0,'JD').then(res=>{
-            let data3 = [];
-            res.data.data.map(item=>{data3.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
-            this.selectList[2].discount_ID = data3;data3 = [];
-            res.data.data.map(item=>{data3.push({id: 'code', key: 'code',value: item.code})})
-            this.selectList[2].code = data3;
-
-            this.loading = false;
-            this._getList(this.currentPage);
+          let data1 = [];
+          res.data.data.map(item=>{data1.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+          this.selectList[0].discount_ID = data1;data1 = [];
+          res.data.data.map(item=>{data1.push({id: 'code', key: 'code',value: item.code})})
+          this.selectList[0].code = data1;
+          
+          getDiscount(0,'A').then(res=>{
+            let data2 = [];
+            res.data.data.map(item=>{data2.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+            this.selectList[1].discount_ID = data2;data2 = [];
+            res.data.data.map(item=>{data2.push({id: 'code', key: 'code',value: item.code})})
+            this.selectList[1].code = data2;
+              
+            getDiscount(0,'JD').then(res=>{
+              let data3 = [];
+              res.data.data.map(item=>{data3.push({id: 'discount_ID', key: 'discount_ID',value: item.discount_ID})})
+              this.selectList[2].discount_ID = data3;data3 = [];
+              res.data.data.map(item=>{data3.push({id: 'code', key: 'code',value: item.code})})
+              this.selectList[2].code = data3;
+            })
           })
         })
-      })
+      }
+    },
+    mounted() {
+      this._getList(this.currentPage);
     },
   }
 </script>

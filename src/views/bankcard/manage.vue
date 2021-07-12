@@ -218,13 +218,17 @@
           this.$message({type: 'warning', message: '请输入卡号'})
         } else {
           editBankcard(this.editItem).then(res=>{
-            this.$message({type: 'success',message: '修改成功'});
-            this.editItem = {
-              bankcard_ID: '',addr: '',cardnum: '',user_id: ''
-            };
-            this.dialogEditVisible = false;
-            this.currentPage = 1;
-            this._getList(this.currentPage);
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '修改成功'});
+              this.editItem = {
+                bankcard_ID: '',addr: '',cardnum: '',user_id: ''
+              };
+              this.dialogEditVisible = false;
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+            } else if(res.data.status=='403') {
+              this.$message({type: 'warning',message: '未进行修改'});
+            }
           })
         }
       },
