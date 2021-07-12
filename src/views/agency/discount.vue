@@ -308,6 +308,29 @@ xxxx xxxx xxxx xxxx xxxx
         } else {
           let start_time = this.dateFormat(this.newItem.daterange[0]);
           let end_time = this.dateFormat(this.newItem.daterange[1]);
+          let repeat = false;
+          let right = true;
+          if(this.newItem.brand=='N') {
+            this.selectList[0].code.map(code=>{
+              if(this.newItem.code==code.value){repeat=true;right=false}
+            });
+          } else 
+          if(this.newItem.brand=='A') {
+            this.selectList[1].code.map(code=>{
+              if(this.newItem.code==code.value){repeat=true;right=false}
+            });
+          } else if(this.newItem.brand=='JD') {
+            this.selectList[2].code.map(code=>{
+              if(this.newItem.code==code.value){repeat=true;right=false}
+            });
+          }
+          this.newItems.map(item=>{
+            if(item.code==this.newItem.code&&item.brand==this.newItem.brand) {
+              repeat = true;right=false;
+            }
+          })
+          this.newItem.repeat = repeat;
+          this.newItem.right = right;
           this.newItem.start_date = start_time;
           this.newItem.valid_date = end_time;
           this.newItems.push(this.newItem);
@@ -360,6 +383,9 @@ xxxx xxxx xxxx xxxx xxxx
                 brand = 'NULL'
                 right = false;
               }
+              this.newItems.map(item=>{
+                if(item.brand==brand&&item.code==rowData[0]){repeat=true;right=false}
+              })
               this.newItems.push({code:rowData[0],type:type,brand:brand,start_date:rowData[3]?rowData[3]:'格式错误',valid_date:rowData[4]?rowData[4]:'格式错误',repeat:repeat,right:right});
               this.dialogEditVisible = false;
             }
@@ -426,8 +452,8 @@ xxxx xxxx xxxx xxxx xxxx
       },
       goSearch() {
         this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.filter=='type') {
+          this.searchWord=(this.search=='2')?'单次码':'复用码';
         } else {
           this.searchWord = this.search;
         }

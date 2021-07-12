@@ -9,11 +9,17 @@
       <el-option label="编号" value="giftcard_ID"></el-option>
       <el-option label="卡号" value="card_num"></el-option>
     </el-select>
-    <template v-if="this.filter=='storage_status'">
-      <el-radio v-model="search" label="0">库存中</el-radio>
-      <el-radio v-model="search" label="1">已出库</el-radio>
-    </template>
-    <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input>
+    <el-autocomplete
+      class="inline-input"
+      v-model="search"
+      size="small"
+      style="width:30vw;margin-right:10px"
+      :fetch-suggestions="querySearch"
+      placeholder="请输入内容···"
+      :trigger-on-focus="false"
+      @select="handleSelect"
+    ></el-autocomplete>
+    <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
     <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
     <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
@@ -80,14 +86,22 @@
       :data="newItems">
         <el-table-column min-width="30%" label="卡号" prop="card_num"></el-table-column>
         <el-table-column min-width="20%" label="PIN" prop="pin"></el-table-column>
-        <el-table-column min-width="20%" label="品牌" prop="brand"></el-table-column>
+        <el-table-column min-width="20%" label="品牌" prop="brand">
+          <template slot-scope="scope">
+            <span v-if="scope.row.brand=='N'">Nike</span>
+            <span v-else-if="scope.row.brand=='A'">Adidas</span>
+            <span v-else-if="scope.row.brand=='JD'">JDSports</span>
+            <span v-else>品牌错误</span>
+          </template>
+        </el-table-column>
         <el-table-column min-width="20%" label="余额" prop="balance"></el-table-column>
         <el-table-column
           prop="right"
           label=""
-          width="100">
+          width="150">
           <template slot-scope="scope">
             <el-button type="danger" icon="el-icon-delete" size="mini" circle @click="newItems.splice(scope.$index,1)"></el-button>
+            <el-tag v-if="scope.row.repeat==true" type="danger" size="mini" style="margin-left:10px">折扣码已存在</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -122,7 +136,7 @@ xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getGiftcard,addGiftcard,delGiftcard,getCrawlerGiftcard } from '@/network/agency.js'
+  import { getGiftcard,filterGiftcard,addGiftcard,delGiftcard,getCrawlerGiftcard } from '@/network/agency.js'
   export default {
     name: "giftcard",
     data () {
@@ -144,7 +158,8 @@ xxxx xxxx xxxx
           pin: '',
           balance: '',
           brand: '',
-          right: false
+          right: false,
+          repeat: false,
         },
         newItemText: '',
         newItems: [],
@@ -167,25 +182,27 @@ xxxx xxxx xxxx
         interpret: {
           'giftcard_ID': {name:'编号'},
           'card_num': {name:'卡号'}
-        }
+        },
+        selectList: [[],[],[]],
       }
     },
     methods:{
       test(index) {
       },
-      _getList(pageIndex) {
+      _getList(pageIndex) {    
+        this.defaultData();
         this.loading = true;
         if(this.isSearch==true) {
-          // filterStorage(this.filter,this.search,pageIndex).then(res => {
-          //   if(res.data.status=='200') {
-          //     this.pageNum = parseInt(res.data.storages_num);
-          //     this.tableData = res.data.data;
-          //     this.loading = false;
-          //   } else {
-          //     this.$message({type: 'error',message: res.data.msg})
-          //   }
-          //   this.loading = false;
-          // });
+          filterGiftcard(this.filter,this.search,pageIndex,this.brand).then(res => {
+            if(res.data.status=='200') {
+              this.pageNum = parseInt(res.data.giftcards_num);
+              this.tableData = res.data.data;
+              this.loading = false;
+            } else {
+              this.$message({type: 'error',message: res.data.msg})
+            }
+            this.loading = false;
+          });
         } else {
           getGiftcard(pageIndex,this.brand).then(res => {
             if(res.data.status=='200') {
@@ -206,6 +223,7 @@ xxxx xxxx xxxx
           balance: '',
           brand: '',
           right: false,
+          repeat: false,
         };
         this.newItems = [];
         this.dialogAddVisible = true;
@@ -220,7 +238,28 @@ xxxx xxxx xxxx
         } else {
           this.addLoading = true;
           this.enterNum = 1;
-          this.addItem(this.newItem);
+          let flag = false;
+          this.newItems.map(item=>{
+            if(item.brand==this.newItem.brand&&item.card_num==this.newItem.card_num) {
+              flag = true
+            }
+          })
+          let index;
+          if(this.newItem.brand=='N')index=0
+          if(this.newItem.brand=='A')index=1
+          if(this.newItem.brand=='JD')index=2
+          this.selectList[index].card_num.map(item=>{
+            if(item.value==this.newItem.card_num) {
+              flag = true
+            }
+          })
+          if(flag==true) {
+            this.enterNum--;
+            this.newItems.push({card_num:this.newItem.card_num,pin:this.newItem.pin.toUpperCase(),balance:'无效',brand:this.newItem.brand,right:false,repeat:true})          
+            this.addLoading = false;
+          } else {
+            this.addItem(this.newItem);
+          }
           this.newItem = {
             card_num: '',
             pin: '',
@@ -231,7 +270,8 @@ xxxx xxxx xxxx
       },
       addItem(item) {
         if(item.brand.toUpperCase().indexOf('N')!=-1) {
-          item.brand = 'Nike'
+          console.log(item);
+          item.brand = 'N'
           this.$axios({
             method: 'post',
             url: 'https://api.nike.com/payment/giftcard_balance/v1/',
@@ -300,7 +340,29 @@ xxxx xxxx xxxx
             if(row!='') {
               let rowData = row.split(' ').filter(iii=>{return iii!=''&&iii!=' '});
               if(rowData.length>2) {
-                this.addItem({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
+                let repeat = false;
+                if(rowData[2].toUpperCase().indexOf('N')!=-1) {
+                  this.selectList[0].card_num.map(item=>{
+                    if(item.value==rowData[0])repeat=true
+                  })
+                } else if(rowData[2].toUpperCase().indexOf('A')!=-1) {
+                  this.selectList[1].card_num.map(item=>{
+                    if(item.value==rowData[0])repeat=true
+                  })
+                } else if(rowData[2].toUpperCase().indexOf('JD')!=-1) {
+                  this.selectList[2].card_num.map(item=>{
+                    if(item.value==rowData[0])repeat=true
+                  })
+                }
+                if(repeat==true) {
+                  this.enterNum--;
+                  this.newItems.push({card_num:rowData[0],pin:rowData[1],balance:'无效',brand:rowData[2],right:false,repeat:true})
+                  if(this.enterNum==0) {
+                    this.addLoading = false
+                  }
+                } else {
+                  this.addItem({card_num:rowData[0],pin:rowData[1],brand:rowData[2],right:false});
+                }
               } else {
                 this.enterNum--;
                 this.newItems.push({card_num:rowData[0],pin:rowData[1]?rowData[1]:'格式错误',balance:'无效',brand:rowData[2]?rowData[2]:'格式错误',right:false})
@@ -323,19 +385,16 @@ xxxx xxxx xxxx
             newobj[curVal.card_num] ? '' : newobj[curVal.card_num] = preVal.push(curVal); 
             return preVal 
           }, [])
+          
           this.handleNum = this.okItems.length;
-          this.addLoading = true;
           if(this.handleNum==0) {
-            this.addLoading = false;
-            this.currentPage = 1;
-            this._getList(this.currentPage);
+            this.$message({type: 'warning',message: '请确认已填入正确的信息'});
           } else {
-            this.addLoading = true;
+            this.loading = true;
+            this.okItems.map(item=>{
+              this._addGiftcard(item);
+            })
           }
-          this.dialogAddVisible = false;
-          this.okItems.map(item=>{
-            this._addGiftcard(item)
-          })
         }
       },
       _addGiftcard(item) {
@@ -343,6 +402,7 @@ xxxx xxxx xxxx
           this.handleNum--;
           if(this.handleNum==0) {
             this.addLoading = false;
+            this.dialogAddVisible = false;
             this.currentPage = 1;
             this._getList(this.currentPage);
           }
@@ -373,11 +433,7 @@ xxxx xxxx xxxx
       },
       goSearch() {
         this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
-        } else {
-          this.searchWord = this.search;
-        }
+        this.searchWord = this.search;
         this.filterWord = this.interpret[this.filter].name;
         this.loading = true;
         this.currentPage = 1;
@@ -403,6 +459,56 @@ xxxx xxxx xxxx
           return v.toString(16);
         });
       },
+      querySearch(queryString, cb) {
+        queryString = queryString.toString();
+        let index = 0;
+        if(this.brand == 'N') {index = 0}
+        else if(this.brand == 'A') {index = 1}
+        else if(this.brand == 'JD') {index = 2}
+
+        if(this.filter=='giftcard_ID') {
+          let query = this.selectList[index].giftcard_ID;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='card_num') {
+          let query = this.selectList[index].card_num;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        }
+      },
+      handleSelect() {
+        this.goSearch();
+      },
+      createFilter(queryString) {
+        return (item) => {
+          return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
+        };
+      },
+      defaultData() {
+        getGiftcard(0,'N').then(res=>{
+          let data1 = [];
+          res.data.data.map(item=>{data1.push({id: 'giftcard_ID', key: 'giftcard_ID',value: item.giftcard_ID})})
+          this.selectList[0].giftcard_ID = data1;data1 = [];
+          res.data.data.map(item=>{data1.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+          this.selectList[0].card_num = data1;
+          
+          getGiftcard(0,'A').then(res=>{
+            let data2 = [];
+            res.data.data.map(item=>{data2.push({id: 'giftcard_ID', key: 'giftcard_ID',value: item.giftcard_ID})})
+            this.selectList[1].giftcard_ID = data2;data2 = [];
+            res.data.data.map(item=>{data2.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+            this.selectList[1].card_num = data2;
+              
+            getGiftcard(0,'JD').then(res=>{
+              let data3 = [];
+              res.data.data.map(item=>{data3.push({id: 'giftcard_ID', key: 'giftcard_ID',value: item.giftcard_ID})})
+              this.selectList[2].giftcard_ID = data3;data3 = [];
+              res.data.data.map(item=>{data3.push({id: 'card_num', key: 'card_num',value: item.card_num})})
+              this.selectList[2].card_num = data3;
+            })
+          })
+        })
+      }
     },
     mounted() {
       this._getList(this.currentPage)

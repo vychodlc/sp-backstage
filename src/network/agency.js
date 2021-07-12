@@ -120,6 +120,12 @@ export function filterAgency(filter,value,p) {
     params: {filter,value,p}
   })
 }
+export function filterGiftcard(filter,value,p,brand) {
+  return request({
+    url: '/filter_giftcard.php',
+    params: {filter,value,p,brand}
+  })
+}
 export function filterDiscount(filter,value,p) {
   return request({
     url: '/filter_discount.php',

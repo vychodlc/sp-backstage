@@ -327,6 +327,12 @@ xxxx xxxx xxxx xxx-xxx
               }
             })
           }
+          this.newItems.map(item=>{
+            if(item.card_num==this.newItem.card_num&&item.brand==this.newItem.brand) {
+              this.newItem.repeat=true;
+              this.newItem.right=false;
+            }
+          })
           this.newItems.push(this.newItem);
           this.newItem = {
             card_num: '',psd: '',brand: '',card_type: '',right: false,repeat:false
@@ -387,6 +393,9 @@ xxxx xxxx xxxx xxx-xxx
                 type = '3';
                 right = false;
               }
+              this.newItems.map(item=>{
+                if(item.brand==brand&&item.card_num==rowData[0]){repeat=true;right=false}
+              })
               this.newItems.push({card_num:rowData[0],psd:rowData[1]?rowData[1]:'格式错误',card_type:type,brand:brand,right:right,repeat:repeat});
               this.dialogEnter = false;
             }
@@ -473,8 +482,8 @@ xxxx xxxx xxxx xxx-xxx
       },
       goSearch() {
         this.isSearch = true;
-        if(this.filter=='storage_status') {
-          this.searchWord=(this.search=='0')?'库存中':'已出库';
+        if(this.filter=='card_type') {
+          this.searchWord=(this.search=='1')?'普通账号':'生日账号';
         } else {
           this.searchWord = this.search;
         }

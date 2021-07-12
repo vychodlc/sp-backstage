@@ -400,8 +400,27 @@
         }
       },
       handleDetail(row) {
-        let text = row.country+'<br>'+row.city+'<br>'+row.postal
-        this.$alert(text, '物流详情', {
+        let text = '<h1>物流详情</h1>'
+        + '<br><strong>order_time:    </strong>' + row.order_time
+        + '<br><strong>price:    </strong>' + row.price
+        + '<br><strong>maxOrderLineStatus:    </strong>' + row.maxOrderLineStatus
+        + '<br><strong>minOrderLineStatus:    </strong>' + row.minOrderLineStatus
+        + '<br><strong>rolledUpStatus:    </strong>' + row.rolledUpStatus
+        + '<br><strong>size:    </strong>' + row.size
+        + '<br><strong>style:    </strong>' + row.style
+        + '<br><strong>op_date:    </strong>' + row.op_date
+        + '<br><strong>op_description:    </strong>' + row.op_description
+        + '<br><strong>op_quantity:    </strong>' + row.op_quantity
+        + '<br><strong>first_address:    </strong>' + row.first_address
+        + '<br><strong>second_address:    </strong>' + row.second_address
+        + '<br><strong>city:    </strong>' + row.city
+        + '<br><strong>postal:    </strong>' + row.postal
+        + '<br><strong>country:    </strong>' + row.country
+        + '<br><strong>gift:    </strong>' + row.gift
+        + '<br><strong>tracker:    </strong>' + row.tracker
+        + '<br><strong>refresh_time:    </strong>' + row.refresh_time
+        + '<br><strong>refresh_status:    </strong>' + row.refresh_status
+        this.$alert(text, '', {
           dangerouslyUseHTMLString: true
         });
       },
