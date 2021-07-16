@@ -35,17 +35,17 @@
           <el-row>
             <el-col :span="8">
               <el-form-item label="长" label-width="30px">
-                <el-input v-model="inputInfo.size[0]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input v-model="inputInfo.size[0]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="宽" label-width="30px">
-                <el-input v-model="inputInfo.size[1]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input v-model="inputInfo.size[1]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="高" label-width="30px">
-                <el-input v-model="inputInfo.size[2]" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input v-model="inputInfo.size[2]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -53,7 +53,7 @@
         <el-form-item label="货品重量">
           <el-row>
             <el-col>
-              <el-input v-model="inputInfo.weight" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+              <el-input v-model="inputInfo.weight" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
             </el-col>
           </el-row>
         </el-form-item>
@@ -140,12 +140,22 @@
           this.$message({type: 'warning',message: '邮箱格式错误'});
         } else if(this.inputInfo.size[0]=='') {
           this.$message({type: 'warning',message: '请填写长度'});
+        } else if(this.inputInfo.size[0]!=parseFloat(this.inputInfo.size[0])) {
+          this.$message({type:'warning',message:'请输入正确的长度'})
         } else if(this.inputInfo.size[1]=='') {
           this.$message({type: 'warning',message: '请填写宽度'});
+        } else if(this.inputInfo.size[1]!=parseFloat(this.inputInfo.size[1])) {
+          this.$message({type:'warning',message:'请输入正确的宽度'})
         } else if(this.inputInfo.size[2]=='') {
           this.$message({type: 'warning',message: '请填写高度'});
+        } else if(this.inputInfo.size[2]!=parseFloat(this.inputInfo.size[2])) {
+          this.$message({type:'warning',message:'请输入正确的高度'})
         } else if(this.inputInfo.weight=='') {
           this.$message({type: 'warning',message: '请填写重量'});
+        } else if(this.inputInfo.weight!=parseFloat(this.inputInfo.weight)) {
+          this.$message({type:'warning',message:'请输入正确的重量'})
+        } else if(this.inputInfo.description=='') {
+          this.$message({type: 'warning',message: '请填写货品描述'});
         } else if(this.$refs.uploadImg.uploadFiles.length==0) {
           this.$message({type: 'warning',message: '请上传图片'});
         } else {
@@ -252,7 +262,6 @@
         if(this.inputInfo.method=='0') {
           let query = this.selectList.expressid;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
-          console.log(this.selectList.expressid);
           cb(results);
         } else if(this.inputInfo.method=='1') {
           let query = this.selectList.code;
@@ -300,13 +309,12 @@
             data[i].value = data[i].code;
           }
           this.selectList.code = data;
-          getUser().then(res=>{
+          getUser(0).then(res=>{
             let data = res.data.data;
             for(let i=0;i<data.length;i++) {
               data[i].value = data[i].user_email;
             }
             this.selectList.email = data;
-            console.log(this.selectList);
             this.loading = false;
           })
         })

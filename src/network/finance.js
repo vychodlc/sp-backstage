@@ -50,3 +50,21 @@ export function filterPayment(p,filter,value) {
     params: {p,filter,value}
   })
 }
+
+export function addCharge(user_id,amount) {
+  let formData = new FormData()
+  formData.append('user_id',user_id)
+  formData.append('amount',parseInt(parseFloat(amount)*100))
+  return request({
+    method: 'POST',
+    url: '/add_charge.php',
+    data: formData
+  })
+}
+
+export function getCharge(p) {
+  return request({
+    url: '/get_charge_list.php',
+    params: {p}
+  })
+}

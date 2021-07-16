@@ -57,19 +57,19 @@
           <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('repo_add')!=-1||$store.state.user.right.indexOf('repo_edit')!=-1||$store.state.user.right.indexOf('repo_del')!=-1">
         <template slot="header">
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_add')!=-1"
             type="primary"
             @click="$router.replace({name:'Input'})">新增</el-button>
         </template>
         <template slot-scope="scope">
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_edit')!=-1"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_out_del')!=-1"
             type="danger"
             @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
@@ -85,17 +85,17 @@
           <el-row>
             <el-col>
               <el-form-item label="长(cm)" label-width="80px">
-                <el-input type="number" v-model="newStorage.size[0]"></el-input>
+                <el-input v-model="newStorage.size[0]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="宽(cm)" label-width="80px">
-                <el-input type="number" v-model="newStorage.size[1]"></el-input>
+                <el-input v-model="newStorage.size[1]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="高(cm)" label-width="80px">
-                <el-input type="number" v-model="newStorage.size[2]"></el-input>
+                <el-input v-model="newStorage.size[2]"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -133,23 +133,23 @@
           <el-row>
             <el-col>
               <el-form-item label="长(cm)" label-width="80px">
-                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[0]"></el-input>
+                <el-input  oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[0]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="宽(cm)" label-width="80px">
-                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[1]"></el-input>
+                <el-input  oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[1]"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="高(cm)" label-width="80px">
-                <el-input onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[2]"></el-input>
+                <el-input  oninput="if(value>999999999)value=999999999;if(value<0)value=0" v-model="editStorageSize[2]"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="重量">
-          <el-input v-model="editStorageWeight" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+          <el-input v-model="editStorageWeight"  oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
         </el-form-item>
         <el-form-item label="图片">
           <template>
@@ -181,7 +181,7 @@
           <el-radio v-model="dialogChange" label="0">库存中</el-radio>
           <el-radio v-model="dialogChange" label="1">已出库</el-radio>
           <span style="font-size:14px;margin-right:10px" v-if="dialogChange==1&&oldStorage.outbound_id=='0'">出库ID</span>
-          <el-input size="mini" style="width:100px;" v-model="newOutbound_id" v-if="dialogChange==1&&oldStorage.outbound_id=='0'" placeholder="不填默认为0" onkeyup="value=value.replace(/[^\d]/g,'')"></el-input>
+          <el-input size="mini" style="width:100px;" v-model="newOutbound_id" v-if="dialogChange==1&&oldStorage.outbound_id=='0'" placeholder="不填默认为0" ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -205,8 +205,6 @@
   import { addStorage,delStorage,editStorage,getStorageList,changeStorage,filterStorage } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import * as imageConversion from 'image-conversion';
-  import { validateEmail } from '@/utils/validate.js'
-  import { compress } from '@/utils/compress.js'
   import { getUser } from '@/network/user.js'
   export default {
     name: "Transmit",
@@ -268,7 +266,7 @@
           data1.push({key: 'storage_ID',value: storage.storage_ID})
         })
         this.selectList.storage_ID = data1;
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [];
           users.map(user=>{
@@ -432,12 +430,20 @@
       goEdit() {
         if (this.editStorageSize[0]=='') {
           this.$message({type: 'warning',message: '请填写长度'});
+        } else if(this.editStorageSize[0]!=parseFloat(this.editStorageSize[0])) {
+          this.$message({type:'warning',message:'请输入正确的长度'})
         } else if (this.editStorageSize[1]=='') {
           this.$message({type: 'warning',message: '请填写宽度'});
+        } else if(this.editStorageSize[1]!=parseFloat(this.editStorageSize[1])) {
+          this.$message({type:'warning',message:'请输入正确的宽度'})
         } else if (this.editStorageSize[2]=='') {
           this.$message({type: 'warning',message: '请填写高度'});
+        } else if(this.editStorageSize[2]!=parseFloat(this.editStorageSize[2])) {
+          this.$message({type:'warning',message:'请输入正确的高度'})
         } else if (this.editStorageWeight=='') {
           this.$message({type: 'warning',message: '请填写重量'});
+        } else if(this.editStorageWeight!=parseFloat(this.editStorageWeight)) {
+          this.$message({type:'warning',message:'请输入正确的重量'})
         } else {
           this.dialogEditVisible = false;
           this.loading = true;

@@ -28,21 +28,21 @@
       <el-table-column label="参数值" prop="value"></el-table-column>
       <el-table-column label="描述信息" prop="description"></el-table-column>
       <el-table-column label="操作时间" prop="edit_time"></el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('factor_edit')!=-1">
         <template slot="header">
-          <el-button
+          <!-- <el-button
             size="mini"
             type="primary"
-            @click="dialogAddVisible=true;newItem={user_id:'',addr:''};">新增</el-button>
+            @click="handleAdd()">新增</el-button> -->
         </template>
         <template slot-scope="scope">
           <el-button
             size="mini"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
-          <el-button
+          <!-- <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            @click="handleDelete(scope.$index, scope.row)">删除</el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -182,6 +182,8 @@
           this.$message({type: 'warning',message: '请填写参数名称'});
         } else if(this.newItem.value=='') {
           this.$message({type: 'warning',message: '请填写参数值'});
+        } else if(parseFloat(this.newItem.value)!=this.newItem.value) {
+          this.$message({type: 'warning',message: '请确保参数值为数字'});
         } else {
           addOption(this.newItem).then(res=>{
             if(res.data.status=='200') {
@@ -206,6 +208,8 @@
       goEdit() {
         if(this.editItem.value=='') {
           this.$message({type: 'warning',message: '请填写参数值'});
+        } else if(parseFloat(this.editItem.value)!=this.editItem.value) {
+          this.$message({type: 'warning',message: '请确保参数值为数字'});
         } else {
           editOption(this.editItem).then(res=>{
             if(res.data.status=='200') {

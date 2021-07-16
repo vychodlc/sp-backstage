@@ -79,13 +79,13 @@
           <el-tag size="mini" v-if="scope.row.outbound_status==3" type="primary">待出库</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==4" type="warning">转运中</el-tag>
           <el-tag size="mini" v-if="scope.row.outbound_status==5" type="info">已完成</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,0)"></el-link><br>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,0)" v-if="$store.state.user.right.indexOf('repo_out_change')!=-1"></el-link><br>
           <el-tag size="mini" v-if="scope.row.pay_status==0" type="warning">未支付</el-tag>
           <el-tag size="mini" v-if="scope.row.pay_status==1" type="success">已支付</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,1)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row,1)" v-if="$store.state.user.right.indexOf('repo_out_pay')!=-1"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="250">
+      <el-table-column label="操作" align="right" width="250" v-if="$store.state.user.right.indexOf('repo_out_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -330,7 +330,6 @@
   import { payBalance } from '@/network/payment.js'
   import { getUserByEmail,getUserInfoById,getUser,getDrawbackFactor } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
-  import { validateEmail } from '@/utils/validate.js';
   import { filterAddress } from '@/network/address.js'
 
   export default {
@@ -411,7 +410,7 @@
           data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
         })
         this.selectList.outbound_ID = data1;
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [];
           users.map(user=>{
@@ -587,7 +586,9 @@
         if(email=='') {
           this.$message({type: 'warning',message: '请输入用户注册邮箱地址'});
         } else {
+          console.log(email);
           getUserByEmail(email).then(res=>{
+            console.log(res);
             if(res.data.status=='200') {
               let user_id = res.data.user_ID;
               this.newOutput.user_id = user_id;
@@ -596,8 +597,9 @@
                   if(res1.data.data.length==0) {
                     this.$message({type: 'warning',message: '未查到该用户的库存信息'});
                   }
+                  console.log(user_id);
                   filterAddress(0,'user_id',user_id).then(res2=>{
-                    if(res2.data.address_num=='0') {
+                    if(res2.data.data.length=='0') {
                       this.$message({type: 'warning',message: '未查到该用户的地址信息'});
                     } else {
                       this.userStorage = res1.data.data;
@@ -926,16 +928,31 @@
         this.displayPrice2 = parseFloat(this.editOutput.price/100).toFixed(2);
       },
       priceFormat(target) {
-        this.displayPrice = parseFloat(target).toFixed(2);
-        this.newOutput.price = parseInt(target*100);
+        if(target=='') {
+          this.displayPrice = 0
+          this.newOutput.price = 0
+        } else {
+          this.displayPrice = parseFloat(target).toFixed(2);
+          this.newOutput.price = parseInt(target*100);
+        }
       },
       priceFormat2(target) {
-        this.displayPrice2 = parseFloat(target).toFixed(2);
-        this.editOutput.price = parseInt(target*100);
+        if(target=='') {
+          this.displayPrice2 = 0
+          this.editOutput.price = 0
+        } else {
+          this.displayPrice2 = parseFloat(target).toFixed(2);
+          this.editOutput.price = parseInt(target*100);
+        }
       },
       taxFormat(target) {
-        this.displayTax = parseFloat(target).toFixed(2);
-        this.taxItem.amount = parseInt(target*100);
+        if(target=='') {
+          this.displayTax = 0
+          this.taxItem.amount = 0
+        } else {
+          this.displayTax = parseFloat(target).toFixed(2);
+          this.taxItem.amount = parseInt(target*100);
+        }
       },
 
       handleTax(index,row) {

@@ -1,8 +1,7 @@
 <template>
   <div class="post-container">
     <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
-      <el-option label="编号" value="withdraw_ID"></el-option>
-      <el-option label="银行卡号" value="bankcard"></el-option>
+      <el-option label="编号" value="charge_ID"></el-option>
       <el-option label="用户邮箱" value="user_email"></el-option>
       <el-option label="用户昵称" value="user_nickname"></el-option>
       <el-option label="用户编号" value="user_id"></el-option>
@@ -32,30 +31,20 @@
       :data="tableData"
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
-      <el-table-column label="单号" prop="withdraw_ID"></el-table-column>
+      <el-table-column label="单号" prop="charge_ID"></el-table-column>
       <el-table-column label="用户" prop="user_id">
         <template slot-scope='scope'>
           {{scope.row.user_id}}-{{scope.row.user_nickname}}
         </template>
       </el-table-column>
-      <el-table-column label="银行卡" prop="bankcard"></el-table-column>
       <el-table-column label="金额" prop="amount">
         <template slot-scope="scope">
           <span>{{parseFloat(scope.row.amount/100).toFixed(2)}}</span>
         </template>
       </el-table-column>
-      <el-table-column label="申请时间" prop="apply_time"></el-table-column>
       <el-table-column label="操作人员" prop="auditor"></el-table-column>
-      <el-table-column label="编辑时间" prop="audit_time"></el-table-column>
-      <el-table-column label="状态" prop="withdraw_status">
-        <template slot-scope="scope">
-          <el-tag size="mini" v-if="scope.row.withdraw_status==0" type="warning">待审核</el-tag>
-          <el-tag size="mini" v-if="scope.row.withdraw_status==1" type="success">已提现</el-tag>
-          <el-tag size="mini" v-if="scope.row.withdraw_status==2" type="info">已驳回</el-tag>
-          <el-link v-if="scope.row.withdraw_status==0&&$store.state.user.right.indexOf('withdraw_edit')!=-1" style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="right" width="100" v-if="$store.state.user.right.indexOf('withdraw_edit')!=-1">
+      <el-table-column label="充值时间" prop="charge_time"></el-table-column>
+      <el-table-column label="操作" align="right" width="100" v-if="$store.state.user.right.indexOf('charge_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -71,7 +60,7 @@
       </el-table-column>
     </el-table>
     
-    <el-dialog title="新增提现记录" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
+    <el-dialog title="新增充值记录" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
         <!-- <el-form-item label="匹配方式" label-width="80px">
           <el-radio v-model="newItem.method" @change="changeMethod()" label="0">用户编号</el-radio>
@@ -94,26 +83,10 @@
         <el-form-item v-if="dialogAddMore==true" label="金额" label-width="80px">
           <el-input v-model="newItem.amount"></el-input>
         </el-form-item>
-        <el-form-item v-if="dialogAddMore==true" label="银行卡号" label-width="80px">
-          <el-input v-model="newItem.bankcard"></el-input>
-        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogAddVisible = false" size="medium">取 消</el-button>
         <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
-      </div>
-    </el-dialog>
-    <el-dialog title="提现状态修改" :visible.sync="dialogChangeVisible" :close-on-click-modal="false">
-      <el-form>
-        <el-form-item>
-          <el-radio v-model="dialogChange" label="0">待审核</el-radio>
-          <el-radio v-model="dialogChange" label="1">已提现</el-radio>
-          <el-radio v-model="dialogChange" label="2">已驳回</el-radio>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogChangeVisible = false">取 消</el-button>
-        <el-button type="primary" @click="goStatusChange()">确 定</el-button>
       </div>
     </el-dialog>
     <div class="pagination">
@@ -130,7 +103,7 @@
 
 <script>
   import { getDiscount,addDiscount,delDiscount } from '@/network/agency.js'
-  import { getWithdrawl,filterWithdrawl,addWithdrawl,changeWithdrawl } from '@/network/finance.js'
+  import { getCharge,filterWithdrawl,addCharge,changeWithdrawl } from '@/network/finance.js'
   import { getUser } from '@/network/user.js'
 
   export default {
@@ -140,7 +113,7 @@
         showDialog: true,
         search: null,
         searchWord: null,
-        filter: 'withdraw_ID',
+        filter: 'charge_ID',
         filterWord: null,
         isSearch: false,
         loading: true,
@@ -168,7 +141,7 @@
         pageNum: null,
         currentPage: 1,
         interpret: {
-          'withdraw_ID': {name:'编号'},
+          'charge_ID': {name:'编号'},
           'bankcard': {name:'银行卡号'},
           'withdraw_status': {name:'状态'},
           'user_email': {name:'用户邮箱'},
@@ -199,7 +172,7 @@
         if(this.isSearch==true) {
           filterWithdrawl(this.filter,this.search,pageIndex).then(res => {
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.withdrawls_num);
+              this.pageNum = parseInt(res.data.charges_num);
               this.tableData = res.data.data;
               this.loading = false;
             } else {
@@ -208,9 +181,9 @@
             this.loading = false;
           });
         } else {
-          getWithdrawl(pageIndex).then(res => {
+          getCharge(pageIndex).then(res => {
             if(res.data.status=='200') {
-              this.pageNum = parseInt(res.data.Withdrawls_num);
+              this.pageNum = parseInt(res.data.charges_num);
               this.tableData = res.data.data;
               this.loading = false;
             } else {
@@ -222,9 +195,8 @@
       },
       handleAdd() {
         this.newItem = {
-          amount: '',bankcard: '',user_id: '',method: '0',user_email:''
+          amount: '',user_id: '',user_email:''
         };
-        this.placeholder = '请输入用户编号···';
         this.dialogAddVisible = true;
       },
       goAdd() {
@@ -236,31 +208,23 @@
           this.$message({type: 'warning',message: '请填写提现金额'});
         } else if(this.newItem.amount!=parseFloat(this.newItem.amount)||parseFloat(this.newItem.amount)<0.01) {
           this.$message({type: 'warning',message: '请填写正确的提现金额'});
-        } else if(this.newItem.bankcard=='') {
-          this.$message({type: 'warning',message: '请填写银行卡号'});
-        } else if(this.newItem.bankcard!=parseInt(this.newItem.bankcard)) {
-          this.$message({type: 'warning',message: '请填写正确的银行卡号'});
         } else {
           this.selectList.user_email.map(email=>{
             if(email.value==this.newItem.user_email) {
               this.newItem.user_id = email.id
             }
           })
-          addWithdrawl(this.newItem).then(res=>{
+          addCharge(this.newItem.user_id,this.newItem.amount).then(res=>{
             if(res.data.status=='200') {
-              this.$message({type:'success',message:'添加成功'});
+              this.$message({type:'success',message:'充值成功'});
               this.newItem = {
-                amount: '',bankcard: '',user_id: '',method: '0'
+                amount: '',user_id: '',user_email:''
               };
               this.currentPage = 1;
               this._getList(this.currentPage);
               this.dialogAddVisible = false;
             } else {
-              if(res.data.status=='403') {
-                this.$message({type:'warning',message:'提现申请失败：用户余额不足'})
-              } else {
-                this.$message({type:'warning',message:'添加失败：'+res.data.msg})
-              }
+              this.$message({type:'warning',message:'充值失败：'+res.data.msg})
             }
           })
         }
@@ -293,7 +257,7 @@
       goStatusChange() {
         if(this.oldItem.withdraw_status!=this.dialogChange) {
           changeWithdrawl({
-            withdraw_ID: this.oldItem.withdraw_ID,
+            charge_ID: this.oldItem.charge_ID,
             withdraw_status: this.dialogChange
           }).then(res => {
             this.$message({type: 'success',message: '状态修改成功'});
@@ -338,8 +302,8 @@
 
       querySearch(queryString, cb) {
         queryString = queryString.toString();
-        if(this.filter=='withdraw_ID') {
-          let query = this.selectList.withdraw_ID;
+        if(this.filter=='charge_ID') {
+          let query = this.selectList.charge_ID;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } else if(this.filter=='user_email') {
@@ -382,15 +346,15 @@
       }
     },
     mounted() {
-      getWithdrawl(0).then(res=>{
+      getCharge(0).then(res=>{
         let data1 = [],data2 = [];
         let items = res.data.data;
         
         items.map(item=>{
-          data1.push({id: 'withdraw_ID', key: 'withdraw_ID',value: item.withdraw_ID})
+          data1.push({id: 'charge_ID', key: 'charge_ID',value: item.charge_ID})
           data2.push({id: 'bankcard', key: 'bankcard',value: item.bankcard})
         })
-        this.selectList.withdraw_ID = data1;
+        this.selectList.charge_ID = data1;
         this.selectList.bankcard = this.deWeight(data2);
         getUser(0).then(res=>{
           let users = res.data.data;

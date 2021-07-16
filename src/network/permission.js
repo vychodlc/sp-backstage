@@ -1,9 +1,9 @@
 import {request} from './request'
 
-export function addRole(name,permissions) {
+export function addRole(name,description,permissions) {
   let formData = new FormData()
   formData.append('name',name)
-  // formData.append('desc',desc)
+  formData.append('description',description)
   formData.append('permissions',JSON.stringify(permissions))
   return request({
     method: 'POST',
@@ -19,13 +19,26 @@ export function getRoleList(p) {
   })
 }
 
-export function editRole(roleID,permission_text) {
+export function editRole(role_ID,permissions,name,description) {
   let formData = new FormData()
-  formData.append('roleID',roleID)
-  formData.append('permission_text',permission_text)
+  formData.append('role_ID',role_ID)
+  formData.append('name',name)
+  formData.append('description',description)
+  formData.append('permissions',JSON.stringify(permissions))
+  console.log(JSON.stringify(permissions));
   return request({
     method: 'POST',
     url: '/edit_role.php',
+    data: formData
+  })
+}
+
+export function delRole(role_ID) {
+  let formData = new FormData()
+  formData.append('role_ID',role_ID)
+  return request({
+    method: 'POST',
+    url: '/del_role.php',
     data: formData
   })
 }

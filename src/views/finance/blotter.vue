@@ -8,6 +8,8 @@
       <el-option label="状态" value="order_status"></el-option>
       <el-option label="种类" value="order_type"></el-option>
       <el-option label="用户编号" value="uuid"></el-option>
+      <el-option label="用户邮箱" value="user_email"></el-option>
+      <el-option label="用户昵称" value="user_nickname"></el-option>
     </el-select>
     <template v-if="this.filter=='order_status'">
       <el-radio v-model="search" @input="goSearch()" label="0">付款</el-radio>
@@ -42,7 +44,11 @@
       style="width: 100%;height: calc(100vh - 142px);overflow-y:scroll"
       class="elTable">
       <el-table-column label="流水单号" prop="payment_ID"></el-table-column>
-      <el-table-column label="用户" prop="uuid"></el-table-column>
+      <el-table-column label="用户" prop="uuid">
+        <template slot-scope="scope">
+          <span>{{scope.row.user_id}}-{{scope.row.user_nickname}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="方式" prop="order_type">
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.order_type=='o'&&scope.row.order_status==0" type="success">出库-付款</el-tag>
@@ -102,6 +108,7 @@
 
 <script>
   import { getPayment,filterPayment } from '@/network/finance.js'
+  import { getUser } from '@/network/user.js'
   export default {
     name: "Blotter",
     data () {
@@ -147,7 +154,9 @@
           'order_status': {name:'状态'},
           'operator': {name:'经办人'},
           'order_type': {name:'种类'},
-          'uuid': {name:'用户编号'},
+          'user_id': {name:'用户编号'},
+          'user_nickname': {name:'用户昵称'},
+          'user_email': {name:'用户邮箱'},
         },
         selectList: [],
       }
@@ -221,8 +230,16 @@
           let query = this.selectList.payment_ID;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
-        } else if(this.filter=='uuid') {
-          let query = this.selectList.uuid;
+        } else if(this.filter=='user_id') {
+          let query = this.selectList.user_id;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_email') {
+          let query = this.selectList.user_email;
+          let results = queryString ? query.filter(this.createFilter(queryString)) : query;
+          cb(results);
+        } else if(this.filter=='user_nickname') {
+          let query = this.selectList.user_nickname;
           let results = queryString ? query.filter(this.createFilter(queryString)) : query;
           cb(results);
         } else if(this.filter=='operator') {
@@ -255,15 +272,23 @@
         let items = res.data.data;
         
         items.map(item=>{
-          data1.push({id: 'uuid', key: 'uuid',value: item.uuid})
+          data1.push({id: 'user_id', key: 'user_id',value: item.user_id})
           data2.push({id: 'payment_ID', key: 'payment_ID',value: item.payment_ID})
           data3.push({id: 'operator', key: 'operator',value: item.operator})
         })
         this.selectList.uuid = this.deWeight(data1);
         this.selectList.payment_ID = this.deWeight(data2)
         this.selectList.operator = this.deWeight(data3)
-        this.loading = false;
-        this._getList(this.currentPage);
+        this.selectList.user_email = []
+        this.selectList.user_nickname = []
+        getUser(0).then(res=>{
+          res.data.data.map(user=>{
+            this.selectList.user_email.push({id:'user_email',key:'user_email',value:user.user_email})
+            this.selectList.user_nickname.push({id:'user_nickname',key:'user_nickname',value:user.user_nickname})
+          })
+          this.loading = false;  
+          this._getList(this.currentPage);
+        })
       })
     },
   }

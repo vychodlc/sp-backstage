@@ -17,20 +17,24 @@
         label="标签所属文章数"
         prop="posts">
       </el-table-column> -->
-      <el-table-column label="操作" align="right">
+      <el-table-column label="操作" align="right" 
+            v-if="$store.state.user.right.indexOf('tag_add')!=-1||$store.state.user.right.indexOf('tag_edit')!=-1||$store.state.user.right.indexOf('tag_del')!=-1">
         <template slot="header">
           <el-button
             size="mini"
             type="primary"
+            v-if="$store.state.user.right.indexOf('tag_add')!=-1"
             @click="dialogAddVisible = true">新增</el-button>
         </template>
         <template slot-scope="scope">
           <el-button
             size="mini"
+            v-if="$store.state.user.right.indexOf('tag_edit')!=-1"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
             type="danger"
+            v-if="$store.state.user.right.indexOf('tag_del')!=-1"
             @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
       </el-table-column>

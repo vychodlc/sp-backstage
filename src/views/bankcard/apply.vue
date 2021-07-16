@@ -47,11 +47,11 @@
           <el-tag size="mini" v-if="scope.row.apply_status==0" type="warning">未审批</el-tag>
           <el-tag size="mini" v-if="scope.row.apply_status==1" type="success">已通过</el-tag>
           <el-tag size="mini" v-if="scope.row.apply_status==2" type="info">已驳回</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)" v-if="$store.state.user.right.indexOf('card_audit')!=-1"></el-link>
         </template>
       </el-table-column>
       <el-table-column label="审核人" prop="auditor"></el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('card_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -72,20 +72,22 @@
     
     <el-dialog title="新增银行卡申请" :visible.sync="dialogAddVisible" :close-on-click-modal="false" v-model="showDialog">
       <el-form label-width="100px" size="mini">
-        <el-form-item label="用户编号" label-width="80px">
+        <el-form-item label="用户邮箱" label-width="80px">
           <el-autocomplete
             class="inline-input"
-            v-model="newItem.user_ID"
+            v-model="newItem.user_email"
             size="mini"
             style="width:100%;margin-right:10px"
             :fetch-suggestions="querySearch2"
             :trigger-on-focus="false"
+            @select="handleSelect2"
+            @input="dialogAddMore=false"
           ></el-autocomplete>
         </el-form-item>
-        <el-form-item label="地址" label-width="80px">
+        <el-form-item v-if="dialogAddMore==true" label="地址" label-width="80px">
           <el-input v-model="newItem.addr"></el-input>
         </el-form-item>
-        <el-form-item label="申请材料" label-width="80px">
+        <el-form-item v-if="dialogAddMore==true" label="申请材料" label-width="80px">
           <el-upload
             ref="uploadImg"
             class="upload-demo"
@@ -217,6 +219,7 @@
           'apply_status': {name:'状态'},
         },
         selectList: {},
+        dialogAddMore: false,
       }
     },
     methods:{
@@ -276,8 +279,10 @@
         return isIMAGE && isLt1M;
       },
       goAdd() {
-        if(this.newItem.user_ID=='') {
+        if(this.newItem.user_email=='') {
           this.$message({type: 'warning',message: '请填写用户编号'});
+        } else if(this.dialogAddMore==false) {
+          this.$message({type: 'warning',message: '请选择正确的用户'});
         } else if(this.newItem.addr=='') {
           this.$message({type: 'warning',message: '请填写地址信息'});
         } else if(this.$refs.uploadImg.uploadFiles.length==0) {
@@ -292,14 +297,27 @@
               addCoverImg(uploadFile).then(resImg=>{
                 this.newItem.pic.push(resImg.data.cover_img_url)
                 if(this.newItem.pic.length==imgNum) {
+                  this.selectList.user_email.map(email=>{
+                    if(email.value==this.newItem.user_email){
+                      this.newItem.user_ID = email.id
+                    }
+                  })
                   addBankcardApply(this.newItem).then(res=>{
-                    this.$message({type: 'success',message: '新添成功'});
-                    this.newItem = {
-                      user_ID: '',addr: '',pic: []
-                    };
-                    this.dialogAddVisible = false;
-                    this.currentPage = 1;
-                    this._getList(this.currentPage);
+                    if(res.data.status=='200') {
+                      this.$message({type: 'success',message: '新添成功'});
+                      this.newItem = {
+                        user_ID: '',addr: '',pic: []
+                      };
+                      this.dialogAddVisible = false;
+                      this.currentPage = 1;
+                      this._getList(this.currentPage);
+                    } else {
+                      this.$message({type: 'warning',message: '新添失败 '+res.data.msg});
+                      this.newItem = {
+                        user_ID: '',addr: '',pic: []
+                      };
+                      this.dialogAddVisible = false;
+                    }
                   })
                 }
               })
@@ -316,6 +334,8 @@
       goChange() {
         if(this.newCardnum==''&&this.dialogChange=='1') {
           this.$message({type: 'warning',message: '请输入新卡号'});
+        } else if(this.newCardnum!=parseInt(this.newCardnum)||parseInt(this.newCardnum)<1) {
+          this.$message({type:'warning',message:'请检查卡号的格式'})
         } else {
           if(this.oldApply.apply_status!=this.dialogChange) {
             changeBankcardApply({
@@ -492,12 +512,15 @@
       querySearch2(queryString, cb) {
         queryString = queryString.toString();
 
-        let query = this.selectList.user_id;
+        let query = this.selectList.user_email;
         let results = queryString ? query.filter(this.createFilter(queryString)) : query;
         cb(results);
       },
       handleSelect() {
         this.goSearch()
+      },
+      handleSelect2() {
+        this.dialogAddMore = true;
       },
       createFilter(queryString) {
         return (item) => {
@@ -518,7 +541,7 @@
         })
         this.selectList.apply_ID = data1;
         this.selectList.auditor = this.deWeight(data2)
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [],names = [];
           users.map(user=>{

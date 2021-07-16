@@ -201,3 +201,16 @@ export function delAgency(agency_ID) {
     data: formData
   })
 }
+
+export function editDiscount(info) {
+  let formData = new FormData()
+  formData.append('discount_ID',info.discount_ID)
+  formData.append('start_date',info.start_date)
+  formData.append('valid_date',info.valid_date)
+  formData.append('brand',info.brand)
+  return request({
+    method: 'POST',
+    url: '/edit_discount.php',
+    data: formData
+  })
+}

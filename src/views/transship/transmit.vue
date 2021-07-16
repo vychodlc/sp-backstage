@@ -65,29 +65,29 @@
           <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="300">
+      <el-table-column label="操作" align="right" width="300" v-if="$store.state.user.right.indexOf('repo_add')!=-1||$store.state.user.right.indexOf('repo_edit')!=-1||$store.state.user.right.indexOf('repo_del')!=-1">
         <template slot="header">
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_out_edit')!=-1"
             type="primary"
-            @click="dialogAddVisible=true">新增</el-button>
+            @click="dialogAddVisible=true;newApplyUserEmail='';newApplyBrand='';newApplyExpressid='';newApplyEmail='';">新增</el-button>
         </template>
         <template slot-scope="scope">
           <el-button
             size="mini"
             type="warning"
             v-if="scope.row.apply_status==0"
-            @click="handleRefuse(scope.row)">驳回</el-button>
+            @click="handleRefuse(scope.row)&&$store.state.user.right.indexOf('repo_edit')!=-1">驳回</el-button>
           <el-button
-            size="mini"
+            size="mini" 
             type="success"
-            v-if="scope.row.apply_status==0"
+            v-if="scope.row.apply_status==0&&$store.state.user.right.indexOf('repo_edit')!=-1"
             @click="handleStorage(scope.row)">入库</el-button>
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_edit')!=-1"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('repo_del')!=-1"
             type="danger"
             @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
@@ -105,18 +105,20 @@
             style="width:100%"
             :fetch-suggestions="querySearch2"
             :trigger-on-focus="false"
+            @select="handleSelect2"
+            @input="dialogAddMore=false"
           ></el-autocomplete>
         </el-form-item>
-        <el-form-item label="品牌">
+        <el-form-item v-if="dialogAddMore==true" label="品牌">
           <el-radio v-model="newApplyBrand" :disabled='loading' label="N">Nike</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="A">Adidas</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="JD">JDSports</el-radio>
-          <el-radio v-model="newApplyBrand" :disabled='loading' label="U">通用</el-radio>
+          <!-- <el-radio v-model="newApplyBrand" :disabled='loading' label="U">通用</el-radio> -->
         </el-form-item>
-        <el-form-item label="订单号">
+        <el-form-item v-if="dialogAddMore==true" label="订单号">
           <el-input v-model="newApplyExpressid" autocomplete="off" :disabled='loading'></el-input>
         </el-form-item>
-        <el-form-item label="邮箱地址">
+        <el-form-item v-if="dialogAddMore==true" label="邮箱地址">
           <el-input v-model="newApplyEmail" autocomplete="off" :disabled='loading'></el-input>
         </el-form-item>
       </el-form>
@@ -164,23 +166,23 @@
           <el-row>
             <el-col>
               <el-form-item label="长(cm)">
-                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[0]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input min="0" max="999999999" v-model="newStorage.size[0]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="宽(cm)">
-                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[1]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input min="0" max="999999999" v-model="newStorage.size[1]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
             <el-col>
               <el-form-item label="高(cm)">
-                <el-input type="number" min="0" max="999999999" v-model="newStorage.size[2]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
+                <el-input min="0" max="999999999" v-model="newStorage.size[2]" oninput="if(value>999999999)value=999999999;if(value<0)value=0"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="货品重量">
-          <el-input type="number" v-model="newStorage.weight" min="0" max="999999999" oninput="if(value>999999999)value=999999999;if(value<0)value=0" autocomplete="off"></el-input>
+          <el-input v-model="newStorage.weight" min="0" max="999999999" oninput="if(value>999999999)value=999999999;if(value<0)value=0" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="货品描述">
           <el-input v-model="newStorage.description" autocomplete="off"></el-input>
@@ -219,7 +221,7 @@
 </template>
 
 <script>
-  import { addApply,delApply,editApply,getApplyList,changeApply, addStorage,filterApply,getCrawlerOrder } from '@/network/transship.js'
+  import { addApply,delApply,editApply,getApplyList,changeApply,addStorage,filterApply,getCrawlerOrder } from '@/network/transship.js'
   import { addCoverImg } from '@/network/post.js'
   import { getUserByEmail,getUser } from '@/network/user.js'
   import * as imageConversion from 'image-conversion';
@@ -278,6 +280,7 @@
           'code': {name:'转运码'},
           'apply_status': {name:'状态'},
         },
+        dialogAddMore: false,
       }
     },
     mounted() {
@@ -295,7 +298,7 @@
         this.selectList.apply_ID = data1;
         this.selectList.expressid = data2;
         this.selectList.email = data3;
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [];
           users.map(user=>{
@@ -351,6 +354,9 @@
       handleSelect() {
         this.goSearch();
       },
+      handleSelect2() {
+        this.dialogAddMore = true;
+      },
       createFilter(queryString) {
         return (item) => {
           return (item.value.toLowerCase().indexOf(queryString.toLowerCase()) != -1);
@@ -387,7 +393,6 @@
           });
         } else {
           getApplyList(pageIndex).then(res => {
-            console.log(res.data.data);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.applications_num);
               this.tableData = res.data.data;
@@ -400,45 +405,51 @@
         }
       },
       handleDetail(row) {
-        let text = '<h1>物流详情</h1>'
-        + '<br><strong>order_time:    </strong>' + row.order_time
-        + '<br><strong>price:    </strong>' + row.price
-        + '<br><strong>maxOrderLineStatus:    </strong>' + row.maxOrderLineStatus
-        + '<br><strong>minOrderLineStatus:    </strong>' + row.minOrderLineStatus
-        + '<br><strong>rolledUpStatus:    </strong>' + row.rolledUpStatus
-        + '<br><strong>size:    </strong>' + row.size
-        + '<br><strong>style:    </strong>' + row.style
-        + '<br><strong>op_date:    </strong>' + row.op_date
-        + '<br><strong>op_description:    </strong>' + row.op_description
-        + '<br><strong>op_quantity:    </strong>' + row.op_quantity
-        + '<br><strong>first_address:    </strong>' + row.first_address
-        + '<br><strong>second_address:    </strong>' + row.second_address
-        + '<br><strong>city:    </strong>' + row.city
-        + '<br><strong>postal:    </strong>' + row.postal
-        + '<br><strong>country:    </strong>' + row.country
-        + '<br><strong>gift:    </strong>' + row.gift
-        + '<br><strong>tracker:    </strong>' + row.tracker
-        + '<br><strong>refresh_time:    </strong>' + row.refresh_time
-        + '<br><strong>refresh_status:    </strong>' + row.refresh_status
-        this.$alert(text, '', {
-          dangerouslyUseHTMLString: true
+        let text = '<strong>order_time:</strong>' + row.order_time.slice(0,10)+'('+row.order_time.slice(11,19)+')'
+        + '<br><strong>price:</strong>' + row.price
+        + '<br><strong>maxOrderLineStatus:</strong>' + row.maxOrderLineStatus
+        + '<br><strong>minOrderLineStatus:</strong>' + row.minOrderLineStatus
+        + '<br><strong>rolledUpStatus:</strong>' + row.rolledUpStatus
+        + '<br><strong>size:</strong>' + row.size
+        + '<br><strong>style:</strong>' + row.style
+        + '<br><strong>op_date:</strong>' + row.op_date.split(',').map(date=>date='<br>'+date.slice(0,10)+'('+date.slice(11,19)+')').join(',')
+        + '<br><strong>op_description:</strong>' + row.op_description
+        + '<br><strong>op_quantity:</strong>' + row.op_quantity
+        + '<br><strong>first_address:</strong>' + row.first_address
+        + '<br><strong>second_address:</strong>' + row.second_address
+        + '<br><strong>city:</strong>' + row.city
+        + '<br><strong>postal:</strong>' + row.postal
+        + '<br><strong>country:</strong>' + row.country
+        + '<br><strong>gift:</strong>' + row.gift
+        + '<br><strong>tracker:</strong>' + row.tracker
+        + '<br><strong>refresh_time:</strong>' + row.refresh_time
+        + '<br><strong>refresh_status:</strong>' + row.refresh_status
+        // this.$alert(text, '', {
+        //   dangerouslyUseHTMLString: true
+        // });
+        this.$notify({
+          title: '物流详情',
+          dangerouslyUseHTMLString: true,
+          message: text
         });
       },
       handleAdd() {
         if(this.newApplyUserEmail=='') {
           this.$message({type: 'warning',message: '请填写用户邮箱'});
+        } else if(this.dialogAddMore==false) {
+          this.$message({type: 'warning',message: '请选择正确的用户'});
         } else if(validateEmail(this.newApplyUserEmail)==false) {
           this.$message({type: 'warning',message: '用户邮箱格式不符合规范'});
+        } else if(this.newApplyBrand==null||this.newApplyBrand=='') {
+          this.$message({type: 'warning',message: '请选择品牌'});
         } else if(this.newApplyExpressid=='') {
           this.$message({type: 'warning',message: '请填写订单号'});
-        } else if(this.newApplyBrand==null) {
-          this.$message({type: 'warning',message: '请选择品牌'});
         } else if(this.newApplyEmail=='') {
           this.$message({type: 'warning',message: '请填写邮箱地址'});
         } else if(validateEmail(this.newApplyEmail)==false) {
           this.$message({type: 'warning',message: '邮箱地址格式不符合规范'});
         } else {
-          this.checkOrder('add',this.newApplyBrand,this.newApplyExpressid,this.newApplyEmail,this.newApplyUserEmail)
+          this.checkOrder('add',this.newApplyBrand,this.newApplyExpressid,this.newApplyEmail,this.newApplyUserEmail);
         }
       },
       handleEdit(index,row) {
@@ -516,37 +527,59 @@
         this.dialogStorageVisible = true;
       },
       goStorage() {
-        let file = this.$refs.uploadImg.uploadFiles.pop().raw;
-        let fileName = new Date().getTime() + '-' +file.name;
-        imageConversion.compress(file,0.6).then(res=>{
-          let uploadFile = new File([res], fileName, {type: res.type});
-          addCoverImg(uploadFile).then(res=>{
-            if(res.data.status=='201') {
-              addStorage({
-                article_num: this.newStorage.article_num, 
-                user_id: this.newStorage.user_id,
-                apply_id: this.newStorage.apply_id,
-                size: this.newStorage.size.join('*'), 
-                weight: this.newStorage.weight,
-                description: this.newStorage.description,
-                pic: res.data.cover_img_url,
-              }).then(resAdd=>{
-                if(resAdd.data.status=='200') {
-                  changeApply(this.newStorage.apply_id,1).then(res=>{
-                    this.dialogStorageVisible = false;
-                    this.currentPage = 1;
-                    this._getApplyList(this.currentPage);
-                    this.$message({type: 'success',message: '入库成功'});
-                  });
-                }else{
-                  this.$message({type: 'warning',message: '入库失败——'+resAdd.data.msg});
-                }
-              })
-            } else {
-              this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
-            }
+        if(this.newStorage.size[0]=='') {
+          this.$message({type:'warning',message:'请输入长度'})
+        } else if(this.newStorage.size[0]!=parseFloat(this.newStorage.size[0])) {
+          this.$message({type:'warning',message:'请输入正确的长度'})
+        } else if(this.newStorage.size[1]=='') {
+          this.$message({type:'warning',message:'请输入宽度'})
+        } else if(this.newStorage.size[1]!=parseFloat(this.newStorage.size[1])) {
+          this.$message({type:'warning',message:'请输入正确的宽度'})
+        } else if(this.newStorage.size[2]=='') {
+          this.$message({type:'warning',message:'请输入高度'})
+        } else if(this.newStorage.size[2]!=parseFloat(this.newStorage.size[2])) {
+          this.$message({type:'warning',message:'请输入正确的高度'})
+        } else if(this.newStorage.weight=='') {
+          this.$message({type:'warning',message:'请输入重量'})
+        } else if(this.newStorage.weight!=parseFloat(this.newStorage.weight)) {
+          this.$message({type:'warning',message:'请输入正确的重量'})
+        } else if(this.newStorage.description=='') {
+          this.$message({type:'warning',message:'请输入货物描述'})
+        } else if(this.$refs.uploadImg.uploadFiles.length==0) {
+          this.$message({type:'warning',message:'请上传货物图片'})
+        } else {
+          let file = this.$refs.uploadImg.uploadFiles.pop().raw;
+          let fileName = new Date().getTime() + '-' +file.name;
+          imageConversion.compress(file,0.6).then(res=>{
+            let uploadFile = new File([res], fileName, {type: res.type});
+            addCoverImg(uploadFile).then(res=>{
+              if(res.data.status=='201') {
+                addStorage({
+                  article_num: this.newStorage.article_num, 
+                  user_id: this.newStorage.user_id,
+                  apply_id: this.newStorage.apply_id,
+                  size: this.newStorage.size.join('*'), 
+                  weight: this.newStorage.weight,
+                  description: this.newStorage.description,
+                  pic: res.data.cover_img_url,
+                }).then(resAdd=>{
+                  if(resAdd.data.status=='200') {
+                    changeApply(this.newStorage.apply_id,1).then(res=>{
+                      this.dialogStorageVisible = false;
+                      this.currentPage = 1;
+                      this._getApplyList(this.currentPage);
+                      this.$message({type: 'success',message: '入库成功'});
+                    });
+                  }else{
+                    this.$message({type: 'warning',message: '入库失败——'+resAdd.data.msg});
+                  }
+                })
+              } else {
+                this.$message({type: 'warning',message: '图片上传失败——'+res.data.msg});
+              }
+            })
           })
-        })
+        }
       },
       handleChangeImg(file,filelist) {
         const isIMAGE = (file.raw.type === 'image/jpeg')||(file.raw.type === 'image/gif')||(file.raw.type === 'image/png');

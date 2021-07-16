@@ -41,10 +41,10 @@
         <template slot-scope="scope">
           <el-tag size="mini" v-if="scope.row.bankcard_status==0" type="success">使用中</el-tag>
           <el-tag size="mini" v-if="scope.row.bankcard_status==1" type="info">冻结中</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="handleChange(scope.row)" v-if="$store.state.user.right.indexOf('card_audit')!=-1"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('card_edit')!=-1">
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -216,6 +216,8 @@
           this.$message({type: 'warning', message: '请输入地址'})
         } else if(this.editItem.cardnum=='') {
           this.$message({type: 'warning', message: '请输入卡号'})
+        } else if(this.editItem.cardnum!=parseInt(this.editItem.cardnum)||parseInt(this.editItem.cardnum)<1) {
+          this.$message({type:'warning',message:'请检查卡号的格式'})
         } else {
           editBankcard(this.editItem).then(res=>{
             if(res.data.status=='200') {
@@ -343,7 +345,7 @@
         })
         this.selectList.bankcard_ID = data1;
         this.selectList.cardnum = data2;
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [],names = [];
           users.map(user=>{

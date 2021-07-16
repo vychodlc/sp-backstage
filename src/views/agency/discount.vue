@@ -55,7 +55,7 @@
         </template>
       </el-table-column>
       <el-table-column label="添加时间" prop="add_time"></el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('discount_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -63,6 +63,9 @@
             @click="handleAdd()">新增</el-button>
         </template>
         <template slot-scope="scope">
+          <el-button
+            size="mini"
+            @click="handleEdit(scope.index, scope.row)">编辑</el-button>
           <el-button
             size="mini"
             type="danger"
@@ -96,7 +99,7 @@
           </el-date-picker>
         </el-form-item>
         <el-form-item style="float:right;">
-          <el-button type="success" @click="dialogEditVisible=true;newItemText=''">批量添加</el-button>
+          <el-button type="success" @click="dialogEnterVisible=true;newItemText=''">批量添加</el-button>
           <el-button type="primary" @click="handleAddAdd()">添加</el-button>
         </el-form-item>
         <el-table
@@ -139,7 +142,7 @@
         <el-button type="primary" @click="goAdd()" size="medium">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="批量导入折扣码" :visible.sync="dialogEditVisible" :close-on-click-modal="false">
+    <el-dialog title="批量导入折扣码" :visible.sync="dialogEnterVisible" :close-on-click-modal="false">
       <el-form label-width="100px" size="mini">
         <el-form-item label="文本信息">
           <el-input type="textarea" rows="10" v-model="newItemText" placeholder="xxxx xxxx xxxx xxxx xxxx
@@ -148,8 +151,31 @@ xxxx xxxx xxxx xxxx xxxx
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogEditVisible = false" size="mini">取 消</el-button>
+        <el-button @click="dialogEnterVisible = false" size="mini">取 消</el-button>
         <el-button type="primary" @click="enterItems()" size="mini">确 定</el-button>
+      </div>
+    </el-dialog>
+    
+    <el-dialog title="修改折扣码信息" :visible.sync="dialogEditVisible">
+      <el-form size="mini" v-if="editItem!=null">
+        <el-form-item label="折扣码">
+          <el-input v-model="editItem.code" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="品牌">
+          <el-radio v-model="editItem.brand" label="N">Nike</el-radio>
+          <el-radio v-model="editItem.brand" label="A">Adidas</el-radio>
+          <el-radio v-model="editItem.brand" label="JD">JD</el-radio>
+        </el-form-item>
+        <el-form-item label="起始日期">
+          <el-input v-model="editItem.start_date"></el-input>
+        </el-form-item>
+        <el-form-item label="截止日期">
+          <el-input v-model="editItem.valid_date"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogEditVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goEdit()">确 定</el-button>
       </div>
     </el-dialog>
     <div class="pagination">
@@ -165,7 +191,7 @@ xxxx xxxx xxxx xxxx xxxx
 </template>
 
 <script>
-  import { getDiscount,addDiscount,delDiscount,filterDiscount } from '@/network/agency.js'
+  import { getDiscount,addDiscount,delDiscount,filterDiscount,editDiscount } from '@/network/agency.js'
   import { getUser } from '@/network/user.js'
   import { msToDate } from '@/utils/time.js'
   export default {
@@ -194,7 +220,7 @@ xxxx xxxx xxxx xxxx xxxx
         newItems: [],
         handleNum: 0,
 
-        dialogEditVisible: false,
+        dialogEnterVisible: false,
         editStorageID: '',
         editStorageSize: '',
         editStorageNumber: '',
@@ -212,7 +238,9 @@ xxxx xxxx xxxx xxxx xxxx
           'code': {name:'折扣码'},
           'type': {name:'种类'}
         },
-        selectList: [[],[],[]]
+        selectList: [[],[],[]],
+        dialogEditVisible: false,
+        editItem: {discount_ID:'',code:'',type:'',brand:'',start_date:'',valid_date:''},
       }
     },
     methods:{
@@ -387,7 +415,7 @@ xxxx xxxx xxxx xxxx xxxx
                 if(item.brand==brand&&item.code==rowData[0]){repeat=true;right=false}
               })
               this.newItems.push({code:rowData[0],type:type,brand:brand,start_date:rowData[3]?rowData[3]:'格式错误',valid_date:rowData[4]?rowData[4]:'格式错误',repeat:repeat,right:right});
-              this.dialogEditVisible = false;
+              this.dialogEnterVisible = false;
             }
           })
           this.newItemText = '';
@@ -427,6 +455,32 @@ xxxx xxxx xxxx xxxx xxxx
           }
         })
       },
+      handleEdit(index,row) {
+        this.editItem.discount_ID= row.discount_ID;
+        this.editItem.code= row.code;
+        this.editItem.brand = row.brand;
+        this.editItem.start_date = row.start_date;
+        this.editItem.valid_date = row.valid_date;
+        this.dialogEditVisible = true;
+      },
+      goEdit() {
+        if(this.editItem.start_date=='') {
+          this.$message({tyep:'warning',message:'请输入起始日期'})
+        } else if(this.editItem.valid_date=='') {
+          this.$message({tyep:'warning',message:'请输入截止日期'})
+        } else {
+          editDiscount(this.editItem).then(res=>{
+            if(res.data.status=='403') {
+              this.$message({tyep:'warning',message:'未修改'})
+            } else if(res.data.status=='200') {
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+              this.dialogEditVisible = false;
+              this.$message({type: 'success',message: '修改成功!'});
+            }
+          })
+        }
+      },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.discount_ID +'的礼品卡, 是否继续?', '提示', {
           confirmButtonText: '确定',
@@ -451,16 +505,20 @@ xxxx xxxx xxxx xxxx xxxx
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='type') {
-          this.searchWord=(this.search=='2')?'单次码':'复用码';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='type') {
+            this.searchWord=(this.search=='2')?'单次码':'复用码';
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;

@@ -54,9 +54,10 @@ export function register(form) {
   })
 }
 
-export function getUser() {
+export function getUser(p) {
   return request({
     url: '/get_user.php',
+    params: {p}
   })
 }
 
@@ -103,6 +104,7 @@ export function getUserByEmail(user_email) {
 }
 
 export function getUserRight(uuid) {
+  console.log(uuid);
   return request({
     url: '/get_user_right.php',
     params: {uuid}
@@ -130,5 +132,12 @@ export function getDrawbackFactor(user_id) {
   return request({
     url: '/get_drawback_factor.php',
     params: {user_id}
+  })
+}
+
+export function getBalance(uuid) {
+  return request({
+    url: '/get_balance.php',
+    params: {uuid}
   })
 }

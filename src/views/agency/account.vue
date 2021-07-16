@@ -52,7 +52,7 @@
         </template>
       </el-table-column>
       <!-- <el-table-column label="添加时间" prop="add_time"></el-table-column> -->
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('account_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -446,16 +446,20 @@ xxxx xxxx xxxx xxx-xxx
         this.dialogEditVisible = true;
       },
       goEdit() {
-        changeAccount(this.editItem).then(res=>{
-          if(res.data.status=='403') {
-            this.$message({tyep:'warning',message:'未修改'})
-          } else if(res.data.status=='200') {
-            this.currentPage = 1;
-            this._getList(this.currentPage);
-            this.dialogEditVisible = false;
-            this.$message({type: 'success',message: '修改成功!'});
-          }
-        })
+        if(this.editItem.psd=='') {
+          this.$message({tyep:'warning',message:'请输入密码'})
+        } else {
+          changeAccount(this.editItem).then(res=>{
+            if(res.data.status=='403') {
+              this.$message({tyep:'warning',message:'未修改'})
+            } else if(res.data.status=='200') {
+              this.currentPage = 1;
+              this._getList(this.currentPage);
+              this.dialogEditVisible = false;
+              this.$message({type: 'success',message: '修改成功!'});
+            }
+          })
+        }
       },
       handleDelete(index,row) {
         this.$confirm('此操作将永久删除这条单号为：'+ row.account_ID +'的购物账号, 是否继续?', '提示', {
@@ -481,16 +485,20 @@ xxxx xxxx xxxx xxx-xxx
         this._getList(this.currentPage)
       },
       goSearch() {
-        this.isSearch = true;
-        if(this.filter=='card_type') {
-          this.searchWord=(this.search=='1')?'普通账号':'生日账号';
+        if(this.search==''||this.search==null) {
+          this.$message({type:'warning',message:'请输入搜索词'})
         } else {
-          this.searchWord = this.search;
+          this.isSearch = true;
+          if(this.filter=='card_type') {
+            this.searchWord=(this.search=='1')?'普通账号':'生日账号';
+          } else {
+            this.searchWord = this.search;
+          }
+          this.filterWord = this.interpret[this.filter].name;
+          this.loading = true;
+          this.currentPage = 1;
+          this._getList(this.currentPage)
         }
-        this.filterWord = this.interpret[this.filter].name;
-        this.loading = true;
-        this.currentPage = 1;
-        this._getList(this.currentPage)
       },
       goBack() {
         this.isSearch=false;

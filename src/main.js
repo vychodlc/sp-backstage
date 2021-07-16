@@ -7,10 +7,12 @@ import store from './store'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import sha1 from 'js-sha1'
+import echarts from 'echarts'
 
 Vue.config.productionTip = false
 Vue.prototype.$bus = new Vue();
 Vue.prototype.$axios = axios;
+Vue.prototype.$echarts = echarts;
 
 Vue.use(ElementUI)
 

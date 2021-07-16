@@ -123,13 +123,13 @@
           <el-tag size="mini" v-if="scope.row.agency_status==1" type="info">已驳回</el-tag>
           <el-tag size="mini" v-if="scope.row.agency_status==2" type="success">进行中</el-tag>
           <el-tag size="mini" v-if="scope.row.agency_status==3" type="info">已完成</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row,0)"></el-link><br>
+          <el-link style="margin-left:10px" icon="el-icon-edit" v-if="$store.state.user.right.indexOf('agency_change')!=-1" @click="changeStatus(scope.row,0)"></el-link><br>
           <el-tag size="mini" v-if="scope.row.pay_status==0" type="warning">未支付</el-tag>
           <el-tag size="mini" v-if="scope.row.pay_status==1" type="success">已支付</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row,1)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" v-if="$store.state.user.right.indexOf('agency_pay')!=-1" @click="changeStatus(scope.row,1)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="150">
+      <el-table-column label="操作" align="right" width="150" v-if="$store.state.user.right.indexOf('agncy_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -222,10 +222,10 @@
           <el-radio @input="priceOk=false" v-model="newItem.account_type" style="margin-right:20px" label="2">生日账号</el-radio>
         </el-form-item>
         <el-form-item label="单数" label-width="80px">
-          <el-input @input="priceOk=false" v-model="newItem.order_num" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>9999)value=9999;if(value<0)value=0"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.order_num" onkeyup="value=value.replace(/[^\d]/g,'')" oninput="if(value>9999)value=9999;if(value<1)value=1"></el-input>
         </el-form-item>
         <el-form-item label="时限" label-width="80px">
-          <el-input @input="priceOk=false" v-model="newItem.interval" placeholder="20~300小时" onkeyup="value=value.replace(/[^\d]/g,'')" onblur="if(value>300)value=300;if(value<20)value=20"></el-input>
+          <el-input @input="priceOk=false" v-model="newItem.interval" placeholder="20~300小时"></el-input>
         </el-form-item>
         <!-- <el-form-item label="费用" label-width="80px">
           <el-input v-model="newItem.price" disabled></el-input>
@@ -456,6 +456,8 @@ xxxx xxxx
           this.$message({type: 'warning',message: '请选择礼品卡类别'});
         } else if(this.newItem.giftcard_type=='2'&&this.newItem.giftcards.length==0) {
           this.$message({type: 'warning',message: '请添加礼品卡信息'});
+        } else if(this.newItem.giftcard_type=='2'&&this.newItem.giftcards.filter(card=>{return card.right==true}).length==0) {
+          this.$message({type: 'warning',message: '请添加有效的礼品卡信息'});
         } else if(this.newItem.discount_type=='') {
           this.$message({type: 'warning',message: '请选择折扣码类别'});
         } else if(this.newItem.discount_type=='2'&&this.newItem.discount_code=='') {
@@ -465,9 +467,15 @@ xxxx xxxx
         } else if(this.newItem.account_type=='') {
           this.$message({type: 'warning',message: '请选择购物账号类别'});
         } else if(this.newItem.order_num=='') {
-          this.$message({type: 'warning',message: '请选择单数'});
+          this.$message({type: 'warning',message: '请填入单数'});
+        } else if(this.newItem.order_num!=parseInt(this.newItem.order_num)||parseFloat(this.newItem.order_num)<1) {
+          this.$message({type: 'warning',message: '请填入正确的单数'});
         } else if(this.newItem.interval=='') {
           this.$message({type: 'warning',message: '请选择代购时限'});
+        } else if(this.newItem.interval!=parseFloat(this.newItem.interval)) {
+          this.$message({type: 'warning',message: '请填入正确的代购时限'});
+        } else if(parseFloat(this.newItem.interval)<20||parseFloat(this.newItem.interval)>300) {
+          this.$message({type: 'warning',message: '请确认代购时限在 20~300 小时'});
         } else if(parseFloat(this.newItem.price)!=this.newItem.price&&regExp.test(this.newItem.price)==false) {
           this.$message({type: 'warning',message: '请输入正确的价格'});
         } else {
@@ -730,14 +738,14 @@ xxxx xxxx
           this.$message({type: 'warning',message: '请填写商品链接'});
         } else if(this.newItem.brand=='') {
           this.$message({type: 'warning',message: '请选择品牌'});
-        } else if(this.newItem.storage_link.indexOf(linkMsg[this.newItem.brand].link)==-1) {
-          this.$message({type: 'warning',message: linkMsg[this.newItem.brand].msg});
         } else if(this.newItem.size.length==0) {
           this.$message({type: 'warning',message: '请选择尺寸'});
         } else if(this.newItem.giftcard_type=='') {
           this.$message({type: 'warning',message: '请选择礼品卡类别'});
         } else if(this.newItem.giftcard_type=='2'&&this.newItem.giftcards.length==0) {
           this.$message({type: 'warning',message: '请添加礼品卡信息'});
+        } else if(this.newItem.giftcard_type=='2'&&this.newItem.giftcards.filter(card=>{return card.right==true}).length==0) {
+          this.$message({type: 'warning',message: '请添加有效的礼品卡信息'});
         } else if(this.newItem.discount_type=='') {
           this.$message({type: 'warning',message: '请选择折扣码类别'});
         } else if(this.newItem.discount_type=='2'&&this.newItem.discount_code=='') {
@@ -747,9 +755,15 @@ xxxx xxxx
         } else if(this.newItem.account_type=='') {
           this.$message({type: 'warning',message: '请选择购物账号类别'});
         } else if(this.newItem.order_num=='') {
-          this.$message({type: 'warning',message: '请选择单数'});
+          this.$message({type: 'warning',message: '请填入单数'});
+        } else if(this.newItem.order_num!=parseInt(this.newItem.order_num)||parseFloat(this.newItem.order_num)<1) {
+          this.$message({type: 'warning',message: '请填入正确的单数'});
         } else if(this.newItem.interval=='') {
           this.$message({type: 'warning',message: '请选择代购时限'});
+        } else if(this.newItem.interval!=parseFloat(this.newItem.interval)) {
+          this.$message({type: 'warning',message: '请填入正确的代购时限'});
+        } else if(parseFloat(this.newItem.interval)<20||parseFloat(this.newItem.interval)>300) {
+          this.$message({type: 'warning',message: '请确认代购时限在 20~300 小时'});
         } else {
           this.addLoading = true
           if(this.newItem.brand=='N') {
@@ -809,7 +823,7 @@ xxxx xxxx
         })
         this.selectList.agency_ID = data1;
         this.selectList.storage_link = this.deWeight(data2);
-        getUser().then(res=>{
+        getUser(0).then(res=>{
           let users = res.data.data;
           let emails = [],ids = [],codes = [];
           users.map(user=>{

@@ -71,10 +71,10 @@
           <el-tag size="mini" v-if="scope.row.post_status==0" type="warning">未发布</el-tag>
           <el-tag size="mini" v-if="scope.row.post_status==1" type="success">已发布</el-tag>
           <el-tag size="mini" v-if="scope.row.post_status==2" type="info">已下架</el-tag>
-          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)"></el-link>
+          <el-link style="margin-left:10px" icon="el-icon-edit" @click="changeStatus(scope.row)" v-if="$store.state.user.right.indexOf('post_audit')!=-1"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="200">
+      <el-table-column label="操作" align="right" width="200" v-if="$store.state.user.right.indexOf('post_edit')!=-1||$store.state.user.right.indexOf('post_del')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -84,11 +84,11 @@
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="$router.push({name:'PostEdit',params:{id:scope.row.ID}})">编辑</el-button>
+            @click="$router.push({name:'PostEdit',params:{id:scope.row.ID}})" v-if="$store.state.user.right.indexOf('post_edit')!=-1">编辑</el-button>
           <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            @click="handleDelete(scope.$index, scope.row)" v-if="$store.state.user.right.indexOf('post_del')!=-1">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -149,6 +149,7 @@
       }
     },
     mounted() {
+      console.log(this.$store.state);
       this._getPostList(this.currentPage)
     },
     methods:{

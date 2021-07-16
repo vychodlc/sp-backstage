@@ -9,7 +9,7 @@ export default new Vuex.Store({
     user: {
       id: localStorage.getItem('ID') ? localStorage.getItem('ID'):null,
       nickname: localStorage.getItem('nickname') ? localStorage.getItem('nickname'):null,
-      right: localStorage.getItem('right') ? localStorage.getItem('right'):null
+      right: localStorage.getItem('permissions') ? localStorage.getItem('permissions').split(','):null
     },
     token: localStorage.getItem('token') ? localStorage.getItem('token'):'',
     refresh_token: localStorage.getItem('refresh_token') ? localStorage.getItem('refresh_token'):'',

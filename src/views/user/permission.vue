@@ -1,6 +1,6 @@
 <template>
   <div class="post-container">
-    <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
+    <!-- <el-select v-model="filter" size="small" @change='filterChange' style="width:8vw;margin-right:10px" placeholder="请选择">
       <el-option label="出库单号" value="outbound_ID"></el-option>
       <el-option label="用户编号" value="user_id"></el-option>
       <el-option label="用户邮箱" value="user_email"></el-option>
@@ -35,11 +35,11 @@
       placeholder="请输入内容···"
       :trigger-on-focus="false"
       @select="handleSelect"
-    ></el-autocomplete>
+    ></el-autocomplete> -->
     <!-- <el-input v-else placeholder="请输入内容" size="small" style="width:30vw;margin-right:10px" v-model="search" class="input-with-select"></el-input> -->
-    <el-button size="small" type="" @click="goSearch">搜索</el-button>
+    <!-- <el-button size="small" type="" @click="goSearch">搜索</el-button>
     <el-button size="small" v-if="isSearch==true" type="primary" @click="goBack">返回</el-button>
-    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag>
+    <el-tag size="small" closable v-if="isSearch==true" style="margin-left:10px" @close="goBack">{{filterWord}} : {{searchWord}}</el-tag> -->
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -47,10 +47,10 @@
       class="elTable">
       <el-table-column label="编号" prop="role_ID"></el-table-column>
       <el-table-column label="用户组名称" prop="name"></el-table-column>
-      <el-table-column label="描述信息" prop="name"></el-table-column>
+      <el-table-column label="描述信息" prop="description"></el-table-column>
       <el-table-column label="编辑时间" prop="edit_time"></el-table-column>
       <el-table-column label="编辑人" prop="edit_user"></el-table-column>
-      <el-table-column label="操作" align="right" width="150">
+      <el-table-column label="操作" align="right" width="150" v-if="$store.state.user.right.indexOf('permission_edit')!=-1||$store.state.user.right.indexOf('permission_del')!=-1">
         <template slot="header">
           <el-button
             size="mini"
@@ -59,10 +59,10 @@
         </template>
         <template slot-scope="scope">
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('permission_edit')!=-1"
             @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button
-            size="mini"
+            size="mini" v-if="$store.state.user.right.indexOf('permission_del')!=-1"
             type="danger"
             @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
@@ -75,11 +75,11 @@
           <el-input v-model="newItem.name"></el-input>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="newItem.desc"></el-input>
+          <el-input v-model="newItem.description"></el-input>
         </el-form-item>
         <el-form-item label="权限">
           <el-checkbox-group v-model="newItem.permissions">
-            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:25%"></el-checkbox>
+            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item.value" style="width:25%">{{item.name}}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -116,11 +116,11 @@
           <el-input v-model="editItem.name"></el-input>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="editItem.desc"></el-input>
+          <el-input v-model="editItem.description"></el-input>
         </el-form-item>
         <el-form-item label="权限">
           <el-checkbox-group v-model="editItem.permissions">
-            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item" style="width:25%"></el-checkbox>
+            <el-checkbox v-for="(item,index) in permissionList" :key="index" :label="item.value" style="width:25%">{{item.name}}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -144,7 +144,7 @@
 
 <script>
   import { getUserStorage,addOutput,delOutput,editOutput,getOutputList,changeOutput,changeOutputPay,filterOutput,filterStorage } from '@/network/transship.js'
-  import { getRoleList,addRole,editRole } from '@/network/permission.js'
+  import { getRoleList,addRole,editRole,delRole } from '@/network/permission.js'
   import { getUserByEmail,getUserInfoById,getUser,getUserRight } from '@/network/user.js'
 
   export default {
@@ -189,75 +189,111 @@
         },
 
         newItem: {
-          name: '',desc: '',permissions: [],
+          name: '',description: '',permissions: [],
         },
         editItem: {
-          name: '',desc: '',permissions: [],
+          name: '',description: '',permissions: [],
         },
         
         permissionList: [
-          'post_page',
-          'post_page_all',
-          'post_edit',
-          'post_delete',
-          'post_audit',
-          'tag_page',
-          'tag_add',
-          'tag_edit',
-          'tag_del',
-          'repo_page',
-          'repo_add',
-          'repo_edit',
-          'repo_del',
-          'repo_page',
-          'repo_out',
-          'tax_page',
-          'tax_audit',
-          'card_page',
-          'card_edit',
-          'card_audit',
-          'user_page',
-          'a_user_page',
-          'a_user_audit',
-          'a_user_edit',
-          'b_user_page',
-          'b_user_audit',
-          'b_user_edit',
-          'user_group',
-          'user_block',
-          'system_set',
+          {value:'post_page',name:'文章页面查看'},
+          {value:'post_page_all',name:'文章查看（所有人）'},
+          {value:'post_edit',name:'文章创建&编辑'},
+          {value:'post_del',name:'文章删除'},
+          {value:'post_audit',name:'文章审稿'},
+          {value:'tag_page',name:'Tag页面查看'},
+          {value:'tag_add',name:'Tag创建'},
+          {value:'tag_edit',name:'Tag编辑'},
+          {value:'tag_del',name:'Tag删除'},
+          {value:'repo_page',name:'仓库页面查看'},
+          {value:'repo_add',name:'仓库添加记录'},
+          {value:'repo_edit',name:'仓库编辑记录'},
+          {value:'repo_del',name:'仓库删除记录'},
+          {value:'repo_out_page',name:'仓库出库页面查看'},
+          {value:'repo_out_edit',name:'仓库出库编辑'},
+          {value:'repo_out_change',name:'仓库出库改状态'},
+          {value:'repo_out_pay',name:'仓库出库支付'},
+          {value:'tax_page',name:'仓库退税查看'},
+          {value:'tax_audit',name:'仓库退税审核'},
+          {value:'card_page',name:'银行卡&申请页面查看'},
+          {value:'card_edit',name:'银行卡页面修改'},
+          {value:'card_audit',name:'银行卡申请页面修改审核'},
+          {value:'user_page',name:'用户管理页面查看'},
+          {value:'user_right_edit',name:'用户信息/权限编辑 * '},
+          {value:'user_del',name:'用户删除 * '},
+          {value:'permission_page',name:'权限管理界面查看 * '},
+          {value:'permission_edit',name:'权限管理-新增/编辑 * '},
+          {value:'permission_del',name:'权限管理-删除 * '},
+          {value:'address_page',name:'地址管理查看'},
+          {value:'address_edit',name:'地址编辑'},
+          {value:'address_del',name:'地址删除'},
+          {value:'factor_page',name:'代购参数管理查看'},
+          {value:'factor_edit',name:'代购参数管理修改'},
+          {value:'charge_page',name:'充值页面查看'},
+          {value:'charge_edit',name:'充值页面修改'},
+          {value:'agency_page',name:'代购订单查看'},
+          {value:'agency_edit',name:'代购订单编辑'},
+          {value:"agency_change",name:'代购状态修改'},
+          {value:"agency_pay",name:'代购付款'},
+          {value:'discount_page',name:'代购折扣码查看'},
+          {value:'discount_edit',name:'代购折扣码修改'},
+          {value:'account_page',name:'代购账户查看'},
+          {value:'account_edit',name:'代购账户修改'},
+          {value:'giftcard_page',name:'代购礼品卡查看'},
+          {value:'giftcard_edit',name:'代购礼品卡修改'},
+          {value:'withdraw_page',name:'提现页面查看'},
+          {value:'withdraw_edit',name:'提现页面修改&审核'},
+          {value:'payment_page',name:'流水记录页面查看'},
         ],
         permissionDict: {
-          'post_page':0,
-          'post_page_all':0,
-          'post_edit':0,
-          'post_delete':0,
-          'post_audit':0,
-          'tag_page':0,
-          'tag_add':0,
-          'tag_edit':0,
-          'tag_del':0,
-          'repo_page':0,
-          'repo_add':0,
-          'repo_edit':0,
-          'repo_del':0,
-          'repo_page':0,
-          'repo_out':0,
-          'tax_page':0,
-          'tax_audit':0,
-          'card_page':0,
-          'card_edit':0,
-          'card_audit':0,
-          'user_page':0,
-          'a_user_page':0,
-          'a_user_audit':0,
-          'a_user_edit':0,
-          'b_user_page':0,
-          'b_user_audit':0,
-          'b_user_edit':0,
-          'user_group':0,
-          'user_block':0,
-          'system_set':0,
+          "post_page": "0",
+          "post_page_all": "1",
+          "post_edit": "0",
+          "post_del": "0",
+          "post_audit": "1",
+          "tag_page": "1",
+          "tag_add": "1",
+          "tag_edit": "0",
+          "tag_del": "0",
+          "repo_page": "1",
+          "repo_add": "1",
+          "repo_edit": "0",
+          "repo_del": "1",
+          "repo_out_page": "0",
+          "repo_out_edit": "0",
+          "repo_out_change": "0",
+          "repo_out_pay": "0",
+          "tax_page": "1",
+          "tax_audit": "1",
+          "card_page": "0",
+          "card_edit": "0",
+          "card_audit": "1",
+          "user_page": "1",
+          "user_right_edit": "0",
+          "user_del": "0",
+          "permission_page": "0",
+          "permission_edit": "0",
+          "permission_del": "0",
+          "address_page": "0",
+          "address_edit": "0",
+          "address_del": "0",
+          "factor_page": "0",
+          "factor_edit": "0",
+          "charge_page": "0",
+          "charge_edit": "0",
+          "agency_page": "0",
+          "agency_edit": "0",
+          "agency_change": "0",
+          "agency_pay": "0",
+          "discount_page": "0",
+          "discount_edit": "0",
+          "account_page": "0",
+          "account_edit": "0",
+          "giftcard_page": "0",
+          "giftcard_edit": "0",
+          "withdraw_page": "0",
+          "withdraw_edit": "0",
+          "payment_page": "0"
         },
 
         selectList: {},
@@ -293,7 +329,7 @@
       //     data1.push({id: 'outbound_ID', key: 'outbound_ID',value: item.outbound_ID})
       //   })
       //   this.selectList.outbound_ID = data1;
-      //   getUser().then(res=>{
+      //   getUser(0).then(res=>{
       //     let users = res.data.data;
       //     let emails = [],ids = [],codes = [];
       //     users.map(user=>{
@@ -346,7 +382,6 @@
         if(this.isSearch==true) {
         } else {
           getRoleList(pageIndex).then(res => {
-            console.log(res);
             if(res.data.status=='200') {
               this.pageNum = parseInt(res.data.roles_num);
               this.tableData = res.data.data;
@@ -359,13 +394,13 @@
         }
       },
       handleAdd() {
-        this.newItem = {name: '',desc: '',permissions: []};
+        this.newItem = {name: '',description: '',permissions: []};
         this.dialogAddVisible = true;
       },
       goAdd() {
         if(this.newItem.name == '') {
           this.$message({type: 'warning',message: '请输入用户组名称'});
-        } else if(this.newItem.desc == '') {
+        } else if(this.newItem.description == '') {
           this.$message({type: 'warning',message: '请输入用户组描述'});
         } else if(this.newItem.permissions.length == 0) {
           this.$message({type: 'warning',message: '请选择用户权限'});
@@ -377,11 +412,13 @@
               this.permissionDict[item] = 0
             }
           }
-          addRole(this.newItem.name,this.permissionDict).then(res=>{
+          console.log(this.permissionDict);
+          addRole(this.newItem.name,this.newItem.description,this.permissionDict).then(res=>{
+            console.log(res.data);
             if(res.data.status=='200') {
               this.$message({type:'success',message:'添加成功'})
             } else {
-              this.$message({type:'warning',message:'添加失败'})
+              this.$message({type:'warning',message:'添加失败'+res.data.msg})
             }
             this.dialogAddVisible = false;
             this.currentPage = 1;
@@ -390,11 +427,11 @@
         }
       },
       handleEdit(index,row) {
-        this.newItem = {role_ID: row.role_ID,desc: '',permissions: []};
+        this.editItem = {role_ID:row.role_ID,name:row.name,description:row.description,permissions:[]};
         let pms = row;
         for(let item in pms) {
           if(item!='name'&&item!='role_ID'&&item!='edit_time'&&item!='edit_user'&&pms[item]=='1') {
-            this.newItem.permissions.push(item)
+            this.editItem.permissions.push(item)
           }
         }
         this.dialogEditVisible = true;
@@ -402,7 +439,7 @@
       goEdit() {
         if(this.editItem.name == '') {
           this.$message({type: 'warning',message: '请输入用户组名称'});
-        } else if(this.editItem.desc == '') {
+        } else if(this.editItem.description == '') {
           this.$message({type: 'warning',message: '请输入用户组描述'});
         } else if(this.editItem.permissions.length == 0) {
           this.$message({type: 'warning',message: '请选择用户权限'});
@@ -414,7 +451,7 @@
               this.permissionDict[item] = 0
             }
           }
-          editRole(this.editItem.role_ID,this.permissionDict).then(res=>{
+          editRole(this.editItem.role_ID,this.permissionDict,this.editItem.name,this.editItem.description).then(res=>{
             if(res.data.status=='200') {
               this.$message({type:'success',message:'修改成功'})
             } else {
@@ -457,12 +494,12 @@
         this.editOutput.material.splice(index,1);
       },
       handleDelete(index,row) {
-        this.$confirm('此操作将永久删除这条单号为：'+ row.outbound_ID +'的出库信息, 是否继续?', '提示', {
+        this.$confirm('此操作将永久删除这条名称为：'+ row.name +'的用户组, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          delOutput(row.outbound_ID).then(res=>{
+          delRole(row.role_ID).then(res=>{
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '删除成功!'});
               this.currentPage = 1;
