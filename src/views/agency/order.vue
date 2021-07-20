@@ -129,7 +129,7 @@
           <el-link style="margin-left:10px" icon="el-icon-edit" v-if="$store.state.user.right.indexOf('agency_pay')!=-1" @click="changeStatus(scope.row,1)"></el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" width="150" v-if="$store.state.user.right.indexOf('agncy_edit')!=-1">
+      <el-table-column label="操作" align="right" width="150" v-if="$store.state.user.right.indexOf('agency_edit')!=-1">
         <template slot="header">
           <el-button
             size="mini"

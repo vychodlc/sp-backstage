@@ -141,3 +141,21 @@ export function getBalance(uuid) {
     params: {uuid}
   })
 }
+
+export function getCode(user_id) {
+  return request({
+    url: '/get_transship_code.php',
+    params: {user_id}
+  })
+}
+
+export function changeCode(info) {
+  let formData = new FormData()
+  formData.append('user_id',info.user_id)
+  formData.append('code_status',info.code_status)
+  return request({
+    method: 'POST',
+    url: '/change_tranship_code.php',
+    data: formData
+  })
+}

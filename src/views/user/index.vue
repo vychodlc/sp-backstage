@@ -44,6 +44,14 @@
         label="用户">
         <template slot-scope="scope">
           <span>{{scope.row.id+'-'+scope.row.code}}</span>
+          <el-button
+            style="margin-left:10px"
+            @click="handleEditCode(scope.$index, scope.row)"
+            type="text"
+            v-if="$store.state.user.right.indexOf('user_right_edit')!=-1"
+            size="small">
+            转运码管理
+          </el-button>
         </template>
       </el-table-column>
       <el-table-column
@@ -164,6 +172,18 @@
         <el-button type="primary" @click="goRightEdit()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="转运码状态修改" :visible.sync="dialogCodeVisible" :close-on-click-modal="false">
+      <el-form>
+        <el-form-item>
+          <el-radio v-model="dialogCode.newStatus" label="0">冻结</el-radio>
+          <el-radio v-model="dialogCode.newStatus" label="1">有效</el-radio>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogCodeVisible = false">取 消</el-button>
+        <el-button type="primary" @click="goCodeEdit()">确 定</el-button>
+      </div>
+    </el-dialog>
     <div class="pagination">
       <el-pagination
         small
@@ -177,7 +197,7 @@
 </template>
 
 <script>
-  import { getUser,editUserinfo,delUser,register,setUserRight,getUserRight,editUserRight,getDrawbackFactor } from '@/network/user.js'
+  import { getUser,editUserinfo,delUser,register,setUserRight,getUserRight,editUserRight,getDrawbackFactor,getCode,changeCode } from '@/network/user.js'
   import { validateEmail } from '@/utils/validate.js'
   import { getRoleList } from '@/network/permission.js'
   export default {
@@ -300,6 +320,8 @@
         dialogForm: {nickname:'',email:'',right:'',permissions:[],factor:'',role_ID:''},
         dialogRightVisible: false,
         dialogRight: {uuid:'',nickname:'',email:'',right:''},
+        dialogCodeVisible: false,
+        dialogCode: {user_id:'',code_status:'',newStatus:''},
         oldUser: null,
         pageNum: null,
         displayFactor: null,
@@ -327,7 +349,6 @@
     methods:{
       defaultData() {
         getUser(0).then(res=>{
-          console.log(res);
           let users = res.data.data;
           this.selectList.id = [];
           this.selectList.user_email = [];
@@ -509,6 +530,30 @@
             if(res.data.status=='200') {
               this.$message({type: 'success',message: '权限修改成功!'});
               this.dialogRightVisible = false;
+            }else{
+              this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
+            }
+            this.currentPage = 1;
+            this._getUser(this.currentPage)
+          })
+        }
+      },
+      handleEditCode(index, row) {
+        getCode(row.id).then(res=>{
+          this.dialogCodeVisible = true;
+          this.dialogCode.user_id = row.id;
+          this.dialogCode.code_status = res.data.code_status;
+          this.dialogCode.newStatus = res.data.code_status;
+        })
+      },
+      goCodeEdit() {
+        if(this.dialogCode.code_status == this.dialogCode.newStatus) {
+          this.$message({type: 'warning',message: '未进行修改'});
+        } else {
+          changeCode({user_id:this.dialogCode.user_id,code_status:this.dialogCode.newStatus}).then(res=>{
+            if(res.data.status=='200') {
+              this.$message({type: 'success',message: '转运码状态修改成功!'});
+              this.dialogCodeVisible = false;
             }else{
               this.$message({type: 'warning',message: '修改失败——'+res.data.msg});
             }

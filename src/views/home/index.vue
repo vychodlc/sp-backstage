@@ -98,24 +98,26 @@
         this.$router.replace('/login')
       }
 
-      this.permissions = localStorage.permissions.split(',')
-      if(this.permissions.indexOf('post_page')!=-1||this.permissions.indexOf('post_edit')!=-1||this.permissions.indexOf('tag_page')!=-1) {
-        this.menu[0] = true
-      }
-      if(this.permissions.indexOf('repo_page')!=-1||this.permissions.indexOf('repo_out_page')!=-1) {
-        this.menu[1] = true
-      }
-      if(this.permissions.indexOf('agency_page')!=-1||this.permissions.indexOf('giftcard_page')!=-1||this.permissions.indexOf('discount_page')!=-1||this.permissions.indexOf('account_page')!=-1) {
-        this.menu[2] = true
-      }
-      if(this.permissions.indexOf('user_page')!=-1||this.permissions.indexOf('permission_page')!=-1||this.permissions.indexOf('address_page')!=-1) {
-        this.menu[3] = true
-      }
-      if(this.permissions.indexOf('card_page')!=-1) {
-        this.menu[4] = true
-      }
-      if(this.permissions.indexOf('withdraw_page')!=-1||this.permissions.indexOf('payment_page')!=-1||this.permissions.indexOf('charge_page')!=-1||this.permissions.indexOf('factor_page')!=-1) {
-        this.menu[5] = true
+      if(localStorage.permissions) {
+        this.permissions = localStorage.permissions.split(',')
+        if(this.permissions.indexOf('post_page')!=-1||this.permissions.indexOf('post_edit')!=-1||this.permissions.indexOf('tag_page')!=-1) {
+          this.menu[0] = true
+        }
+        if(this.permissions.indexOf('repo_page')!=-1||this.permissions.indexOf('repo_out_page')!=-1) {
+          this.menu[1] = true
+        }
+        if(this.permissions.indexOf('agency_page')!=-1||this.permissions.indexOf('giftcard_page')!=-1||this.permissions.indexOf('discount_page')!=-1||this.permissions.indexOf('account_page')!=-1) {
+          this.menu[2] = true
+        }
+        if(this.permissions.indexOf('user_page')!=-1||this.permissions.indexOf('permission_page')!=-1||this.permissions.indexOf('address_page')!=-1) {
+          this.menu[3] = true
+        }
+        if(this.permissions.indexOf('card_page')!=-1) {
+          this.menu[4] = true
+        }
+        if(this.permissions.indexOf('withdraw_page')!=-1||this.permissions.indexOf('payment_page')!=-1||this.permissions.indexOf('charge_page')!=-1||this.permissions.indexOf('factor_page')!=-1) {
+          this.menu[5] = true
+        }
       }
 
       // if(localStorage.permissions)

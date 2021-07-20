@@ -334,7 +334,7 @@
       goChange() {
         if(this.newCardnum==''&&this.dialogChange=='1') {
           this.$message({type: 'warning',message: '请输入新卡号'});
-        } else if(this.newCardnum!=parseInt(this.newCardnum)||parseInt(this.newCardnum)<1) {
+        } else if((this.newCardnum!=parseInt(this.newCardnum)||parseInt(this.newCardnum)<1)&&this.dialogChange=='1') {
           this.$message({type:'warning',message:'请检查卡号的格式'})
         } else {
           if(this.oldApply.apply_status!=this.dialogChange) {
