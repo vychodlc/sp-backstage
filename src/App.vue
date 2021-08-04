@@ -47,7 +47,6 @@
       //     "accept-language":"zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja-JP;q=0.6,ja;q=0.5",
       //   }
       // }).then(res=>{
-      //   console.log(res);
       // })
       // document.addEventListener('plusready', function(){
       //   var xhr = new plus.net.XMLHttpRequest();

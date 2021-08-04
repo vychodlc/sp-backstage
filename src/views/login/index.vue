@@ -217,7 +217,6 @@ export default {
                   }
                   localStorage.permissions = permissions
                   this.$store.commit('setUser',{id:res1.data.data.ID,nickname:res1.data.data.user_nickname,right:permissions});
-                  console.log(this.$store.state);
                   this.$message({message: '登陆成功',type: 'success'});
                   this.loading = false;
                   this.$router.push({ path:'/home' });

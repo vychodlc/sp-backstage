@@ -412,9 +412,7 @@
               this.permissionDict[item] = 0
             }
           }
-          console.log(this.permissionDict);
           addRole(this.newItem.name,this.newItem.description,this.permissionDict).then(res=>{
-            console.log(res.data);
             if(res.data.status=='200') {
               this.$message({type:'success',message:'添加成功'})
             } else {

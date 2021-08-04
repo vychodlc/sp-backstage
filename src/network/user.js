@@ -104,7 +104,6 @@ export function getUserByEmail(user_email) {
 }
 
 export function getUserRight(uuid) {
-  console.log(uuid);
   return request({
     url: '/get_user_right.php',
     params: {uuid}
@@ -155,7 +154,7 @@ export function changeCode(info) {
   formData.append('code_status',info.code_status)
   return request({
     method: 'POST',
-    url: '/change_tranship_code.php',
+    url: '/change_transship_code.php',
     data: formData
   })
 }

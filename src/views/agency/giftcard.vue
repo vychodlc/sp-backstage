@@ -270,7 +270,6 @@ xxxx xxxx xxxx
       },
       addItem(item) {
         if(item.brand.toUpperCase().indexOf('N')!=-1) {
-          console.log(item);
           item.brand = 'N'
           this.$axios({
             method: 'post',

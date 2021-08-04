@@ -586,9 +586,7 @@
         if(email=='') {
           this.$message({type: 'warning',message: '请输入用户注册邮箱地址'});
         } else {
-          console.log(email);
           getUserByEmail(email).then(res=>{
-            console.log(res);
             if(res.data.status=='200') {
               let user_id = res.data.user_ID;
               this.newOutput.user_id = user_id;
@@ -597,7 +595,6 @@
                   if(res1.data.data.length==0) {
                     this.$message({type: 'warning',message: '未查到该用户的库存信息'});
                   }
-                  console.log(user_id);
                   filterAddress(0,'user_id',user_id).then(res2=>{
                     if(res2.data.data.length=='0') {
                       this.$message({type: 'warning',message: '未查到该用户的地址信息'});

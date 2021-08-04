@@ -44,11 +44,12 @@
           <span v-if="scope.row.brand=='N'">Nike</span>
           <span v-if="scope.row.brand=='A'">Adidas</span>
           <span v-if="scope.row.brand=='JD'">JD·Sports</span>
+          <span v-if="scope.row.brand=='U'">通用</span>
         </template>
       </el-table-column>
       <el-table-column label="物流">
         <template slot-scope='scope'>
-          <el-link icon="el-icon-more-outline" @click="handleDetail(scope.row)">详情</el-link>
+          <el-link v-if="scope.row.brand!='U'" icon="el-icon-more-outline" @click="handleDetail(scope.row)">详情</el-link>
         </template>
       </el-table-column>
       <el-table-column label="用户编号" prop="user_id">
@@ -113,7 +114,7 @@
           <el-radio v-model="newApplyBrand" :disabled='loading' label="N">Nike</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="A">Adidas</el-radio>
           <el-radio v-model="newApplyBrand" :disabled='loading' label="JD">JDSports</el-radio>
-          <!-- <el-radio v-model="newApplyBrand" :disabled='loading' label="U">通用</el-radio> -->
+          <el-radio v-model="newApplyBrand" :disabled='loading' label="U">通用</el-radio>
         </el-form-item>
         <el-form-item v-if="dialogAddMore==true" label="订单号">
           <el-input v-model="newApplyExpressid" autocomplete="off" :disabled='loading'></el-input>
@@ -449,7 +450,11 @@
         } else if(validateEmail(this.newApplyEmail)==false) {
           this.$message({type: 'warning',message: '邮箱地址格式不符合规范'});
         } else {
-          this.checkOrder('add',this.newApplyBrand,this.newApplyExpressid,this.newApplyEmail,this.newApplyUserEmail);
+          if(this.newApplyBrand=='U') {
+            this._handleApply('add',this.newApplyUserEmail,'U',{id:this.newApplyExpressid,email:this.newApplyEmail});
+          } else {
+            this.checkOrder('add',this.newApplyBrand,this.newApplyExpressid,this.newApplyEmail,this.newApplyUserEmail);
+          }
         }
       },
       handleEdit(index,row) {
@@ -468,7 +473,11 @@
         } else if(validateEmail(this.editApplyEmail)==false) {
           this.$message({type: 'warning',message: '邮箱格式不符合规范'});
         } else {
-          this.checkOrder('edit',this.editApplyBrand,this.editApplyExpressid,this.editApplyEmail,this.editApplyUser)
+          if(this.editApplyBrand=='U') {
+            this._handleApply('edit',this.editApplyUser,'U',{});
+          } else {
+            this.checkOrder('edit',this.editApplyBrand,this.editApplyExpressid,this.editApplyEmail,this.editApplyUser)
+          }
         }       
       },
       handleDelete(index,row) {
@@ -853,9 +862,11 @@
                 } else {
                   this.$message({type: 'warning',message: '添加失败——'+res.data.msg});
                 }
+                this.dialogAddMore = false;
               })
             } else {
               this.$message({type: 'warning',message: '查无用户'});
+              this.dialogAddMore = false;
             }
           })
         } else if(type=='edit') {

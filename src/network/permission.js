@@ -25,7 +25,6 @@ export function editRole(role_ID,permissions,name,description) {
   formData.append('name',name)
   formData.append('description',description)
   formData.append('permissions',JSON.stringify(permissions))
-  console.log(JSON.stringify(permissions));
   return request({
     method: 'POST',
     url: '/edit_role.php',

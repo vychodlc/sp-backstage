@@ -149,7 +149,6 @@
       }
     },
     mounted() {
-      console.log(this.$store.state);
       this._getPostList(this.currentPage)
     },
     methods:{

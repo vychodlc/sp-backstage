@@ -160,8 +160,6 @@ export default {
   },
   methods: {
     test() {
-      // console.log(this.postForm);
-      // console.log(this.getBLen(this.postForm.title));
     },
     onEditorReady(editor) {}, // 准备编辑器
     onEditorBlur(){}, // 失去焦点事件
@@ -175,7 +173,6 @@ export default {
     },
     getHtml() {
       let h = '<h1>'+this.escapeStringHTML(this.postForm.title)+'</h1>'+'<h4>'+'</h4>'+this.escapeStringHTML(this.postForm.content);
-      // console.log(h);
       return h;
     },
     handleChange(file,filelist) {
@@ -195,7 +192,6 @@ export default {
       const isIMAGE = (f.raw.type === 'image/jpeg')||(f.raw.type === 'image/gif')||(f.raw.type === 'image/png');
       const isLt1M = f.raw.size / 1024 / 1024 < 1;
       if (!isIMAGE) {
-        console.log(123);
         this.$refs.uploadContentImg.uploadFiles.pop().raw;
         this.$message.error('上传文件只能是图片格式!');
       } else if (!isLt1M) {
@@ -253,7 +249,6 @@ export default {
           if(this.postForm.act_start_time!=''&&this.postForm.act_start_time.toString().indexOf('GMT')!=-1){this.postForm.act_start_time = msToDate(this.postForm.act_start_time.getTime()).hasTime};
           if(this.postForm.act_end_time!=''&&this.postForm.act_end_time.toString().indexOf('GMT')!=-1){this.postForm.act_end_time = msToDate(this.postForm.act_end_time.getTime()).hasTime};  
           editPost(this.postForm).then(res=>{
-            console.log('EDIT NO IMG');
             if(res.data.status='200') {
               this.$message({type: 'success',message: '修改文章成功!'});
               this.$router.replace('/home/post');
@@ -281,7 +276,6 @@ export default {
                 
                 if(this.isEdit==true) {
                   editPost(this.postForm).then(res=>{
-                    console.log('EDIT HAS IMG');
                     if(res.data.status='200') {
                       this.$message({type: 'success',message: '修改文章成功!'});
                       this.$router.replace('/home/post')
@@ -295,7 +289,6 @@ export default {
                   this.postForm.author = localStorage.nickname;
                   this.postForm.author_id = localStorage.uuid;
                   addPost(this.postForm).then(res=>{
-                    console.log('ADD HAS IMG');
                     if(res.data.status='200') {
                       this.$message({type: 'success',message: '新建文章成功!'});
                       this.$router.replace('/home/post')
@@ -346,7 +339,6 @@ export default {
       let editId = this.$route.params.id;
       getPostDetail(editId).then(res=>{
         if(res.data.status=='200') {
-          // console.log(res.data.data);
           this.postForm.id = res.data.data.ID;
           this.postForm.author = res.data.data.author;
           this.postForm.author_id = res.data.data.author_id;

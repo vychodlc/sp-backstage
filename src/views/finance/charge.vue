@@ -165,7 +165,6 @@
         });
       },
       test(index) {
-        console.log(index);
       },
       _getList(pageIndex) {
         this.loading = true;
